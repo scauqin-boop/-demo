@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>考试管理 — 学员端</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,'PingFang HK','Microsoft YaHei',sans-serif; font-size:13px; color:#333; background:#f0f2f5; }
+
+/* 固定布局：topbar + sidebar + main 全部 position:fixed */
+.topbar { position:fixed; top:0; left:0; right:0; height:48px; background:#00b389; display:flex; align-items:center; padding:0 16px; justify-content:space-between; z-index:200; }
+.topbar-logo { color:#fff; font-size:15px; font-weight:700; }
+.topbar-user { color:rgba(255,255,255,0.9); font-size:12px; display:flex; gap:12px; }
+
+.sidebar { position:fixed; top:48px; left:0; bottom:0; width:200px; background:#001529; overflow-y:auto; z-index:100; }
+.menu-section { padding:12px 16px 4px; font-size:10px; color:rgba(255,255,255,0.35); font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.menu-item { display:block; padding:11px 16px 11px 24px; color:rgba(255,255,255,0.55); font-size:12px; cursor:pointer; border-left:3px solid transparent; transition:all 0.15s; }
+.menu-item:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.85); }
+.menu-item.active { background:#00b389; color:#fff; border-left-color:#5fffda; font-weight:600; }
+
+.main { position:fixed; top:48px; left:200px; right:0; bottom:0; overflow:hidden; }
+
+/* 每个 panel 铺满 main */
+.panel { display:none; position:absolute; top:0; left:0; right:0; bottom:0; overflow-y:auto; background:#f0f2f5; }
+.panel.active { display:block; }
+
+/* 公共组件 */
+.page-header { background:#fff; padding:14px 20px 10px; border-bottom:1px solid #e8e8e8; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; }
+.page-title { font-size:15px; font-weight:700; color:#222; }
+.page-content { padding:16px 20px; }
+
+.btn { display:inline-flex; align-items:center; gap:4px; padding:6px 14px; border-radius:4px; font-size:12px; cursor:pointer; border:1px solid transparent; transition:all 0.15s; white-space:nowrap; }
+.btn-primary { background:#00b389; color:#fff; border-color:#00b389; }
+.btn-primary:hover { background:#009e7a; }
+.btn-default { background:#fff; color:#555; border-color:#d9d9d9; }
+.btn-default:hover { border-color:#00b389; color:#00b389; }
+.btn-sm { padding:3px 10px; font-size:11px; }
+.btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+.badge { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10px; font-weight:600; white-space:nowrap; }
+.badge-green { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+.badge-red { background:#fff1f0; color:#ff4d4f; border:1px solid #ffa39e; }
+.badge-orange { background:#fff7e6; color:#fa8c16; border:1px solid #ffd591; }
+.badge-blue { background:#e6f7ff; color:#1890ff; border:1px solid #91d5ff; }
+.badge-teal { background:#e6fffb; color:#13c2c2; border:1px solid #87e8de; }
+.badge-gray { background:#f5f5f5; color:#aaa; border:1px solid #e8e8e8; }
+
+.card { background:#fff; border-radius:8px; padding:16px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+.card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.1); }
+
+table { width:100%; border-collapse:collapse; }
+thead tr { background:#fafafa; }
+th { padding:9px 12px; text-align:left; font-size:12px; font-weight:600; color:#555; border-bottom:1px solid #f0f0f0; white-space:nowrap; }
+td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8f8; vertical-align:middle; }
+.td-op { color:#00b389; cursor:pointer; font-size:11px; margin-right:8px; }
+.td-op:hover { text-decoration:underline; }
+
+/* 弹窗 */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:none; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:#fff; border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,0.18); display:flex; flex-direction:column; max-height:90vh; }
+.modal-sm { width:420px; }
+.modal-md { width:560px; }
+.modal-lg { width:700px; }
+.modal-header { padding:14px 20px; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.modal-header h3 { font-size:14px; font-weight:700; color:#222; }
+.modal-close { cursor:pointer; color:#aaa; font-size:16px; }
+.modal-body { padding:18px 20px; overflow-y:auto; flex:1; }
+.modal-footer { padding:12px 20px; border-top:1px solid #f0f0f0; display:flex; justify-content:flex-end; gap:8px; flex-shrink:0; }
+
+/* 答题页 */
+.exam-page { position:fixed; inset:0; background:#f0f2f5; z-index:500; display:none; flex-direction:column; }
+.exam-page.open { display:flex; }
+.exam-topbar { background:#00b389; padding:0 20px; height:48px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.exam-nav { background:#fff; padding:10px 20px; border-bottom:1px solid #e8e8e8; flex-shrink:0; }
+.exam-nav-label { font-size:11px; color:#888; margin-bottom:6px; }
+.exam-nav-btns { display:flex; flex-wrap:wrap; gap:6px; }
+.nav-btn { width:30px; height:30px; border-radius:4px; border:1px solid #d9d9d9; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; font-weight:600; color:#555; transition:all 0.15s; }
+.nav-btn.answered { background:#00b389; color:#fff; border-color:#00b389; }
+.exam-body { flex:1; overflow-y:auto; padding:20px; }
+.exam-footer { background:#fff; padding:12px 20px; border-top:1px solid #e8e8e8; display:flex; justify-content:flex-end; gap:8px; flex-shrink:0; }
+
+/* 小测 */
+.quiz-q { background:#f9f9f9; border-radius:6px; padding:12px 14px; margin-bottom:14px; }
+.quiz-q-title { font-size:12px; font-weight:600; color:#222; margin-bottom:10px; line-height:1.5; }
+.quiz-opt { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:#444; margin-bottom:6px; cursor:pointer; padding:4px 6px; border-radius:4px; }
+.quiz-opt:hover { background:#f0faf7; }
+.quiz-opt input { margin-top:2px; accent-color:#00b389; flex-shrink:0; }
+.quiz-opt.correct { background:#f6ffed; color:#52c41a; }
+.quiz-opt.wrong { background:#fff1f0; color:#ff4d4f; }
+
+/* 每日Briefing */
+.briefing-item { background:#fff; border-radius:8px; padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:box-shadow 0.15s; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
+.briefing-item:hover { box-shadow:0 4px 16px rgba(0,0,0,0.1); }
+.briefing-item-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.briefing-date { font-size:11px; color:#aaa; }
+.briefing-title { font-size:13px; font-weight:600; color:#222; margin-bottom:4px; }
+.briefing-meta { font-size:11px; color:#aaa; }
+.briefing-status { font-size:10px; padding:1px 6px; border-radius:3px; font-weight:600; }
+.briefing-status.watching { background:#fff7e6; color:#fa8c16; border:1px solid #ffd591; }
+.briefing-status.watched { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+.briefing-status.quiz-pending { background:#f0f0f0; color:#888; }
+.briefing-status.quiz-pass { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+.briefing-status.quiz-fail { background:#fff1f0; color:#f5222d; border:1px solid #ffa39e; }
+.briefing-progress-bar { height:4px; background:#f0f0f0; border-radius:2px; margin-top:8px; }
+.briefing-progress-fill { height:100%; background:#fa8c16; border-radius:2px; }
+.briefing-progress-label { font-size:11px; color:#aaa; margin-top:4px; }
+
+.video-player { background:#1a1a2e; padding:16px 20px; border-radius:8px 8px 0 0; }
+.video-mock { background:#16213e; border-radius:6px; height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; margin-bottom:10px; cursor:pointer; }
+.video-mock:hover { background:#0f3460; }
+.video-progress { height:5px; background:#444; border-radius:3px; cursor:pointer; }
+.video-progress-fill { height:100%; background:#00b389; border-radius:3px; }
+.speed-btn { background:transparent; border:1px solid #555; color:#aaa; border-radius:3px; padding:2px 8px; font-size:11px; cursor:pointer; }
+.speed-btn.active { border-color:#00b389; color:#00b389; }
+
+.briefing-content-tab { flex:1; padding:10px; text-align:center; font-size:12px; cursor:pointer; color:#666; border-bottom:2px solid transparent; }
+.briefing-content-tab.active { color:#00b389; border-bottom-color:#00b389; font-weight:600; }
+
+/* toast */
+.toast-wrap { position:fixed; top:60px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+.toast { background:#fff; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.15); padding:10px 16px; font-size:12px; color:#333; min-width:200px; border-left:3px solid #00b389; animation:fadein 0.2s; }
+@keyframes fadein { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-thumb { background:#d9d9d9; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="topbar">
+  <div class="topbar-logo">ARK 客服平台</div>
+  <div class="topbar-user"><span>覃国权</span><span style="opacity:0.6">|</span><span>注销</span></div>
+</div>
+
+<!-- 侧边栏 -->
+<div class="sidebar">
+  <div class="menu-section">考试及每日Briefing管理</div>
+  <div class="menu-item active" id="menu-todo" onclick="showPanel('todo')">📋 待完成</div>
+  <div class="menu-item" id="menu-history" onclick="showPanel('history')">✅ 已完成</div>
+  <div class="menu-item" id="menu-briefing" onclick="showPanel('briefing')">🎬 每日Briefing管理</div>
+</div>
+
+<!-- 主内容区 -->
+<div class="main">
+
+  <!-- 待完成 -->
+  <div class="panel active" id="panel-todo">
+    <div class="page-header">
+      <div class="page-title">待完成考试</div>
+      <div style="font-size:12px;color:#aaa;">共 <strong style="color:#ff4d4f;" id="todoCount">2</strong> 项待完成</div>
+    </div>
+    <div class="page-content" id="todoList"></div>
+  </div>
+
+  <!-- 已完成 -->
+  <div class="panel" id="panel-history">
+    <div class="page-header">
+      <div class="page-title">已完成</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select style="border:1px solid #d9d9d9;border-radius:4px;padding:5px 8px;font-size:12px;outline:none;"><option>全部类型</option><option>Briefing小测</option><option>月测</option><option>专项测验</option></select>
+        <input type="date" style="border:1px solid #d9d9d9;border-radius:4px;padding:5px 8px;font-size:12px;outline:none;" value="2026-06-01">
+        <span style="font-size:12px;color:#888;">～</span>
+        <input type="date" style="border:1px solid #d9d9d9;border-radius:4px;padding:5px 8px;font-size:12px;outline:none;" value="2026-07-06">
+        <button class="btn btn-primary btn-sm" onclick="showToast('查询完成')">查询</button>
+      </div>
+    </div>
+    <div class="page-content">
+      <div style="font-size:11px;color:#aaa;margin-bottom:10px;">同试卷重做记录已分组收纳，管理员看板展示最高分。</div>
+      <div style="background:#fff;border-radius:6px;overflow:hidden;">
+        <table>
+          <thead><tr><th>作答批次</th><th>类型</th><th>得分</th><th>满分</th><th>结果</th><th>提交时间</th><th>用时</th><th>操作</th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 每日Briefing管理 -->
+  <div class="panel" id="panel-briefing">
+    <div class="page-header">
+      <div class="page-title">每日Briefing管理</div>
+      <div style="font-size:12px;color:#aaa;">2026-07-02</div>
+    </div>
+    <div class="page-content">
+
+      <!-- Briefing 列表视图 -->
+      <div id="briefing-list-view">
+        <div class="briefing-item" onclick="openBriefingDetail()">
+          <div class="briefing-item-header">
+            <span class="briefing-date">今日 · 2026-07-02</span>
+            <div style="display:flex;gap:4px;">
+              <span class="briefing-status watching">观看中</span>
+              <span class="briefing-status quiz-pending">小测未做</span>
+            </div>
+          </div>
+          <div class="briefing-title">📹 2026-07-02 开户业务及转账规则更新说明</div>
+          <div class="briefing-meta">时长 18:32 · 今日 09:00 · 主讲：Lucy</div>
+          <div class="briefing-progress-bar"><div class="briefing-progress-fill" style="width:45%"></div></div>
+          <div class="briefing-progress-label">已观看 45%，完成观看后可解锁小测</div>
+        </div>
+        <div style="padding:10px 4px;font-size:11px;color:#aaa;font-weight:600;border-top:1px solid #e8e8e8;margin-top:8px;margin-bottom:8px;">历史记录</div>
+        <div class="briefing-item" onclick="openBriefingDetail2()">
+          <div class="briefing-item-header">
+            <span class="briefing-date">2026-07-01</span>
+            <div style="display:flex;gap:4px;">
+              <span class="briefing-status watched">已观看</span>
+              <span class="briefing-status quiz-pass">小测通过 92分</span>
+            </div>
+          </div>
+          <div class="briefing-title">📹 2026-07-01 VA账户新功能说明</div>
+          <div class="briefing-meta">时长 12:15 · 主讲：Tom</div>
+        </div>
+        <div class="briefing-item">
+          <div class="briefing-item-header">
+            <span class="briefing-date">2026-06-30</span>
+            <div style="display:flex;gap:4px;">
+              <span class="briefing-status watched">已观看</span>
+              <span class="briefing-status quiz-fail">小测未通过 52分</span>
+            </div>
+          </div>
+          <div class="briefing-title">📹 2026-06-30 基金相关查询处理流程</div>
+          <div class="briefing-meta">时长 22:08 · 主讲：Lucy</div>
+          <div style="margin-top:8px;"><button onclick="event.stopPropagation()" class="btn btn-default btn-sm" style="border-color:#7c3aed;color:#7c3aed;">重做小测</button></div>
+        </div>
+      </div>
+
+      <!-- Briefing 详情视图 -->
+      <div id="briefing-detail-view" style="display:none;background:#fff;border-radius:8px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #f0f0f0;">
+          <span style="cursor:pointer;color:#00b389;font-size:12px;" onclick="closeBriefingDetail()">◀ 返回</span>
+          <span style="font-size:13px;font-weight:700;color:#222;">2026-07-02 Briefing</span>
+        </div>
+        <!-- Video player mock -->
+        <div class="video-player">
+          <div class="video-mock">
+            <div style="font-size:36px;margin-bottom:8px;">▶</div>
+            <div style="font-size:13px;">2026-07-02 开户业务及转账规则更新说明</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px;">时长 18:32 · 主讲：Lucy</div>
+          </div>
+          <div class="video-controls">
+            <div class="video-progress"><div class="video-progress-fill" id="vidProgress" style="width:45%"></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+              <span style="font-size:11px;color:#aaa;">08:20 / 18:32</span>
+              <div style="display:flex;gap:6px;">
+                <button class="speed-btn active" onclick="setSpeed(this,'1x')">1x</button>
+                <button class="speed-btn" onclick="setSpeed(this,'1.5x')">1.5x</button>
+                <button class="speed-btn" onclick="setSpeed(this,'2x')">2x</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs: 补充 / 小测 / 附件 -->
+        <div style="display:flex;border-bottom:1px solid #f0f0f0;">
+          <div class="briefing-content-tab active" id="bct-text" onclick="switchBriefingContent('text')">📄 补充</div>
+          <div class="briefing-content-tab" id="bct-quiz" onclick="switchBriefingContent('quiz')">📝 小测 <span style="font-size:10px;color:#aaa;">（观看≥80%后解锁）</span></div>
+          <div class="briefing-content-tab" id="bct-attach" onclick="switchBriefingContent('attach')">📎 附件</div>
+        </div>
+
+        <!-- 补充 -->
+        <div id="bc-text" style="padding:16px 20px;overflow-y:auto;max-height:340px;font-size:12px;line-height:1.8;color:#444;">
+          <p style="color:#aaa;font-size:11px;margin-bottom:10px;">KM补充内容</p>
+          <p><strong>【开户业务更新】</strong></p>
+          <p>各位同事，今日Briefing主要涵盖两个部分：一是开户流程的最新调整，二是转账规则的变更说明。</p>
+          <p style="margin-top:8px;"><strong>开户部分：</strong>从本月起，MCV开户新增了一个步骤——客户需要在App内完成视频验证。这个步骤是在人脸识别之后进行的，大约需要1-2分钟……</p>
+          <p style="margin-top:8px;"><strong>转账部分：</strong>本地转账手续费维持不变，跨境转账方面，港元转人民币的汇率计算方式有所调整……</p>
+        </div>
+
+        <!-- 附件 -->
+        <div id="bc-attach" style="display:none;padding:16px 20px;overflow-y:auto;max-height:340px;">
+          <p style="font-size:11px;color:#aaa;margin-bottom:10px;">本次Briefing附件</p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9f9f9;border:1px solid #f0f0f0;border-radius:6px;cursor:pointer;" onclick="showToast('正在下载...')">
+              <span style="font-size:18px;">📄</span>
+              <div><div style="font-size:12px;font-weight:600;color:#333;">开户流程最新说明.pdf</div><div style="font-size:11px;color:#aaa;">1.2MB</div></div>
+              <span style="margin-left:auto;font-size:11px;color:#00b389;">下载</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9f9f9;border:1px solid #f0f0f0;border-radius:6px;cursor:pointer;" onclick="showToast('正在下载...')">
+              <span style="font-size:18px;">📊</span>
+              <div><div style="font-size:12px;font-weight:600;color:#333;">转账规则变更说明.docx</div><div style="font-size:11px;color:#aaa;">856KB</div></div>
+              <span style="margin-left:auto;font-size:11px;color:#00b389;">下载</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 小测 -->
+        <div id="bc-quiz" style="display:none;padding:16px 20px;overflow-y:auto;max-height:340px;">
+          <div id="quiz-locked" style="text-align:center;padding:36px 0;color:#aaa;">
+            <div style="font-size:32px;margin-bottom:8px;">🔒</div>
+            <p style="font-size:12px;">请先完成80%以上的视频观看</p>
+            <p style="font-size:11px;margin-top:4px;">当前进度：45%</p>
+            <button onclick="simulateWatchComplete()" class="btn btn-primary btn-sm" style="margin-top:12px;">模拟完成观看（Demo用）</button>
+          </div>
+          <div id="quiz-content" style="display:none">
+            <p style="font-size:12px;color:#888;margin-bottom:12px;">共 3 题 · 单选+多选混合 · 满分100分</p>
+            <div class="quiz-q">
+              <div class="quiz-q-title">1.【单选】MCV开户新增的视频验证步骤在哪个环节之后进行？</div>
+              <label class="quiz-opt"><input type="radio" name="bq1"> 填写个人资料之后</label>
+              <label class="quiz-opt"><input type="radio" name="bq1"> 人脸识别之后</label>
+              <label class="quiz-opt"><input type="radio" name="bq1"> 同意条款之后</label>
+              <label class="quiz-opt"><input type="radio" name="bq1"> 输入身份证之后</label>
+            </div>
+            <div class="quiz-q">
+              <div class="quiz-q-title">2.【多选】以下哪些情况会导致开户被拒？（多选）</div>
+              <label class="quiz-opt"><input type="checkbox"> 身份证件过期</label>
+              <label class="quiz-opt"><input type="checkbox"> 存在制裁名单匹配</label>
+              <label class="quiz-opt"><input type="checkbox"> 客户年龄18岁</label>
+              <label class="quiz-opt"><input type="checkbox"> 内部风控规则触发</label>
+            </div>
+            <div class="quiz-q">
+              <div class="quiz-q-title">3.【单选】本次转账规则调整主要影响哪类转账？</div>
+              <label class="quiz-opt"><input type="radio" name="bq3"> 本地港元转账</label>
+              <label class="quiz-opt"><input type="radio" name="bq3"> 港元转人民币跨境转账</label>
+              <label class="quiz-opt"><input type="radio" name="bq3"> 美元转账</label>
+              <label class="quiz-opt"><input type="radio" name="bq3"> 以上均有调整</label>
+            </div>
+            <button onclick="submitBriefingQuiz()" class="btn btn-primary" style="width:100%;margin-top:12px;padding:10px;font-size:13px;font-weight:600;">提交答案</button>
+          </div>
+          <div id="quiz-result" style="display:none;text-align:center;padding:24px 0;">
+            <div style="font-size:40px;font-weight:700;color:#00b389;">85分</div>
+            <div style="font-size:12px;color:#666;margin-top:6px;">✅ 通过（满分100，通过线60分）</div>
+            <div style="margin-top:14px;font-size:12px;color:#aaa;text-align:left;">错题解析：</div>
+            <div style="text-align:left;margin-top:8px;font-size:12px;background:#f9f9f9;border-radius:6px;padding:12px;">
+              <p><strong>第2题</strong>：正确答案应选 A、B、D。<br>客户年龄18岁符合开户条件，不会被拒。</p>
+            </div>
+            <button onclick="resetBriefingQuiz()" class="btn btn-default btn-sm" style="margin-top:12px;border-color:#00b389;color:#00b389;">重做小测</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- 注意事项确认弹窗 -->
+<div class="modal-overlay" id="modalNotice">
+  <div class="modal modal-md">
+    <div class="modal-header">
+      <h3>考试注意事项</h3>
+      <span class="modal-close" onclick="closeModal('modalNotice')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div style="background:#f0faf7;border:1px solid #b7e8d8;border-radius:6px;padding:12px 16px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:8px;" id="noticeExamName"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:#555;">
+          <span>📊 题目数量：<strong id="noticeCount">0</strong> 题</span>
+          <span>🏆 满分：<strong id="noticeFull">100</strong> 分</span>
+          <span>✅ 及格线：<strong id="noticePass">60</strong> 分</span>
+          <span>⏱ 作答时限：<strong id="noticeTime">不限时</strong></span>
+          <span>📅 截止时间：<strong id="noticeDeadline"></strong></span>
+          <span>🔄 可重做：<strong id="noticeRetry"></strong></span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#666;line-height:1.9;">
+        <strong>请注意：</strong>
+        <ol style="padding-left:16px;margin-top:6px;">
+          <li>答题过程中请勿刷新页面，否则作答进度将丢失</li>
+          <li>提交后立即显示成绩和错题解析</li>
+          <li>每次作答独立记录到已完成历史</li>
+          <li>管理员成绩看板展示最高分</li>
+        </ol>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modalNotice')">取消</button>
+      <button class="btn btn-primary" onclick="startExam()">确认开始答题</button>
+    </div>
+  </div>
+</div>
+
+<!-- 成绩详情弹窗 -->
+<div class="modal-overlay" id="modalResult">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="resultTitle">成绩详情</h3>
+      <span class="modal-close" onclick="closeModal('modalResult')">✕</span>
+    </div>
+    <div class="modal-body" id="resultBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modalResult')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 答题全屏页 -->
+<div class="exam-page" id="examPage">
+  <div class="exam-topbar">
+    <div style="color:#fff;font-size:14px;font-weight:700;" id="examTitle"></div>
+    <div style="color:rgba(255,255,255,0.8);font-size:12px;" id="examMeta"></div>
+    <button class="btn btn-sm" onclick="exitExam()" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3);">退出考试</button>
+  </div>
+  <div class="exam-nav">
+    <div class="exam-nav-label">题目导航（白色=未作答 · 绿色=已作答）</div>
+    <div class="exam-nav-btns" id="examNavBtns"></div>
+  </div>
+  <div class="exam-body" id="examBody"></div>
+  <div class="exam-footer">
+    <button class="btn btn-default" onclick="exitExam()">退出</button>
+    <button class="btn btn-primary" onclick="submitExam()">提交答案</button>
+  </div>
+</div>
+
+<!-- 提交结果弹窗 -->
+<div class="modal-overlay" id="modalExamResult">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="erTitle">考试结果</h3>
+      <span class="modal-close" onclick="closeModal('modalExamResult')">✕</span>
+    </div>
+    <div class="modal-body" id="erBody"></div>
+    <div class="modal-footer" id="erFooter"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ═══ 数据 ═══
+var examData = {
+  todo: [
+    {
+      id: 1, name: '2026-07-02 Briefing小测', type: 'Briefing小测',
+      count: 3, full: 100, pass: 60, deadline: '2026-07-03 23:59',
+      unlock: '看完视频后解锁', retries: '不限', timeLimit: null,
+      questions: [
+        { type:'单选', stem:'MCV开户新增的视频验证步骤在哪个环节之后进行？', opts:['填写个人资料之后','人脸识别之后','同意条款之后','输入身份证之后'], ans:1 },
+        { type:'多选', stem:'以下哪些情况会导致开户被拒？（多选）', opts:['身份证件过期','存在制裁名单匹配','客户年龄18岁','内部风控规则触发'], ans:[0,1,3] },
+        { type:'单选', stem:'本次转账规则调整主要影响哪类转账？', opts:['本地港元转账','港元转人民币跨境转账','美元转账','以上均有调整'], ans:1 }
+      ]
+    },
+    {
+      id: 2, name: '2026年7月月测', type: '月测',
+      count: 5, full: 100, pass: 60, deadline: '2026-07-31 23:59',
+      unlock: '无限制', retries: '1次', timeLimit: 30,
+      questions: [
+        { type:'单选', stem:'以下哪项属于ZA Bank的开户条件？', opts:['年龄满16岁','有效香港身份证','需亲临分行','需担保人'], ans:1 },
+        { type:'多选', stem:'客户申请开户被拒时，客服应如何处理？（多选）', opts:['安抚客户情绪','告知具体被拒原因代码','建议重试或联系专属客服','记录工单跟进'], ans:[0,2,3] },
+        { type:'单选', stem:'本地转账一般多久到账？', opts:['即时','1个工作日','3个工作日','7个工作日'], ans:0 },
+        { type:'单选', stem:'VA账户主要服务对象是？', opts:['个人储蓄客户','企业客户','跨境业务客户','基金投资客户'], ans:2 },
+        { type:'多选', stem:'以下哪些渠道可以联系ZA Bank客服？（多选）', opts:['App内在线客服','电话热线','邮件','线下分行'], ans:[0,1,2] }
+      ]
+    }
+  ],
+  done: [
+    { id:3, name:'2026-07-01 Briefing小测', type:'Briefing小测', score:92, full:100, pass:60, submitTime:'2026-07-01 11:23', duration:'7分钟', result:'pass', attemptLabel:'首考',
+      questions:[
+        { type:'单选', stem:'VA账户本次更新新增了哪个功能？', opts:['支持更多货币','提升转账限额','新增账单导出','以上都是'], ans:3, myAns:3 },
+        { type:'多选', stem:'以下哪些操作需要重新验证身份？（多选）', opts:['修改手机号','大额转账','查看余额','更换登录密码'], ans:[0,1,3], myAns:[0,1,3] },
+        { type:'单选', stem:'VA账户转账限额提升后，每日限额是多少港元？', opts:['5万','10万','20万','50万'], ans:2, myAns:3 }
+      ]
+    },
+    { id:8, name:'2026-07-01 Briefing小测', type:'Briefing小测', score:85, full:100, pass:60, submitTime:'2026-07-02 09:30', duration:'9分钟', result:'pass', attemptLabel:'重做第1次', questions:[] },
+    { id:9, name:'2026-07-01 Briefing小测', type:'Briefing小测', score:96, full:100, pass:60, submitTime:'2026-07-04 14:20', duration:'6分钟', result:'pass', attemptLabel:'重做第2次', questions:[] },
+    { id:4, name:'开户业务专项考核', type:'专项测验', score:60, full:100, pass:70, submitTime:'2026-06-25 14:30', duration:'22分钟', result:'fail', attemptLabel:'首考',
+      questions:[
+        { type:'单选', stem:'ZA Bank开户最低年龄要求是？', opts:['16岁','18岁','21岁','无限制'], ans:1, myAns:0 },
+        { type:'单选', stem:'视频验证步骤大概需要多少分钟？', opts:['1-2分钟','5-10分钟','15分钟','30分钟'], ans:0, myAns:0 },
+        { type:'单选', stem:'开户成功后多久可以使用账户？', opts:['即时','24小时','3个工作日','7个工作日'], ans:0, myAns:0 },
+        { type:'多选', stem:'以下哪些情况会导致开户被拒？（多选）', opts:['证件过期','年龄不足','制裁名单','信息不一致'], ans:[0,1,2,3], myAns:[0,2] }
+      ]
+    },
+    { id:7, name:'开户业务专项考核', type:'专项测验', score:82, full:100, pass:70, submitTime:'2026-06-28 10:30', duration:'18分钟', result:'pass', attemptLabel:'重做第1次', questions:[] },
+    { id:5, name:'2026-06-30 Briefing小测', type:'Briefing小测', score:78, full:100, pass:60, submitTime:'2026-06-30 16:45', duration:'9分钟', result:'pass', attemptLabel:'首考', questions:[] },
+    { id:6, name:'2026-06-29 Briefing小测', type:'Briefing小测', score:45, full:100, pass:60, submitTime:'2026-06-29 15:10', duration:'15分钟', result:'fail', attemptLabel:'首考', questions:[] }
+  ]
+};
+
+var pendingExamId = null;
+var currentExam = null;
+var userAnswers = {};
+var answeredSet = new Set();
+
+// ═══ 面板切换 ═══
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.menu-item').forEach(function(m){ m.classList.remove('active'); });
+  var panel = document.getElementById('panel-' + name);
+  var menu = document.getElementById('menu-' + name);
+  if (panel) panel.classList.add('active');
+  if (menu) menu.classList.add('active');
+}
+
+// ═══ 渲染待完成 ═══
+function renderTodo() {
+  var list = document.getElementById('todoList');
+  var countEl = document.getElementById('todoCount');
+  if (!list) return;
+  if (countEl) countEl.textContent = examData.todo.length;
+
+  if (examData.todo.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#bbb;"><div style="font-size:40px;margin-bottom:10px;">🎉</div><p>暂无待完成考试</p></div>';
+    return;
+  }
+
+  list.innerHTML = examData.todo.map(function(e) {
+    var typeColor = e.type==='Briefing小测' ? 'badge-orange' : e.type==='月测' ? 'badge-blue' : 'badge-teal';
+    var isLocked = e.unlock.indexOf('看完视频') >= 0;
+    var canRetry = e.retries === '不限' || parseInt(e.retries || '0') > 0;
+    return '<div class="card">'
+      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">'
+      + '<div>'
+      + '<div style="font-size:14px;font-weight:700;color:#222;margin-bottom:6px;">' + e.name + (isLocked ? ' 🔒' : '') + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#666;">'
+      + '<span>📅 截止：' + e.deadline + '</span>'
+      + '<span>📊 ' + e.count + ' 题 · 满分 ' + e.full + ' 分 · 及格 ' + e.pass + ' 分</span>'
+      + (e.timeLimit ? '<span>⏱ 限时 ' + e.timeLimit + ' 分钟</span>' : '<span>⏱ 不限时</span>')
+      + '<span>🔄 可重做：' + e.retries + '</span>'
+      + '</div>'
+      + '</div>'
+      + '<span class="badge ' + typeColor + '">' + e.type + '</span>'
+      + '</div>'
+      + (isLocked
+        ? '<div style="background:#fff7e6;border:1px solid #ffd591;border-radius:4px;padding:6px 10px;font-size:11px;color:#d46b08;">🔒 需先观看完Briefing视频后方可作答</div>'
+        : '<button class="btn btn-primary btn-sm" onclick="showNotice(' + e.id + ')">开始答题 →</button>')
+      + '</div>';
+  }).join('');
+}
+
+// ═══ 渲染已完成（分组折叠） ═══
+var historyExpanded = {}; // track expanded groups by exam name
+
+function renderHistory() {
+  var tbody = document.getElementById('historyBody');
+  if (!tbody) return;
+
+  // Group by exam name
+  var groups = {};
+  var groupOrder = [];
+  examData.done.forEach(function(e) {
+    if (!groups[e.name]) { groups[e.name] = []; groupOrder.push(e.name); }
+    groups[e.name].push(e);
+  });
+
+  // Sort each group by submitTime descending (latest first)
+  groupOrder.forEach(function(name) {
+    groups[name].sort(function(a, b) { return b.submitTime.localeCompare(a.submitTime); });
+  });
+
+  // Sort groups by latest submission time descending
+  groupOrder.sort(function(a, b) {
+    return groups[b][0].submitTime.localeCompare(groups[a][0].submitTime);
+  });
+
+  var html = '';
+  groupOrder.forEach(function(name) {
+    var records = groups[name];
+    var maxScore = Math.max.apply(null, records.map(function(r){ return r.score; }));
+    var typeColor = records[0].type==='Briefing小测' ? 'badge-orange' : records[0].type==='月测' ? 'badge-blue' : 'badge-teal';
+    var isExpanded = historyExpanded[name] !== false; // default expanded
+    var arrow = isExpanded ? '▼' : '▶';
+
+    // Group header row
+    html += '<tr style="cursor:pointer;background:#fafafa;" onclick="toggleHistoryGroup(\''+name.replace(/'/g,"\\'")+'\')">'
+      +'<td colspan="8" style="padding:10px 12px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="font-size:9px;color:#aaa;width:12px;">'+arrow+'</span>'
+      +'<span style="font-weight:700;font-size:13px;color:#222;">'+name+'</span>'
+      +'<span class="badge '+typeColor+'">'+records[0].type+'</span>'
+      +'<span style="font-size:11px;color:#888;">共 '+records.length+' 次作答</span>'
+      +'<span style="margin-left:auto;font-size:12px;color:#fa8c16;font-weight:600;">🏆 最高分 '+maxScore+' 分</span>'
+      +'</div></td></tr>';
+
+    // Detail rows (only if expanded)
+    if (isExpanded) {
+      records.forEach(function(e) {
+        var isPassed = e.result === 'pass';
+        var attemptBadge = e.attemptLabel === '首考'
+          ? '<span class="badge badge-gray">首次作答</span>'
+          : '<span class="badge badge-orange">'+e.attemptLabel+'</span>';
+        html += '<tr>'
+          +'<td style="padding-left:36px;">'+attemptBadge+'</td>'
+          +'<td><span class="badge '+typeColor+'">'+e.type+'</span></td>'
+          +'<td style="font-weight:700;color:'+(isPassed?'#52c41a':'#ff4d4f')+';">'+e.score+'</td>'
+          +'<td>'+e.full+'</td>'
+          +'<td><span class="badge '+(isPassed?'badge-green':'badge-red')+'">'+(isPassed?'通过':'未通过')+'</span></td>'
+          +'<td style="color:#aaa;">'+e.submitTime+'</td>'
+          +'<td style="color:#aaa;">'+e.duration+'</td>'
+          +'<td><span class="td-op" onclick="showResult('+e.id+')">查看详情</span>'
+          +'<span class="td-op" onclick="showToast(\'已重新开始，请前往待完成\')">重做</span></td>'
+          +'</tr>';
+      });
+    }
+  });
+
+  tbody.innerHTML = html;
+}
+
+function toggleHistoryGroup(name) {
+  historyExpanded[name] = historyExpanded[name] === false ? true : false;
+  renderHistory();
+}
+
+// ═══ 注意事项弹窗 ═══
+function showNotice(id) {
+  var exam = examData.todo.find(function(e){ return e.id === id; });
+  if (!exam) return;
+  pendingExamId = id;
+  document.getElementById('noticeExamName').textContent = exam.name;
+  document.getElementById('noticeCount').textContent = exam.count;
+  document.getElementById('noticeFull').textContent = exam.full;
+  document.getElementById('noticePass').textContent = exam.pass;
+  document.getElementById('noticeDeadline').textContent = exam.deadline;
+  document.getElementById('noticeTime').textContent = exam.timeLimit ? exam.timeLimit + ' 分钟' : '不限时';
+  document.getElementById('noticeRetry').textContent = exam.retries;
+  openModal('modalNotice');
+}
+
+function startExam() {
+  closeModal('modalNotice');
+  openExamPage(pendingExamId);
+}
+
+// ═══ 答题页 ═══
+function openExamPage(id) {
+  var exam = examData.todo.find(function(e){ return e.id === id; });
+  if (!exam) return;
+  currentExam = exam;
+  userAnswers = {};
+  answeredSet = new Set();
+
+  document.getElementById('examTitle').textContent = exam.name;
+  document.getElementById('examMeta').textContent = '共 ' + exam.count + ' 题 · 满分 ' + exam.full + ' 分';
+
+  // 导航栏
+  var navHtml = exam.questions.map(function(q, qi) {
+    return '<div class="nav-btn" id="navBtn_' + qi + '" onclick="scrollToQ(' + qi + ')">' + (qi + 1) + '</div>';
+  }).join('');
+  document.getElementById('examNavBtns').innerHTML = navHtml;
+
+  // 题目
+  var bodyHtml = exam.questions.map(function(q, qi) {
+    var inputType = q.type === '单选' ? 'radio' : 'checkbox';
+    var typeBadge = q.type === '单选'
+      ? '<span class="badge badge-blue" style="font-size:10px;">单选</span>'
+      : '<span class="badge badge-teal" style="font-size:10px;">多选</span>';
+    var optsHtml = q.opts.map(function(opt, oi) {
+      return '<label class="quiz-opt" onclick="recordAnswer(' + qi + ',' + oi + ',\'' + inputType + '\')">'
+        + '<input type="' + inputType + '" name="q' + qi + '" id="q' + qi + '_' + oi + '" style="accent-color:#00b389;">'
+        + '<span>' + String.fromCharCode(65 + oi) + '. ' + opt + '</span>'
+        + '</label>';
+    }).join('');
+    return '<div class="quiz-q" id="examQ_' + qi + '">'
+      + '<div class="quiz-q-title">' + typeBadge + ' <span style="margin-left:4px;">' + (qi + 1) + '. ' + q.stem + '</span></div>'
+      + optsHtml
+      + '</div>';
+  }).join('');
+  document.getElementById('examBody').innerHTML = bodyHtml;
+
+  document.getElementById('examPage').classList.add('open');
+}
+
+function scrollToQ(qi) {
+  var el = document.getElementById('examQ_' + qi);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function recordAnswer(qi, oi, type) {
+  if (type === 'radio') {
+    userAnswers[qi] = oi;
+  } else {
+    if (!userAnswers[qi]) userAnswers[qi] = [];
+    var arr = userAnswers[qi];
+    var idx = arr.indexOf(oi);
+    if (idx >= 0) arr.splice(idx, 1); else arr.push(oi);
+  }
+  answeredSet.add(qi);
+  var btn = document.getElementById('navBtn_' + qi);
+  if (btn) btn.classList.add('answered');
+}
+
+function exitExam() {
+  if (confirm('确认退出？已作答内容将丢失。')) {
+    document.getElementById('examPage').classList.remove('open');
+    currentExam = null;
+  }
+}
+
+function submitExam() {
+  if (!currentExam) return;
+  var exam = currentExam;
+  var correct = 0;
+  exam.questions.forEach(function(q, qi) {
+    var ans = userAnswers[qi];
+    var isRight = Array.isArray(q.ans)
+      ? (ans && ans.length === q.ans.length && q.ans.every(function(a){ return ans.indexOf(a) >= 0; }))
+      : ans === q.ans;
+    if (isRight) correct++;
+  });
+  var score = Math.round(correct / exam.questions.length * 100);
+  var passed = score >= exam.pass;
+
+  // 关闭答题页
+  document.getElementById('examPage').classList.remove('open');
+
+  // 显示结果弹窗
+  document.getElementById('erTitle').textContent = exam.name + ' — 考试结果';
+  var erBody = '<div style="text-align:center;padding:16px 0 20px;">'
+    + '<div style="font-size:48px;font-weight:700;color:' + (passed ? '#52c41a' : '#ff4d4f') + ';">' + score + '</div>'
+    + '<div style="font-size:13px;color:#666;margin-top:6px;">' + (passed ? '✅ 恭喜通过！' : '❌ 未通过，请继续努力') + '（及格线 ' + exam.pass + ' 分）</div>'
+    + '<div style="font-size:12px;color:#aaa;margin-top:4px;">答对 ' + correct + ' / ' + exam.questions.length + ' 题</div>'
+    + '</div>'
+    + '<div style="font-size:13px;font-weight:600;color:#222;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;">📝 错题解析</div>'
+    + exam.questions.map(function(q, qi) {
+      var myAns = userAnswers[qi];
+      var isRight = Array.isArray(q.ans)
+        ? (myAns && myAns.length === q.ans.length && q.ans.every(function(a){ return myAns.indexOf(a) >= 0; }))
+        : myAns === q.ans;
+      if (isRight) return '';
+      var rightStr = Array.isArray(q.ans)
+        ? q.ans.map(function(a){ return String.fromCharCode(65 + a); }).join('、')
+        : String.fromCharCode(65 + q.ans);
+      var myStr = Array.isArray(myAns)
+        ? (myAns.length > 0 ? myAns.map(function(a){ return String.fromCharCode(65 + a); }).join('、') : '未作答')
+        : (myAns !== undefined && myAns !== null ? String.fromCharCode(65 + myAns) : '未作答');
+      return '<div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:10px 12px;margin-bottom:8px;">'
+        + '<div style="font-size:11px;font-weight:600;color:#ff4d4f;margin-bottom:4px;">❌ 第' + (qi + 1) + '题答错</div>'
+        + '<div style="font-size:12px;color:#444;margin-bottom:4px;">' + q.stem + '</div>'
+        + '<div style="font-size:12px;color:#666;">我的答案：<span style="color:#ff4d4f;">' + myStr + '</span></div>'
+        + '<div style="font-size:12px;color:#666;">正确答案：<span style="color:#52c41a;font-weight:600;">' + rightStr + '</span></div>'
+        + '</div>';
+    }).join('') || '<div style="text-align:center;color:#52c41a;padding:12px;font-size:13px;">🎉 全部答对！</div>';
+
+  document.getElementById('erBody').innerHTML = erBody;
+
+  var canRetry = exam.retries === '不限' || parseInt(exam.retries || '0') > 0;
+  document.getElementById('erFooter').innerHTML = '<button class="btn btn-default" onclick="closeModal(\'modalExamResult\')">关闭</button>'
+    + (canRetry
+      ? '<button class="btn btn-primary" onclick="closeModal(\'modalExamResult\');showNotice(' + exam.id + ')">重做</button>'
+      : '<button class="btn btn-primary" disabled title="管理员设置不可重做" style="opacity:0.4;cursor:not-allowed;">重做（不可重做）</button>');
+
+  openModal('modalExamResult');
+
+  // 记录本次作答
+  var record = {
+    id: Date.now(), examId: exam.id, name: exam.name, type: exam.type,
+    score: score, full: exam.full, pass: exam.pass,
+    submitTime: '2026-07-06 刚刚', duration: '10分钟',
+    result: passed ? 'pass' : 'fail',
+    questions: exam.questions.map(function(q, qi){ return Object.assign({}, q, { myAns: userAnswers[qi] }); })
+  };
+  examData.done.unshift(record);
+
+  // 首次完成移出 todo
+  examData.todo = examData.todo.filter(function(e){ return e.id !== exam.id; });
+
+  renderTodo();
+  renderHistory();
+  currentExam = null;
+}
+
+// ═══ 成绩详情 ═══
+function showResult(id) {
+  var exam = examData.done.find(function(e){ return e.id === id; });
+  if (!exam) return;
+  document.getElementById('resultTitle').textContent = exam.name + ' — 成绩详情';
+  var isPassed = exam.result === 'pass';
+  var bodyHtml = '<div style="display:flex;align-items:center;gap:20px;padding:12px 0;border-bottom:1px solid #f0f0f0;margin-bottom:16px;">'
+    + '<div style="text-align:center;"><div style="font-size:40px;font-weight:700;color:' + (isPassed ? '#52c41a' : '#ff4d4f') + ';">' + exam.score + '</div><div style="font-size:11px;color:#aaa;">得分 / ' + exam.full + '</div></div>'
+    + '<div style="flex:1;"><div style="font-size:13px;font-weight:600;margin-bottom:6px;">' + (isPassed ? '✅ 通过' : '❌ 未通过') + '</div>'
+    + '<div style="font-size:12px;color:#666;display:flex;gap:16px;flex-wrap:wrap;"><span>及格线：' + exam.pass + ' 分</span><span>提交：' + exam.submitTime + '</span><span>用时：' + exam.duration + '</span></div>'
+    + '</div></div>';
+
+  if (exam.questions && exam.questions.length > 0 && 'myAns' in exam.questions[0]) {
+    bodyHtml += exam.questions.map(function(q, qi) {
+      var myAns = q.myAns;
+      var isRight = Array.isArray(q.ans)
+        ? (myAns && myAns.length === q.ans.length && q.ans.every(function(a){ return myAns.indexOf(a) >= 0; }))
+        : myAns === q.ans;
+      var rightStr = Array.isArray(q.ans)
+        ? q.ans.map(function(a){ return String.fromCharCode(65 + a); }).join('、')
+        : String.fromCharCode(65 + q.ans);
+      var myStr = Array.isArray(myAns)
+        ? (myAns.length > 0 ? myAns.map(function(a){ return String.fromCharCode(65 + a); }).join('、') : '未作答')
+        : (myAns !== undefined && myAns !== null ? String.fromCharCode(65 + myAns) : '未作答');
+      return '<div style="border:1px solid ' + (isRight ? '#b7eb8f' : '#ffa39e') + ';border-radius:6px;padding:10px 12px;margin-bottom:8px;background:' + (isRight ? '#f6ffed' : '#fff1f0') + ';">'
+        + '<div style="font-size:11px;font-weight:600;color:' + (isRight ? '#52c41a' : '#ff4d4f') + ';margin-bottom:4px;">' + (isRight ? '✅ 答对' : '❌ 答错') + '</div>'
+        + '<div style="font-size:12px;font-weight:600;color:#222;margin-bottom:4px;">' + (qi + 1) + '. ' + q.stem + '</div>'
+        + '<div style="font-size:12px;color:#666;">我的答案：<span style="color:' + (isRight ? '#52c41a' : '#ff4d4f') + ';">' + myStr + '</span></div>'
+        + (!isRight ? '<div style="font-size:12px;color:#666;margin-top:2px;">正确答案：<span style="color:#52c41a;font-weight:600;">' + rightStr + '</span></div>' : '')
+        + '</div>';
+    }).join('');
+  } else {
+    bodyHtml += '<div style="text-align:center;color:#aaa;padding:20px;font-size:12px;">暂无详细答题记录</div>';
+  }
+
+  document.getElementById('resultBody').innerHTML = bodyHtml;
+  openModal('modalResult');
+}
+
+// ═══ 每日Briefing管理 ═══
+function openBriefingDetail() {
+  document.getElementById('briefing-list-view').style.display = 'none';
+  document.getElementById('briefing-detail-view').style.display = 'block';
+}
+function openBriefingDetail2() {
+  document.getElementById('briefing-list-view').style.display = 'none';
+  document.getElementById('briefing-detail-view').style.display = 'block';
+  // Simulate fully watched
+  document.getElementById('vidProgress').style.width = '100%';
+  simulateWatchComplete();
+}
+function closeBriefingDetail() {
+  document.getElementById('briefing-detail-view').style.display = 'none';
+  document.getElementById('briefing-list-view').style.display = 'block';
+}
+function switchBriefingContent(tab) {
+  ['text','quiz','attach'].forEach(function(t) {
+    var tabEl = document.getElementById('bct-' + t);
+    var body  = document.getElementById('bc-'  + t);
+    var isActive = t === tab;
+    if (tabEl) { tabEl.classList.toggle('active', isActive); }
+    if (body)  body.style.display = isActive ? 'block' : 'none';
+  });
+}
+function setSpeed(btn, speed) {
+  document.querySelectorAll('.speed-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+function simulateWatchComplete() {
+  document.getElementById('vidProgress').style.width = '100%';
+  document.getElementById('quiz-locked').style.display = 'none';
+  document.getElementById('quiz-content').style.display = 'block';
+  switchBriefingContent('quiz');
+}
+function submitBriefingQuiz() {
+  document.getElementById('quiz-content').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+}
+function resetBriefingQuiz() {
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-content').style.display = 'block';
+  document.querySelectorAll('.quiz-opt input').forEach(function(i){ i.checked = false; });
+}
+
+// ═══ 弹窗工具 ═══
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
+});
+
+// ═══ Toast ═══
+function showToast(msg) {
+  var wrap = document.getElementById('toastWrap');
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = '✅ ' + msg;
+  wrap.appendChild(t);
+  setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 2000);
+}
+
+// ═══ 初始化 ═══
+document.addEventListener('DOMContentLoaded', function() {
+  renderTodo();
+  renderHistory();
+});
+</script>
+</body>
+</html>

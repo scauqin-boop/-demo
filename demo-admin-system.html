@@ -1,0 +1,3037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>众安客服管理系统 — Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; font-family: -apple-system, 'PingFang HK', 'Microsoft YaHei', sans-serif; font-size: 13px; color: #333; background: #f0f2f5; }
+
+/* ── TOPBAR ── */
+.topbar { position: fixed; top: 0; left: 0; right: 0; height: 48px; background: #00b389; display: flex; align-items: center; padding: 0 16px; justify-content: space-between; z-index: 200; }
+.topbar-logo { color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+.topbar-user { color: rgba(255,255,255,0.9); font-size: 12px; display: flex; align-items: center; gap: 12px; }
+.topbar-user span { cursor: pointer; }
+.topbar-user span:hover { color: #fff; }
+
+/* ── LAYOUT (不再使用，保留为空) ── */
+.layout { display: contents; }
+
+/* ── SIDEBAR ── */
+.sidebar { position: fixed; top: 48px; left: 0; bottom: 0; width: 200px; background: #001529; overflow-y: auto; z-index: 100; }
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: #1a3a5c; }
+
+.menu-group { }
+.menu-group-title { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; color: rgba(255,255,255,0.65); font-size: 13px; cursor: pointer; user-select: none; transition: background 0.15s; }
+.menu-group-title:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+.menu-group-title .arrow { font-size: 10px; transition: transform 0.2s; }
+.menu-group-title .arrow.open { transform: rotate(90deg); }
+.menu-group-title.no-children { cursor: pointer; }
+
+.menu-sub { overflow: hidden; max-height: 0; transition: max-height 0.25s ease; }
+.menu-sub.open { max-height: 600px; }
+
+.menu-item { display: block; padding: 9px 16px 9px 32px; color: rgba(255,255,255,0.55); font-size: 12px; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+.menu-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+.menu-item.active { background: #00b389; color: #fff; border-left-color: #5fffda; font-weight: 600; }
+
+/* ── MAIN CONTENT ── */
+.main { position: fixed; top: 48px; left: 200px; right: 0; bottom: 0; overflow: hidden; }
+.panel { display: none; }
+.panel.active { display: flex; flex-direction: column; position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; }
+.panel.active.row { flex-direction: row; }
+
+/* ── PAGE HEADER ── */
+.page-header { padding: 14px 20px 10px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.page-title { font-size: 15px; font-weight: 700; color: #222; }
+.page-actions { display: flex; gap: 8px; }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border-radius: 4px; font-size: 12px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; }
+.btn-primary { background: #00b389; color: #fff; border-color: #00b389; }
+.btn-primary:hover { background: #009e7a; border-color: #009e7a; }
+.btn-default { background: #fff; color: #555; border-color: #d9d9d9; }
+.btn-default:hover { border-color: #00b389; color: #00b389; }
+.btn-danger { background: #fff; color: #ff4d4f; border-color: #ff4d4f; }
+.btn-danger:hover { background: #ff4d4f; color: #fff; }
+.btn-sm { padding: 3px 10px; font-size: 11px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── FORM ── */
+.form-card { background: #fff; border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; }
+.form-card-title { font-size: 13px; font-weight: 700; color: #222; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 6px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+.form-grid.col1 { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.span2 { grid-column: span 2; }
+.form-label { font-size: 11px; color: #666; }
+.form-label .req { color: #ff4d4f; margin-left: 2px; }
+.form-control { border: 1px solid #d9d9d9; border-radius: 4px; padding: 6px 10px; font-size: 12px; color: #333; outline: none; transition: border-color 0.15s; background: #fff; }
+.form-control:focus { border-color: #00b389; }
+.form-control[readonly] { background: #f5f5f5; color: #888; cursor: not-allowed; }
+select.form-control { cursor: pointer; }
+textarea.form-control { resize: vertical; min-height: 72px; }
+.form-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+/* ── TABLE ── */
+.table-wrap { background: #fff; border-radius: 6px; overflow: hidden; }
+.table-toolbar { padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f0f0f0; flex-wrap: wrap; }
+.table-search { border: 1px solid #d9d9d9; border-radius: 4px; padding: 5px 10px; font-size: 12px; outline: none; width: 180px; }
+.table-search:focus { border-color: #00b389; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: #fafafa; }
+th { padding: 9px 12px; text-align: left; font-size: 12px; font-weight: 600; color: #555; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+td { padding: 9px 12px; font-size: 12px; color: #444; border-bottom: 1px solid #f8f8f8; vertical-align: middle; }
+tr:hover td { background: #fafffe; }
+.td-ops { display: flex; gap: 8px; }
+.td-op { color: #00b389; cursor: pointer; font-size: 11px; white-space: nowrap; }
+.td-op:hover { text-decoration: underline; }
+.td-op.danger { color: #ff4d4f; }
+
+/* ── BADGE ── */
+.badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.badge-green { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.badge-red { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e; }
+.badge-orange { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+.badge-blue { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+.badge-gray { background: #f5f5f5; color: #aaa; border: 1px solid #e8e8e8; }
+.badge-teal { background: #e6fffb; color: #13c2c2; border: 1px solid #87e8de; }
+
+/* ── MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: none; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); display: flex; flex-direction: column; max-height: 90vh; }
+.modal-sm { width: 420px; }
+.modal-md { width: 560px; }
+.modal-lg { width: 680px; }
+.modal-header { padding: 14px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.modal-header h3 { font-size: 14px; font-weight: 700; color: #222; }
+.modal-close { cursor: pointer; color: #aaa; font-size: 16px; line-height: 1; padding: 2px 4px; }
+.modal-close:hover { color: #333; }
+.modal-body { padding: 18px 20px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; top: 60px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: #fff; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); padding: 10px 16px; font-size: 12px; color: #333; display: flex; align-items: center; gap: 8px; min-width: 200px; animation: slideIn 0.2s ease; border-left: 3px solid #00b389; }
+.toast.error { border-left-color: #ff4d4f; }
+.toast.warning { border-left-color: #fa8c16; }
+@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+/* ── PLACEHOLDER PANEL ── */
+.placeholder-panel { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: #bbb; }
+.placeholder-panel .p-icon { font-size: 40px; }
+.placeholder-panel p { font-size: 13px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 3px; }
+
+/* ── RICH TEXT EDITOR ── */
+.rt-btn { padding: 2px 7px; border: 1px solid #e0e0e0; border-radius: 3px; background: #fff; cursor: pointer; font-size: 12px; color: #444; transition: all 0.1s; }
+.rt-btn:hover { border-color: #00b389; color: #00b389; background: #f0faf7; }
+.rt-select { padding: 2px 5px; border: 1px solid #e0e0e0; border-radius: 3px; font-size: 11px; color: #555; outline: none; background: #fff; }
+#rtEditor:empty:before { content: attr(placeholder); color: #bbb; pointer-events: none; }
+
+/* ── CATALOG TREE ── */
+.cat-node:hover { background: #f5fffe; }
+.cat-selected { background: #e6faf5 !important; border-left-color: #00b389 !important; }
+.cat-node { border-left: 3px solid transparent; }
+
+/* ── INLINE EDIT ROW ── */
+.inline-edit-area { background: #f0faf7; border: 1px solid #b7e8d8; border-radius: 6px; padding: 12px 14px; margin: 4px 8px 8px; }
+.inline-edit-area .form-grid { gap: 8px 16px; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">众安客服管理系统</div>
+  <div class="topbar-user">
+    <span>覃国权</span>
+    <span style="opacity:0.6">|</span>
+    <span>注销</span>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+    <div class="menu-group">
+      <div class="menu-group-title no-children" onclick="showPanel('placeholder')">客服作业</div>
+    </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>业务管理</span><span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub">
+        <div class="menu-item" onclick="showPanel('placeholder')">业务授权码管理</div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>知识库管理</span><span class="arrow open">▶</span>
+      </div>
+      <div class="menu-sub open">
+        <div class="menu-item active" id="menu-catalog" onclick="showPanel('catalog')">目录及知识条目管理</div>
+        <div class="menu-item" id="menu-label" onclick="showPanel('label')">标签管理</div>
+        <div class="menu-item" id="menu-briefing" onclick="window.open('demo-briefing.html','_blank')">每日Briefing管理 ↗</div>
+        <div class="menu-item" id="menu-exam-toggle" onclick="toggleExamMenu(this)" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>考试管理</span><span class="arrow" id="examArrow">▶</span>
+        </div>
+        <div id="exam-submenu" style="display:none;">
+          <div class="menu-item" id="menu-quiz-bank" onclick="window.open('demo-quiz-bank.html','_blank')" style="padding-left:44px;">题库管理 ↗</div>
+          <div class="menu-item" id="menu-quiz-paper" onclick="window.open('demo-quiz-paper.html','_blank')" style="padding-left:44px;">试卷管理 ↗</div>
+          <div class="menu-item" id="menu-quiz-score" onclick="window.open('demo-quiz-score.html','_blank')" style="padding-left:44px;">成绩看板 ↗</div>
+        </div>
+        <div class="menu-item" onclick="showPanel('placeholder')">名词解释配置</div>
+        <div class="menu-item" onclick="showPanel('placeholder')">附件配置</div>
+        <div class="menu-item" onclick="showPanel('placeholder')">审核配置</div>
+        <div class="menu-item" onclick="showPanel('placeholder')">权限配置</div>
+        <div class="menu-item" id="menu-error-handle" onclick="showPanel('error-handle')">知识库报错处理</div>
+        <div class="menu-item" id="menu-audit-handle" onclick="showPanel('audit-handle')">知识库审核处理</div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>消息管理</span><span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub">
+        <div class="menu-item" onclick="showPanel('placeholder')">消息配置</div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>安全管理</span><span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub">
+        <div class="menu-item" onclick="showPanel('placeholder')">安全配置</div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>服销管理</span><span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub">
+        <div class="menu-item" onclick="showPanel('placeholder')">服销配置</div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>字典管理</span><span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub">
+        <div class="menu-item" onclick="showPanel('placeholder')">字典配置</div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>XC平台</span><span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub">
+        <div class="menu-item" onclick="showPanel('placeholder')">XC配置</div>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>审批管理</span><span class="arrow">▶</span>
+      </div>
+      <div class="menu-sub">
+        <div class="menu-item" onclick="showPanel('placeholder')">审批配置</div>
+      </div>
+    </div>
+
+    </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- 占位面板 -->
+    <div class="panel active" id="panel-placeholder" style="flex-direction:column;">
+      <div class="placeholder-panel">
+        <div class="p-icon">🗂️</div>
+        <p>该页面暂未在本次重构范围内</p>
+      </div>
+    </div>
+
+    <!-- 知识库报错处理 占位 -->
+    <div class="panel" id="panel-error-handle">
+      <div class="page-header"><div class="page-title">知识库报错处理</div></div>
+      <div style="position:absolute;top:53px;left:0;right:0;bottom:0;overflow-y:auto;padding:14px 16px;">
+        <div class="table-wrap">
+          <div class="table-toolbar"><span style="font-size:12px;color:#666;">状态：</span><select class="form-control" style="width:100px;"><option>全部</option><option>待处理</option><option>已处理</option></select><button class="btn btn-primary btn-sm">查询</button></div>
+          <table><thead><tr><th>知识路径</th><th>问题类型</th><th>错误描述</th><th>报错人</th><th>报错时间</th><th>状态</th><th>操作</th></tr></thead><tbody>
+            <tr><td>银行事业部 / 个人银行 / 开户业务 / 开户介绍</td><td><span class="badge badge-orange">知识错误</span></td><td>开户年龄要求描述有误</td><td>Lucy</td><td style="color:#aaa;">2026-07-02 10:32</td><td><span class="badge badge-red">待处理</span></td><td><span class="td-op">处理</span></td></tr>
+            <tr><td>银行事业部 / 个人银行 / 转账业务 / 转账收费</td><td><span class="badge badge-red">知识缺失</span></td><td>跨境转账手续费标准未更新</td><td>Tom</td><td style="color:#aaa;">2026-07-01 15:44</td><td><span class="badge badge-green">已处理</span></td><td><span class="td-op">查看</span></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 知识库审核处理 占位 -->
+    <div class="panel" id="panel-audit-handle">
+      <div class="page-header"><div class="page-title">知识库审核处理</div></div>
+      <div style="position:absolute;top:53px;left:0;right:0;bottom:0;overflow-y:auto;padding:14px 16px;">
+        <div class="table-wrap">
+          <div class="table-toolbar"><span style="font-size:12px;color:#666;">状态：</span><select class="form-control" style="width:100px;"><option>全部</option><option>待审核</option><option>已通过</option><option>已驳回</option></select><button class="btn btn-primary btn-sm">查询</button></div>
+          <table><thead><tr><th>知识ID</th><th>问题标题</th><th>提交人</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead><tbody>
+            <tr><td style="color:#aaa;">K-20240105</td><td>ZA Bank存款利率最新说明</td><td>Ines</td><td style="color:#aaa;">2026-07-03 09:10</td><td><span class="badge badge-orange">待审核</span></td><td><div class="td-ops"><span class="td-op" style="color:#52c41a;" onclick="showToast('已通过')">通过</span><span class="td-op danger" onclick="showToast('已驳回','warning')">驳回</span></div></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 目录管理面板 -->
+    <div class="panel row" id="panel-catalog">
+
+      <!-- 左侧目录树 -->
+      <div style="width:280px;background:#fff;border-right:1px solid #e8e8e8;display:flex;flex-direction:column;flex-shrink:0;">
+        <div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;font-weight:700;color:#222;">目录管理</span>
+        </div>
+        <div style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">
+          <input class="table-search" style="width:100%;" placeholder="搜索目录名称" oninput="catSearch(this.value)">
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:6px 0;" id="catTree"></div>
+      </div>
+
+      <!-- 右侧表单区 -->
+      <div style="flex:1;overflow-y:auto;padding:14px 16px;background:#f0f2f5;" id="catFormArea">
+        <div class="placeholder-panel" style="height:100%;">
+          <div class="p-icon">🗂️</div>
+          <p>请在左侧选择节点进行编辑，或点击「+ 新建模块」</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 在线录入弹窗 -->
+    <div class="modal-overlay" id="modalEntry" data-no-overlay-close="1">
+      <div class="modal" style="width:720px;">
+        <div class="modal-header">
+          <h3 id="modalEntryTitle">新增知识条目</h3>
+          <span class="modal-close" onclick="closeModal('modalEntry')">✕</span>
+        </div>
+        <div class="modal-body" style="max-height:80vh;overflow-y:auto;">
+
+          <!-- 排序号 + 标签 -->
+          <div class="form-grid" style="margin-bottom:12px;">
+            <div class="form-group">
+              <div class="form-label">排序号</div>
+              <input class="form-control" type="number" placeholder="如：1、2、3...">
+              <div style="font-size:11px;color:#aaa;margin-top:3px;">按序号从小到大展示；不填或重复则按热度排序</div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">标签</div>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;min-height:34px;cursor:pointer;background:#fff;" id="entryTagArea" onclick="toggleTagPicker()">
+                <span id="entryTagPlaceholder" style="font-size:12px;color:#bbb;">点击选择标签...</span>
+                <span style="display:inline-flex;align-items:center;gap:3px;background:#e6fffb;border:1px solid #87e8de;color:#13c2c2;padding:2px 8px;border-radius:10px;font-size:11px;" id="entryTagDefault">开户介绍01 <span style="cursor:pointer;opacity:0.7" onclick="event.stopPropagation();removeEntryTag(this)">✕</span></span>
+                <span style="margin-left:auto;color:#aaa;font-size:11px;">▾</span>
+              </div>
+              <div id="tagPickerDrop" style="display:none;position:absolute;left:0;top:100%;z-index:500;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);width:320px;max-height:260px;overflow-y:auto;padding:8px 0;">
+                <div style="padding:6px 10px;border-bottom:1px solid #f0f0f0;font-size:11px;color:#999;">选择标签类型和标签，可多选</div>
+                <div id="tagPickerTree"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 推荐学习 -->
+          <div style="display:flex;align-items:center;gap:24px;margin-bottom:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:#666;">推荐学习：</span>
+              <input type="checkbox" id="cbRecommend" style="accent-color:#00b389;" onchange="toggleRecommend(this)">
+              <label for="cbRecommend" style="font-size:12px;cursor:pointer;">是</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;display:none;" id="recommendOrderWrap">
+              <span style="font-size:12px;color:#666;">推荐学习排序：</span>
+              <input class="form-control" type="number" id="recommendOrder" style="width:80px;" placeholder="请输入">
+            </div>
+          </div>
+
+          <!-- 立即通知 -->
+          <div style="background:#f9f9f9;border:1px solid #f0f0f0;border-radius:4px;padding:10px 12px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="cbNotify" style="accent-color:#00b389;" onchange="toggleNotify(this)"> 立即通知</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;display:none;" id="cbBootWrap"><input type="checkbox" id="cbBoot" style="accent-color:#00b389;" onchange="toggleBoot(this)"> 开机通知</label>
+              <div style="display:flex;align-items:center;gap:5px;display:none;" id="learnTimeWrap"><span style="font-size:12px;color:#666;">设置学习时间</span><input class="form-control" type="number" style="width:64px;" value="30"><span style="font-size:12px;color:#666;">秒</span></div>
+            </div>
+            <div style="margin-top:10px;display:none;" id="personnelWrap">
+              <div style="font-size:12px;color:#666;margin-bottom:4px;">* 人员：</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <select class="form-control" style="width:140px;" onchange="updatePersonnel(this)">
+                  <option value="">请选择部门或人员</option>
+                  <option value="all">全体客服</option>
+                  <option value="dept-cs">客服事业部</option>
+                  <option value="dept-ops">运营部</option>
+                  <option value="person-qin">覃国权</option>
+                  <option value="person-lucy">Lucy</option>
+                  <option value="person-tom">Tom</option>
+                </select>
+                <div id="personnelTags" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 三语说明 + 语言tab -->
+          <div style="background:#e6f7ff;border:1px solid #91d5ff;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#1890ff;">
+            📌 <strong>语种规则：</strong>繁体中文为必填。简体中文和英文若有填写，客服在ARK勾选对应语种时会自动显示；附件在所有已填写语种下均可查看。
+          </div>
+          <div style="border-bottom:1px solid #f0f0f0;display:flex;margin-bottom:12px;">
+            <div id="etab-tc" onclick="switchEntryLang('tc')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid #00b389;color:#00b389;font-weight:600;">繁体中文 <span style="color:#ff4d4f;">*</span></div>
+            <div id="etab-sc" onclick="switchEntryLang('sc')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#888;">简体中文（选填）</div>
+            <div id="etab-en" onclick="switchEntryLang('en')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#888;">English（选填）</div>
+          </div>
+
+          <!-- 繁体 -->
+          <div id="entry-lang-tc">
+            <div class="form-group" style="margin-bottom:10px;">
+              <div class="form-label">相关问题（繁体）<span class="req">*</span></div>
+              <input class="form-control" id="entryQTc" placeholder="请输入问题标题（繁体中文）">
+            </div>
+            <div class="form-group" style="margin-bottom:4px;">
+              <div class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>解释事项（繁体）<span class="req">*</span></span>
+                <button type="button" class="btn btn-default btn-sm" onclick="toggleRtFullscreen()" style="font-size:10px;padding:1px 7px;">⛶ 全屏</button>
+              </div>
+              <div id="rtWrap" style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
+                <div id="rtOutline" style="display:none;width:140px;border-right:1px solid #f0f0f0;padding:8px;font-size:11px;color:#666;overflow-y:auto;background:#fafafa;float:left;height:220px;">
+                  <div style="font-weight:600;margin-bottom:6px;color:#999;">文档大纲</div>
+                  <div id="rtOutlineList"></div>
+                </div>
+                <div style="overflow:hidden;">
+                  <div id="rtToolbar" style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
+                    <button type="button" class="rt-btn" onclick="rtCmd('bold')"><b>B</b></button>
+                    <button type="button" class="rt-btn" onclick="rtCmd('italic')"><i>I</i></button>
+                    <button type="button" class="rt-btn" onclick="rtCmd('underline')"><u>U</u></button>
+                    <button type="button" class="rt-btn" onclick="rtCmd('strikeThrough')"><s>S</s></button>
+                    <span style="width:1px;background:#e0e0e0;margin:2px 3px;"></span>
+                    <select class="rt-select" onchange="rtCmd('fontSize',this.value);this.value=''"><option value="">字号</option><option value="1">小</option><option value="3">中</option><option value="5">大</option><option value="7">特大</option></select>
+                    <select class="rt-select" onchange="rtFormatBlock(this.value);this.value=''"><option value="">段落</option><option value="h1">标题1</option><option value="h2">标题2</option><option value="h3">标题3</option><option value="p">正文</option><option value="blockquote">引用</option></select>
+                    <span style="width:1px;background:#e0e0e0;margin:2px 3px;"></span>
+                    <button type="button" class="rt-btn" onclick="rtCmd('justifyLeft')">≡L</button>
+                    <button type="button" class="rt-btn" onclick="rtCmd('justifyCenter')">≡C</button>
+                    <button type="button" class="rt-btn" onclick="rtCmd('justifyRight')">≡R</button>
+                    <span style="width:1px;background:#e0e0e0;margin:2px 3px;"></span>
+                    <button type="button" class="rt-btn" onclick="rtCmd('insertUnorderedList')">• 列</button>
+                    <button type="button" class="rt-btn" onclick="rtCmd('insertOrderedList')">1. 列</button>
+                    <button type="button" class="rt-btn" onclick="rtCmd('outdent')">◀</button>
+                    <button type="button" class="rt-btn" onclick="rtCmd('indent')">▶</button>
+                    <span style="width:1px;background:#e0e0e0;margin:2px 3px;"></span>
+                    <button type="button" class="rt-btn" onclick="rtInsertImage()">🖼</button>
+                    <button type="button" class="rt-btn" onclick="rtInsertTable()">⊞</button>
+                    <input type="color" id="rtColorPicker" style="display:none;" onchange="rtCmd('foreColor',this.value)">
+                    <button type="button" class="rt-btn" onclick="document.getElementById('rtColorPicker').click()">A</button>
+                    <button type="button" class="rt-btn" onclick="toggleRtOutline()" style="margin-left:4px;">目录</button>
+                  </div>
+                  <div id="rtEditor" contenteditable="true" style="min-height:180px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;overflow-y:auto;background:#fff;" onpaste="rtHandlePaste(event)" oninput="rtUpdateOutline()"></div>
+                </div>
+              </div>
+              <div style="font-size:11px;color:#aaa;margin-top:3px;">支持 Ctrl+B 加粗、Ctrl+I 斜体、Ctrl+V 粘贴图片；点击「目录」可显示大纲导航</div>
+            </div>
+            <!-- 附件（繁体下方） -->
+            <div class="form-group" style="margin-bottom:10px;">
+              <div class="form-label">上传附件</div>
+              <div style="border:1px dashed #d9d9d9;border-radius:4px;padding:8px 12px;background:#fafafa;">
+                <div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-default btn-sm" onclick="simulateUpload()">+ 选择文件</button><span style="font-size:11px;color:#aaa;">doc/docx/pdf/xls/xlsx/ppt/jpg/png，≤50MB；各语种均可查看</span></div>
+                <div id="attachList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 简体 -->
+          <div id="entry-lang-sc" style="display:none;">
+            <div class="form-group" style="margin-bottom:10px;">
+              <div class="form-label">相关问题（简体）</div>
+              <input class="form-control" placeholder="请输入问题标题（简体中文）">
+            </div>
+            <div class="form-group">
+              <div class="form-label">解释事项（简体）</div>
+              <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
+                <div style="padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:11px;color:#aaa;">富文本工具栏（同繁体）</div>
+                <div contenteditable="true" style="min-height:160px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 英文 -->
+          <div id="entry-lang-en" style="display:none;">
+            <div class="form-group" style="margin-bottom:10px;">
+              <div class="form-label">Question (English)</div>
+              <input class="form-control" placeholder="Enter question title in English">
+            </div>
+            <div class="form-group">
+              <div class="form-label">Answer (English)</div>
+              <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
+                <div style="padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:11px;color:#aaa;">Rich text editor (same as Chinese)</div>
+                <div contenteditable="true" style="min-height:160px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 更新描述（修改时显示） -->
+          <div id="updateDescWrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0;">
+            <div class="form-group">
+              <div class="form-label">更新描述 <span class="req">*</span></div>
+              <input class="form-control" id="updateDesc" placeholder="请填写本次更新的内容说明（必填）">
+              <div style="font-size:11px;color:#aaa;margin-top:3px;">此信息将显示在ARK知识条目的更新日志中</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalEntry')">取消</button>
+          <button class="btn btn-default" id="entryContinueBtn" onclick="showToast('已保存，可继续录入下一条')">继续新增</button>
+          <button class="btn btn-primary" onclick="saveEntryModal()">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 标签管理面板 -->
+    <div class="panel" id="panel-label">
+      <div class="page-header">
+        <div class="page-title">标签管理</div>
+        <div style="position:relative;">
+          <input class="table-search" id="labelSearchInput" placeholder="全局搜索标签名称" oninput="labelSearch(this.value)" style="width:220px;padding-left:26px;">
+          <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#aaa;font-size:12px;">🔍</span>
+        </div>
+      </div>
+      <!-- 全局搜索结果 -->
+      <div id="labelSearchResult" style="display:none;flex:1;overflow-y:auto;padding:14px 16px;">
+        <div style="font-size:12px;color:#888;margin-bottom:8px;">全局搜索结果：</div>
+        <div class="table-wrap"><table><thead><tr><th>标签名称</th><th>所属类型</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="labelSearchBody"></tbody></table></div>
+      </div>
+      <!-- 树状列表 -->
+      <div id="labelTreeView" style="flex:1;overflow-y:auto;background:#fff;"></div>
+    </div>
+
+    <!-- 新建/编辑标签类型弹窗（简化：只改名称） -->
+    <div class="modal-overlay" id="modalLabelTypeEdit">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h3 id="labelTypeEditTitle">编辑标签类型</h3>
+          <span class="modal-close" onclick="closeModal('modalLabelTypeEdit')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <div class="form-label">类型名称 <span class="req">*</span></div>
+            <input class="form-control" id="lte-name" placeholder="请输入标签类型名称">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalLabelTypeEdit')">取消</button>
+          <button class="btn btn-primary" onclick="labelSaveType()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建/编辑标签弹窗 -->
+    <div class="modal-overlay" id="modalLabelEdit">
+      <div class="modal modal-md">
+        <div class="modal-header">
+          <h3 id="labelEditTitle">新建标签</h3>
+          <span class="modal-close" onclick="closeModal('modalLabelEdit')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <div class="form-label">标签类型</div>
+              <input class="form-control" id="leName" readonly id="leType">
+            </div>
+            <div class="form-group">
+              <div class="form-label">标签名称 <span class="req">*</span></div>
+              <input class="form-control" id="leTagName" placeholder="请输入标签名称">
+            </div>
+            <div class="form-group">
+              <div class="form-label">状态</div>
+              <select class="form-control" id="leStatus"><option>启用</option><option>停用</option></select>
+            </div>
+            <div class="form-group">
+              <div class="form-label">等级</div>
+              <input class="form-control" id="leLevel" placeholder="选填">
+            </div>
+            <div class="form-group">
+              <div class="form-label">产品ID</div>
+              <input class="form-control" id="leProdId" placeholder="选填">
+            </div>
+            <div class="form-group">
+              <div class="form-label">直营产品编号</div>
+              <input class="form-control" id="leDirectNo" placeholder="选填">
+            </div>
+            <div class="form-group span2">
+              <div class="form-label">产品介绍链接</div>
+              <input class="form-control" id="leLink" placeholder="https://...（选填）">
+            </div>
+            <div class="form-group span2">
+              <div class="form-label">描述</div>
+              <textarea class="form-control" id="leDesc" placeholder="选填"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalLabelEdit')">取消</button>
+          <button class="btn btn-primary" onclick="labelSaveTag()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 每日Briefing管理 ══ -->
+    <div class="panel" id="panel-briefing">
+
+      <!-- 列表视图 -->
+      <div id="briefing-list-view" style="position:absolute;inset:0;overflow:hidden;">
+        <div class="page-header" id="bf-list-h1">
+          <div class="page-title">每日Briefing管理</div>
+          <div class="page-actions"><button class="btn btn-primary" onclick="openModal('modalBriefingNew')">+ 新建Briefing</button></div>
+        </div>
+        <div id="bf-list-h2" style="padding:10px 16px;background:#fff;border-bottom:1px solid #e8e8e8;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:12px;color:#666;">日期：</span>
+          <input type="date" class="form-control" style="width:140px;" value="2026-07-01">
+          <span style="font-size:12px;color:#666;">～</span>
+          <input type="date" class="form-control" style="width:140px;" value="2026-07-03">
+          <span style="font-size:12px;color:#666;margin-left:12px;">状态：</span>
+          <select class="form-control" style="width:140px;"><option>全部</option><option>AI生成题目中</option><option>AI处理完成</option><option>已发布</option></select>
+          <button class="btn btn-primary btn-sm" onclick="showToast('查询完成')">查询</button>
+          <button class="btn btn-default btn-sm" onclick="showToast('已重置')">重置</button>
+        </div>
+        <div style="position:absolute;top:101px;left:0;right:0;bottom:0;overflow-y:auto;padding:14px 16px;">
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th>日期</th><th>标题</th><th>时长</th><th>创建人</th><th>状态</th>
+              <th>观看完成率</th><th>小测通过率</th><th>操作</th>
+            </tr></thead><tbody id="briefingTableBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 详情/编辑视图 -->
+      <div id="briefing-detail-view" style="display:none;position:absolute;inset:0;overflow:hidden;">
+        <div class="page-header" id="bf-detail-h1">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:#00b389;cursor:pointer;font-size:12px;" onclick="briefingBack()">◀ 返回列表</span>
+            <span style="color:#ddd;">|</span>
+            <div class="page-title" id="briefingDetailTitle"></div>
+            <span id="briefingPublishBtnWrap"></span>
+          </div>
+        </div>
+        <div id="bf-detail-h2" style="background:#fff;border-bottom:1px solid #e8e8e8;display:flex;">
+          <div id="bdtab-info"   onclick="switchBdTab('info')"  style="padding:10px 20px;cursor:pointer;font-size:12px;border-bottom:2px solid #00b389;color:#00b389;font-weight:600;">📋 基本信息</div>
+          <div id="bdtab-supplement" onclick="switchBdTab('supplement')" style="padding:10px 20px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#888;">📄 Briefing补充</div>
+          <div id="bdtab-quiz"   onclick="switchBdTab('quiz')"  style="padding:10px 20px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#888;">📝 小测题</div>
+        </div>
+        <!-- page-header≈53px + tab行≈41px = top:94px -->
+        <div style="position:absolute;top:94px;left:0;right:0;bottom:0;overflow-y:auto;" id="briefingDetailBody"></div>
+      </div>
+    </div>
+
+    <!-- 新建/编辑Briefing弹窗 -->
+    <div class="modal-overlay" id="modalBriefingNew">
+      <div class="modal" style="width:600px;">
+        <div class="modal-header">
+          <h3 id="briefingModalTitle">新建Briefing</h3>
+          <span class="modal-close" onclick="closeModal('modalBriefingNew')">✕</span>
+        </div>
+        <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+          <div class="form-grid col1" style="gap:14px;">
+            <div class="form-group">
+              <div class="form-label">日期 <span class="req">*</span></div>
+              <input class="form-control" type="date" id="bnDate" value="2026-07-03">
+            </div>
+            <div class="form-group">
+              <div class="form-label">标题 <span class="req">*</span></div>
+              <input class="form-control" id="bnTitle" placeholder="如：2026-07-03 开户业务更新说明">
+            </div>
+            <div class="form-group">
+              <div class="form-label">上传视频</div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <button class="btn btn-default btn-sm" onclick="simulateBriefingUpload()">选择文件</button>
+                <span id="bnFileName" style="font-size:12px;color:#aaa;">支持 mp4 / mov，建议≤500MB</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Briefing补充</div>
+              <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
+                <div style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
+                  <button type="button" class="rt-btn" onclick="bnRtCmd('bold')"><b>B</b></button>
+                  <button type="button" class="rt-btn" onclick="bnRtCmd('italic')"><i>I</i></button>
+                  <button type="button" class="rt-btn" onclick="bnRtCmd('underline')"><u>U</u></button>
+                  <span style="width:1px;background:#e0e0e0;margin:2px 3px;"></span>
+                  <select class="rt-select" onchange="bnRtCmd('formatBlock',this.value);this.value=''"><option value="">段落</option><option value="h2">标题</option><option value="p">正文</option></select>
+                  <button type="button" class="rt-btn" onclick="bnRtCmd('insertUnorderedList')">• 列</button>
+                  <button type="button" class="rt-btn" onclick="bnRtCmd('insertOrderedList')">1. 列</button>
+                  <span style="width:1px;background:#e0e0e0;margin:2px 3px;"></span>
+                  <button type="button" class="rt-btn" onclick="bnRtInsertImage()">🖼</button>
+                </div>
+                <div id="bnSupplementEditor" contenteditable="true" style="min-height:100px;padding:8px 10px;font-size:12px;line-height:1.8;outline:none;background:#fff;" onpaste="handleBnPaste(event)"></div>
+              </div>
+              <div style="font-size:11px;color:#aaa;margin-top:3px;">支持 Ctrl+V 粘贴文字及图片（如飞书会议智能总结）</div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">上传附件</div>
+              <div style="border:1px dashed #d9d9d9;border-radius:4px;padding:10px 14px;background:#fafafa;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <button class="btn btn-default btn-sm" onclick="simulateBnAttach()">+ 选择文件</button>
+                  <span style="font-size:11px;color:#aaa;">支持 doc/docx/pdf/xls/xlsx/ppt/jpg/png 等，单文件≤50MB</span>
+                </div>
+                <div id="bnAttachList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalBriefingNew')">取消</button>
+          <button class="btn btn-primary" onclick="briefingCreate()">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 观看完成率详情弹窗 -->
+    <div class="modal-overlay" id="modalWatchDetail">
+      <div class="modal modal-md">
+        <div class="modal-header">
+          <h3>观看完成率详情</h3>
+          <span class="modal-close" onclick="closeModal('modalWatchDetail')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex;gap:16px;margin-bottom:14px;">
+            <div style="flex:1;background:#f0faf7;border-radius:6px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:#00b389;" id="watchRatePct">72%</div>
+              <div style="font-size:11px;color:#888;margin-top:2px;">整体完成率</div>
+            </div>
+            <div style="flex:1;background:#f0f7ff;border-radius:6px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:#1890ff;" id="watchDone">35/48</div>
+              <div style="font-size:11px;color:#888;margin-top:2px;">已完成/总人数</div>
+            </div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="background:#fafafa;"><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #f0f0f0;">姓名</th><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #f0f0f0;">部门</th><th style="padding:8px 10px;border-bottom:1px solid #f0f0f0;">观看进度</th><th style="padding:8px 10px;border-bottom:1px solid #f0f0f0;">状态</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:7px 10px;">覃国权</td><td style="padding:7px 10px;">客服部</td><td style="padding:7px 10px;"><div style="width:80px;height:6px;background:#f0f0f0;border-radius:3px;display:inline-block;"><div style="width:100%;height:100%;background:#00b389;border-radius:3px;"></div></div> 100%</td><td style="padding:7px 10px;"><span class="badge badge-green">已完成</span></td></tr>
+              <tr><td style="padding:7px 10px;">Lucy</td><td style="padding:7px 10px;">客服部</td><td style="padding:7px 10px;"><div style="width:80px;height:6px;background:#f0f0f0;border-radius:3px;display:inline-block;"><div style="width:85%;height:100%;background:#00b389;border-radius:3px;"></div></div> 85%</td><td style="padding:7px 10px;"><span class="badge badge-green">已完成</span></td></tr>
+              <tr><td style="padding:7px 10px;">Tom</td><td style="padding:7px 10px;">运营部</td><td style="padding:7px 10px;"><div style="width:80px;height:6px;background:#f0f0f0;border-radius:3px;display:inline-block;"><div style="width:45%;height:100%;background:#fa8c16;border-radius:3px;"></div></div> 45%</td><td style="padding:7px 10px;"><span class="badge badge-orange">进行中</span></td></tr>
+              <tr><td style="padding:7px 10px;">Sam</td><td style="padding:7px 10px;">运营部</td><td style="padding:7px 10px;"><div style="width:80px;height:6px;background:#f0f0f0;border-radius:3px;display:inline-block;"><div style="width:0%;height:100%;background:#ff4d4f;border-radius:3px;"></div></div> 0%</td><td style="padding:7px 10px;"><span class="badge badge-red">未开始</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer"><button class="btn btn-default" onclick="closeModal('modalWatchDetail')">关闭</button></div>
+      </div>
+    </div>
+
+    <!-- 小测通过率详情弹窗 -->
+    <div class="modal-overlay" id="modalPassDetail">
+      <div class="modal modal-md">
+        <div class="modal-header">
+          <h3>小测通过率详情</h3>
+          <span class="modal-close" onclick="closeModal('modalPassDetail')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex;gap:16px;margin-bottom:14px;">
+            <div style="flex:1;background:#f0faf7;border-radius:6px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:#52c41a;" id="passRatePct">68%</div>
+              <div style="font-size:11px;color:#888;margin-top:2px;">整体通过率</div>
+            </div>
+            <div style="flex:1;background:#fff7e6;border-radius:6px;padding:12px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:#fa8c16;" id="passAvg">78.3</div>
+              <div style="font-size:11px;color:#888;margin-top:2px;">平均分</div>
+            </div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="background:#fafafa;"><th style="padding:8px 10px;text-align:left;border-bottom:1px solid #f0f0f0;">姓名</th><th style="padding:8px 10px;border-bottom:1px solid #f0f0f0;">得分</th><th style="padding:8px 10px;border-bottom:1px solid #f0f0f0;">状态</th><th style="padding:8px 10px;border-bottom:1px solid #f0f0f0;">提交时间</th></tr></thead>
+            <tbody>
+              <tr><td style="padding:7px 10px;">覃国权</td><td style="padding:7px 10px;font-weight:700;color:#52c41a;">92</td><td style="padding:7px 10px;"><span class="badge badge-green">通过</span></td><td style="padding:7px 10px;color:#aaa;">10:15</td></tr>
+              <tr><td style="padding:7px 10px;">Ines</td><td style="padding:7px 10px;font-weight:700;color:#52c41a;">100</td><td style="padding:7px 10px;"><span class="badge badge-green">通过</span></td><td style="padding:7px 10px;color:#aaa;">09:58</td></tr>
+              <tr><td style="padding:7px 10px;">Amy</td><td style="padding:7px 10px;font-weight:700;color:#ff4d4f;">55</td><td style="padding:7px 10px;"><span class="badge badge-red">未通过</span></td><td style="padding:7px 10px;color:#aaa;">14:22</td></tr>
+              <tr><td style="padding:7px 10px;">Sam</td><td style="padding:7px 10px;color:#ccc;">—</td><td style="padding:7px 10px;"><span class="badge badge-gray">未作答</span></td><td style="padding:7px 10px;color:#aaa;">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer"><button class="btn btn-default" onclick="closeModal('modalPassDetail')">关闭</button></div>
+      </div>
+    </div>
+
+    <!-- 小测发布设置弹窗 -->
+    <div class="modal-overlay" id="modalQuizPublish">
+      <div class="modal modal-md">
+        <div class="modal-header">
+          <h3>小测发布设置</h3>
+          <span class="modal-close" onclick="closeModal('modalQuizPublish')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid col1" style="gap:14px;">
+            <div class="form-group">
+              <div class="form-label">及格标准</div>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <select class="form-control" style="width:130px;" id="passType" onchange="updatePassInput()">
+                  <option value="score">分数</option>
+                  <option value="rate">正确率</option>
+                  <option value="count">答对数量</option>
+                </select>
+                <input class="form-control" style="width:80px;" id="passValue" value="60" type="number">
+                <span id="passUnit" style="font-size:12px;color:#666;">分</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">解锁前提</div>
+              <select class="form-control" id="unlockCond">
+                <option value="video">看完视频后解锁</option>
+                <option value="free">无限制，随时可作答</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="form-label">可重做次数</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <input class="form-control" style="width:80px;" id="retryCount" placeholder="不限" type="number">
+                <span style="font-size:12px;color:#888;">次（不填则不限次数）</span>
+              </div>
+            </div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group">
+                <div class="form-label">开始时间</div>
+                <input class="form-control" type="datetime-local" id="quizStart" value="2026-07-03T09:00">
+              </div>
+              <div class="form-group">
+                <div class="form-label">截止时间</div>
+                <input class="form-control" type="datetime-local" id="quizEnd" value="2026-07-04T23:59">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalQuizPublish')">取消</button>
+          <button class="btn btn-primary" onclick="closeModal('modalQuizPublish');showToast('小测发布规则已确认')">确认小测发布规则</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 题库管理 ══ -->
+    <div class="panel" id="panel-quiz-bank">
+      <div class="page-header">
+        <div class="page-title">题库管理</div>
+        <div class="page-actions">
+          <button class="btn btn-default" onclick="showToast('题库模板已下载')">📥 题库模板</button>
+          <button class="btn btn-default" onclick="showToast('请选择Excel文件上传')">📤 上传题库</button>
+          <button class="btn btn-default" id="btnCreatePaperFromBank" disabled onclick="openCreatePaperFromBank()">从选中题目创建试卷</button>
+          <button class="btn btn-primary" onclick="openModal('modalQuizQuestion')">+ 新建题目</button>
+        </div>
+      </div>
+      <div style="background:#fff;border-bottom:1px solid #e8e8e8;padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:12px;color:#666;">题型：</span>
+        <select class="form-control" style="width:90px;"><option>全部</option><option>单选</option><option>多选</option></select>
+        <span style="font-size:12px;color:#666;">来源：</span>
+        <select class="form-control" style="width:110px;"><option>全部</option><option>关联Briefing</option><option>手动录入</option><option>手动上传</option></select>
+        <span style="font-size:12px;color:#666;">标签：</span>
+        <select class="form-control" style="width:110px;"><option>全部</option><option>开户介绍</option><option>转账业务</option><option>账户安全</option></select>
+        <button class="btn btn-primary btn-sm" onclick="showToast('查询完成')">查询</button>
+        <button class="btn btn-default btn-sm" onclick="showToast('已重置')">重置</button>
+      </div>
+      <div style="position:absolute;top:101px;left:0;right:0;bottom:0;overflow-y:auto;padding:14px 16px;">
+        <div class="table-wrap">
+          <table id="quizBankTable">
+            <thead><tr>
+              <th style="width:36px;"><input type="checkbox" style="accent-color:#00b389;" onchange="bankSelectAll(this)"></th>
+              <th>序号</th><th>题型</th><th>题干</th><th>标签</th>
+              <th>来源（关联Briefing）</th><th>创建时间</th><th>更新时间</th><th>操作</th>
+            </tr></thead>
+            <tbody id="quizBankBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建/编辑题目弹窗 -->
+    <div class="modal-overlay" id="modalQuizQuestion">
+      <div class="modal modal-lg">
+        <div class="modal-header">
+          <h3 id="qqTitle">新建题目</h3>
+          <span class="modal-close" onclick="closeModal('modalQuizQuestion')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid" style="margin-bottom:12px;">
+            <div class="form-group span2">
+              <div class="form-label">题型 <span class="req">*</span></div>
+              <div style="display:flex;gap:16px;padding-top:6px;">
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="qqType" value="单选" checked style="accent-color:#00b389;"> 单选</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="qqType" value="多选" style="accent-color:#00b389;"> 多选</label>
+              </div>
+            </div>
+            <div class="form-group span2">
+              <div class="form-label">题干 <span class="req">*</span></div>
+              <textarea class="form-control" id="qqStem" style="height:80px;" placeholder="请输入题目内容"></textarea>
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div class="form-label" style="margin-bottom:6px;">选项（勾选正确答案）<span class="req">*</span></div>
+            <div class="form-grid" style="gap:8px;">
+              <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;">
+                <input type="checkbox" style="accent-color:#00b389;flex-shrink:0;" id="qqAnsA"><span style="font-size:12px;color:#666;white-space:nowrap;width:18px;">A.</span><input class="form-control" id="qqOptA" placeholder="选项A内容">
+              </div>
+              <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;">
+                <input type="checkbox" style="accent-color:#00b389;flex-shrink:0;" id="qqAnsB"><span style="font-size:12px;color:#666;white-space:nowrap;width:18px;">B.</span><input class="form-control" id="qqOptB" placeholder="选项B内容">
+              </div>
+              <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;">
+                <input type="checkbox" style="accent-color:#00b389;flex-shrink:0;" id="qqAnsC"><span style="font-size:12px;color:#666;white-space:nowrap;width:18px;">C.</span><input class="form-control" id="qqOptC" placeholder="选项C内容">
+              </div>
+              <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;">
+                <input type="checkbox" style="accent-color:#00b389;flex-shrink:0;" id="qqAnsD"><span style="font-size:12px;color:#666;white-space:nowrap;width:18px;">D.</span><input class="form-control" id="qqOptD" placeholder="选项D内容">
+              </div>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group span2">
+              <div class="form-label">解析（选填）</div>
+              <textarea class="form-control" style="height:60px;" placeholder="答题后展示给学员的解析说明"></textarea>
+            </div>
+            <div class="form-group span2">
+              <div class="form-label">标签（从标签管理中选择）</div>
+              <select class="form-control" id="qqTagSelect" multiple style="height:80px;">
+                <option value="开户介绍">开户介绍</option>
+                <option value="综合转账相关">综合转账相关</option>
+                <option value="账户安全">账户安全</option>
+                <option value="个人银行">个人银行</option>
+                <option value="基金查询">基金查询</option>
+              </select>
+              <div style="font-size:11px;color:#aaa;margin-top:3px;">按住 Ctrl 可多选</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalQuizQuestion')">取消</button>
+          <button class="btn btn-primary" onclick="saveQuizQuestion()">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 从题库创建试卷弹窗 -->
+    <div class="modal-overlay" id="modalCreatePaperFromBank">
+      <div class="modal modal-md">
+        <div class="modal-header">
+          <h3>创建试卷</h3>
+          <span class="modal-close" onclick="closeModal('modalCreatePaperFromBank')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div style="background:#f0faf7;border:1px solid #b7e8d8;border-radius:4px;padding:8px 12px;margin-bottom:14px;font-size:12px;color:#00956d;">
+            已选 <strong id="selectedBankCount">0</strong> 道题目
+          </div>
+          <div class="form-grid col1" style="gap:12px;">
+            <div class="form-group">
+              <div class="form-label">试卷名称 <span class="req">*</span></div>
+              <input class="form-control" id="cpName" placeholder="如：2026年7月月测">
+            </div>
+            <div class="form-group">
+              <div class="form-label">试卷类型</div>
+              <select class="form-control" id="cpType"><option>月测</option><option>专项测验</option><option>Briefing小测</option></select>
+            </div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group">
+                <div class="form-label">及格标准</div>
+                <select class="form-control" id="cpPassType" onchange="updateCpPassUnit()">
+                  <option value="score">分数</option>
+                  <option value="rate">正确率（%）</option>
+                  <option value="count">答对题数</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <div class="form-label">及格值 <span id="cpPassUnitLabel">（分）</span></div>
+                <input class="form-control" type="number" id="cpPassVal" value="60">
+              </div>
+            </div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group">
+                <div class="form-label">可重做次数</div>
+                <input class="form-control" type="number" placeholder="不填则不限">
+              </div>
+              <div class="form-group">
+                <div class="form-label">作答时限（分钟）</div>
+                <input class="form-control" type="number" placeholder="不填则不限">
+              </div>
+            </div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group">
+                <div class="form-label">开始时间</div>
+                <input class="form-control" type="datetime-local" id="cpStart">
+              </div>
+              <div class="form-group">
+                <div class="form-label">截止时间</div>
+                <input class="form-control" type="datetime-local" id="cpEnd">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalCreatePaperFromBank')">取消</button>
+          <button class="btn btn-primary" onclick="closeModal('modalCreatePaperFromBank');showToast('试卷创建成功');showPanel('quiz-paper')">创建</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 试卷管理 ══ -->
+    <div class="panel" id="panel-quiz-paper">
+      <!-- 列表视图 -->
+      <div id="paperListView" style="position:absolute;inset:0;overflow:hidden;">
+        <div class="page-header">
+          <div class="page-title">试卷管理</div>
+          <div class="page-actions">
+            <button class="btn btn-default" onclick="showToast('试卷模板已下载')">📥 试卷模板</button>
+            <button class="btn btn-default" onclick="showToast('请选择Excel文件上传')">📤 一键上传试卷</button>
+          </div>
+        </div>
+        <div style="position:absolute;top:53px;left:0;right:0;bottom:0;overflow-y:auto;padding:14px 16px;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>试卷名称</th><th>类型</th><th>题数</th><th>满分</th><th>及格线</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+              <tbody id="quizPaperBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- 试卷详情视图 -->
+      <div id="paperDetailView" style="display:none;position:absolute;inset:0;overflow:hidden;">
+        <div class="page-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:#00b389;cursor:pointer;font-size:12px;" onclick="closePaperDetail()">◀ 返回列表</span>
+            <span style="color:#ddd;">|</span>
+            <div class="page-title" id="paperDetailTitle">试卷详情</div>
+          </div>
+          <div class="page-actions"><button class="btn btn-primary" onclick="showToast('保存成功')">保存</button></div>
+        </div>
+        <div style="position:absolute;top:53px;left:0;right:0;bottom:0;overflow-y:auto;padding:16px 20px;" id="paperDetailBody"></div>
+      </div>
+    </div>
+
+    <!-- ══ 派发管理 ══ -->
+    <div class="panel" id="panel-quiz-dispatch">
+      <div class="page-header">
+        <div class="page-title">派发管理</div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openModal('modalQuizDispatch')">+ 新建派发</button>
+        </div>
+      </div>
+      <div style="position:absolute;top:53px;left:0;right:0;bottom:0;overflow-y:auto;padding:14px 16px;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>试卷名称</th><th>派发对象</th><th>开始时间</th><th>截止时间</th><th>进度</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="quizDispatchBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建派发弹窗 -->
+    <div class="modal-overlay" id="modalQuizDispatch">
+      <div class="modal modal-md">
+        <div class="modal-header">
+          <h3>新建派发</h3>
+          <span class="modal-close" onclick="closeModal('modalQuizDispatch')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid col1" style="gap:12px;">
+            <div class="form-group">
+              <div class="form-label">选择试卷 <span class="req">*</span></div>
+              <select class="form-control">
+                <option>请选择</option>
+                <option>2026-07-02 Briefing小测</option>
+                <option>2026年7月月测</option>
+                <option>开户业务专项考核</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="form-label">派发对象 <span class="req">*</span></div>
+              <select class="form-control" id="dispatchTarget" onchange="toggleDispatchPerson(this)">
+                <option value="all">全员</option>
+                <option value="dept-cs">银行客服CS事业部</option>
+                <option value="dept-ops">运营部</option>
+                <option value="custom">指定人员</option>
+              </select>
+            </div>
+            <div id="dispatchPersonWrap" style="display:none;">
+              <div class="form-label" style="margin-bottom:4px;">指定人员</div>
+              <select class="form-control" onchange="addDispatchPerson(this)">
+                <option value="">搜索并选择人员...</option>
+                <option>覃国权</option><option>Lucy</option><option>Tom</option><option>Ines</option><option>Sam</option>
+              </select>
+              <div id="dispatchPersonTags" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;"></div>
+            </div>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-group">
+                <div class="form-label">开始时间 <span class="req">*</span></div>
+                <input class="form-control" type="datetime-local" value="2026-07-03T09:00">
+              </div>
+              <div class="form-group">
+                <div class="form-label">截止时间</div>
+                <input class="form-control" type="datetime-local" value="2026-07-04T23:59">
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">提醒通知</div>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" checked style="accent-color:#00b389;"> 截止前24小时对未完成人员自动再次提醒</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalQuizDispatch')">取消</button>
+          <button class="btn btn-primary" onclick="closeModal('modalQuizDispatch');showToast('派发成功，已通知相关人员')">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 成绩看板 ══ -->
+    <div class="panel" id="panel-quiz-score">
+      <!-- 汇总视图 -->
+      <div id="scoreListView" style="position:absolute;inset:0;overflow:hidden;">
+        <div class="page-header">
+          <div class="page-title">成绩看板</div>
+          <div class="page-actions">
+            <select class="form-control" style="width:220px;font-size:12px;" onchange="showToast('已切换试卷')">
+              <option>2026-07-02 Briefing小测</option>
+              <option>2026年7月月测</option>
+              <option>开户业务专项考核</option>
+            </select>
+          </div>
+        </div>
+        <div style="position:absolute;top:53px;left:0;right:0;bottom:0;overflow-y:auto;padding:14px 16px;" id="quizScoreBody"></div>
+      </div>
+      <!-- 个人答题详情视图 -->
+      <div id="scorePersonView" style="display:none;position:absolute;inset:0;overflow:hidden;">
+        <div class="page-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:#00b389;cursor:pointer;font-size:12px;" onclick="closePersonScore()">◀ 返回看板</span>
+            <span style="color:#ddd;">|</span>
+            <div class="page-title" id="personScoreTitle">覃国权 — 答题详情</div>
+          </div>
+        </div>
+        <div style="position:absolute;top:53px;left:0;right:0;bottom:0;overflow-y:auto;padding:16px 20px;" id="personScoreBody"></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+<!-- 批量标签弹窗 -->
+<div class="modal-overlay" id="modalBatchTag">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h3 id="batchTagTitle">批量加标签</h3>
+      <span class="modal-close" onclick="closeModal('modalBatchTag')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <div class="form-label" id="batchTagLabel">选择要添加的标签</div>
+        <select class="form-control" id="batchTagSelect" multiple style="height:120px;">
+          <option>开户介绍01</option>
+          <option>开户介绍02</option>
+          <option>0911-1</option>
+          <option>综合转账相关</option>
+          <option>账户安全</option>
+        </select>
+        <div style="font-size:11px;color:#aaa;margin-top:3px;">按住 Ctrl 可多选</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modalBatchTag')">取消</button>
+      <button class="btn btn-primary" onclick="executeBatchTag()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ══════════════════════════════════════
+// 目录管理
+// ══════════════════════════════════════
+var catData = [
+  { id:1, pid:0, level:1, name:'银行客服CS事业部', status:'enabled', type:'root' },
+  { id:2, pid:1, level:2, name:'个人银行', status:'enabled', type:'module' },
+  { id:3, pid:2, level:3, name:'开户业务', status:'enabled', type:'category' },
+  { id:4, pid:3, level:4, name:'开户介绍', status:'enabled', type:'item' },
+  { id:5, pid:4, level:5, name:'开户介绍-标准版', status:'enabled', type:'catalog' },
+  { id:6, pid:4, level:5, name:'开户话术助手', status:'enabled', type:'catalog' },
+  { id:7, pid:3, level:4, name:'开户被拒', status:'enabled', type:'item' },
+  { id:8, pid:7, level:5, name:'开户被拒处理', status:'disabled', type:'catalog' },
+  { id:9, pid:2, level:3, name:'转账业务', status:'enabled', type:'category' },
+  { id:10, pid:9, level:4, name:'转账相关', status:'enabled', type:'item' },
+  { id:11, pid:10, level:5, name:'转账操作指引', status:'enabled', type:'catalog' },
+  { id:12, pid:1, level:2, name:'合作业务', status:'disabled', type:'module' },
+  { id:13, pid:12, level:3, name:'合作产品介绍', status:'enabled', type:'category' }
+];
+var catOpen = {1:true, 2:true, 3:true, 4:true, 7:false, 9:false, 10:false, 12:false};
+var catSelected = null;
+var catDragSrc = null;
+
+function catGetChildren(pid) {
+  return catData.filter(function(n){ return n.pid === pid; });
+}
+
+function catIsAncestorDisabled(node) {
+  var cur = node;
+  while (cur.pid !== 0) {
+    var parent = catData.find(function(n){ return n.id === cur.pid; });
+    if (!parent) break;
+    if (parent.status === 'disabled') return true;
+    cur = parent;
+  }
+  return false;
+}
+
+function catRenderTree() {
+  var container = document.getElementById('catTree');
+  container.innerHTML = '';
+  catRenderChildren(container, 0, 0);
+}
+
+var catAddLabels = { module:'新增目录类别', category:'新增目录项目', item:'新增目录配置', catalog:'' };
+var catChildType = { module:'category', category:'item', item:'catalog' };
+
+/* ── 行内编辑状态 ── */
+var catInlineEditing = null; // id of node being inline-edited
+
+function catRenderChildren(container, pid, depth) {
+  var children = catGetChildren(pid);
+  var lineColor = '#d9e8ff';
+  children.forEach(function(node, idx) {
+    var isRoot = node.type === 'root';
+    var isLeaf = node.type === 'catalog';
+    var hasChildren = catGetChildren(node.id).length > 0;
+    var isSelfDisabled = node.status === 'disabled';
+    var isParentDisabled = !isSelfDisabled && catIsAncestorDisabled(node);
+    var isLast = idx === children.length - 1;
+    var indent = depth * 18;
+    var isEditing = catInlineEditing === node.id;
+
+    var statusBadge = '';
+    if (isSelfDisabled) statusBadge = ' <span class="badge badge-red" style="font-size:9px;">停用</span>';
+    else if (isParentDisabled) statusBadge = ' <span class="badge badge-orange" style="font-size:9px;">上级停用</span>';
+
+    var nameStyle = 'font-size:12px;flex:1;';
+    if (isSelfDisabled) nameStyle += 'color:#bbb;text-decoration:line-through;';
+    else if (isParentDisabled) nameStyle += 'color:#bbb;';
+
+    // 树形连接线 SVG
+    var lineHtml = depth > 0 ? '<span style="position:absolute;left:'+(12+(depth-1)*18+9)+'px;top:0;bottom:0;width:1px;background:'+lineColor+';"></span>'
+      + '<span style="position:absolute;left:'+(12+(depth-1)*18+9)+'px;top:50%;width:9px;height:1px;background:'+lineColor+';"></span>' : '';
+
+    // 展开箭头
+    var arrowHtml = '';
+    if (!isLeaf && (hasChildren || catOpen[node.id])) {
+      arrowHtml = '<span class="cat-arrow" style="font-size:9px;color:#aaa;width:12px;flex-shrink:0;transition:transform 0.2s;cursor:pointer;'+(catOpen[node.id]?'transform:rotate(90deg);':'')+'">▶</span>';
+    } else if (isLeaf) {
+      arrowHtml = '<span style="width:12px;flex-shrink:0;color:#00b389;font-size:8px;">●</span>';
+    } else {
+      arrowHtml = '<span style="width:12px;flex-shrink:0;font-size:9px;color:#e0e0e0;">▶</span>';
+    }
+
+    var wrap = document.createElement('div');
+    wrap.style.position = 'relative';
+
+    if (isEditing) {
+      // 行内编辑状态 — 宽度受限时用 min-width:0 确保按钮可见
+      wrap.innerHTML = lineHtml
+        + '<div style="display:flex;align-items:center;padding:4px 4px 4px '+(12+indent)+'px;gap:4px;background:#e6faf5;min-width:0;">'
+        + arrowHtml
+        + '<input id="catInlineInput" class="form-control" style="flex:1;min-width:60px;padding:3px 6px;height:26px;font-size:12px;" value="'+node.name+'" onkeydown="catInlineKeydown(event,'+node.id+')" autofocus>'
+        + '<button class="btn btn-primary btn-sm" style="padding:2px 8px;height:24px;flex-shrink:0;" onclick="catInlineSave('+node.id+')">✓</button>'
+        + '<button class="btn btn-default btn-sm" style="padding:2px 8px;height:24px;flex-shrink:0;" onclick="catInlineCancel()">✕</button>'
+        + '</div>';
+    } else {
+      var rowId = 'catrow-' + node.id;
+      wrap.innerHTML = lineHtml
+        + '<div id="'+rowId+'" class="cat-node'+(catSelected===node.id?' cat-selected':'')+'" data-id="'+node.id+'" draggable="'+(isRoot?'false':'true')+'" style="display:flex;align-items:center;padding:6px 8px 6px '+(12+indent)+'px;cursor:'+(isRoot?'default':'pointer')+';border-left:3px solid transparent;transition:background 0.1s;position:relative;"'
+        + (isRoot ? '' : ' onclick="catSelectNode('+node.id+')" ondragstart="catDragStart(event,'+node.id+')" ondragover="catDragOver(event,'+node.id+')" ondrop="catDrop(event,'+node.id+')" ondragleave="catDragLeave(event)"')
+        + ' onmouseenter="catShowOps(this,'+node.id+',\''+node.status+'\')" onmouseleave="catHideOps(this)">'
+        + arrowHtml
+        + '<span style="'+nameStyle+'">'+ node.name + statusBadge + '</span>'
+        + '<span class="cat-ops" style="display:none;gap:4px;flex-shrink:0;">'
+        + (isRoot ? '' : '<span style="font-size:11px;color:#00b389;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();catStartInlineEdit('+node.id+')">编辑</span>')
+        + (isRoot ? '' : (isSelfDisabled
+            ? '<span style="font-size:11px;color:#52c41a;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();catToggleStatus('+node.id+')">启用</span>'
+            : '<span style="font-size:11px;color:#ff4d4f;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();catToggleStatus('+node.id+')">停用</span>'))
+        + '</span>'
+        + '</div>';
+    }
+
+    // arrow toggle
+    var arrowEl = wrap.querySelector('.cat-arrow');
+    if (arrowEl) {
+      arrowEl.addEventListener('click', function(e) {
+        e.stopPropagation();
+        catOpen[node.id] = !catOpen[node.id];
+        catRenderTree();
+      });
+    }
+
+    container.appendChild(wrap);
+
+    if (!isLeaf && catOpen[node.id]) {
+      catRenderChildren(container, node.id, depth + 1);
+      // + 新增子级按钮（root 不加）
+      if (!isRoot) {
+        var childType = catChildType[node.type];
+        var addLabel = catAddLabels[node.type];
+        if (addLabel) {
+          var addRow = document.createElement('div');
+          addRow.style.cssText = 'padding:4px 8px 4px '+(12+(depth+1)*18)+'px;font-size:11px;color:#00b389;cursor:pointer;display:flex;align-items:center;gap:4px;position:relative;';
+          addRow.innerHTML = '+ ' + addLabel;
+          addRow.onmouseenter = function(){ this.style.background='#f5fffe'; };
+          addRow.onmouseleave = function(){ this.style.background=''; };
+          (function(pn, ct){ addRow.onclick = function(e){ e.stopPropagation(); catStartInlineAdd(pn, ct); }; })(node, childType);
+          container.appendChild(addRow);
+        }
+      }
+    }
+  });
+
+  if (pid === 0) {
+    var addRoot = document.createElement('div');
+    addRoot.style.cssText = 'padding:8px 12px;font-size:11px;color:#00b389;cursor:pointer;border-top:1px dashed #e8e8e8;margin-top:4px;';
+    addRoot.innerHTML = '+ 新增知识模块';
+    addRoot.onmouseenter = function(){ this.style.background='#f5fffe'; };
+    addRoot.onmouseleave = function(){ this.style.background=''; };
+    addRoot.onclick = function() { catStartInlineAdd(null, 'module'); };
+    container.appendChild(addRoot);
+  }
+}
+
+function catShowOps(row, id, status) {
+  var ops = row.querySelector('.cat-ops');
+  if (ops) ops.style.display = 'flex';
+  if (row.querySelector('[data-id]')) row.style.background = '#f5fffe';
+}
+function catHideOps(row) {
+  var ops = row.querySelector('.cat-ops');
+  if (ops) ops.style.display = 'none';
+  var node = catData.find(function(n){ return row.querySelector('[data-id="'+n.id+'"]'); });
+  if (!row.querySelector('.cat-selected')) row.style.background = '';
+}
+
+/* ── 行内编辑 ── */
+function catStartInlineEdit(id) {
+  catInlineEditing = id;
+  catRenderTree();
+  setTimeout(function(){ var el = document.getElementById('catInlineInput'); if (el){ el.focus(); el.select(); } }, 30);
+}
+
+function catInlineKeydown(e, id) {
+  if (e.key === 'Enter') catInlineSave(id);
+  if (e.key === 'Escape') catInlineCancel();
+}
+
+function catInlineSave(id) {
+  var input = document.getElementById('catInlineInput');
+  if (!input) return;
+  var val = input.value.trim();
+  if (!val) { showToast('名称不能为空', 'error'); return; }
+  var node = catData.find(function(n){ return n.id===id; });
+  if (node) node.name = val;
+  catInlineEditing = null;
+  catRenderTree();
+  showToast('保存成功');
+  // 四级节点重新渲染右侧
+  if (node && node.type === 'catalog') catShowForm(node);
+}
+
+function catInlineCancel() {
+  catInlineEditing = null;
+  catRenderTree();
+}
+
+/* ── 行内新增（在树底部插入临时编辑行） ── */
+function catStartInlineAdd(parentNode, childType) {
+  var container = document.getElementById('catTree');
+  var existing = document.getElementById('catAddRow');
+  if (existing) existing.remove();
+
+  var pid = parentNode ? parentNode.id : 0;
+  var tmp = catData.find(function(n){ return n.id===pid; });
+  var d = 0;
+  while (tmp && tmp.pid !== 0) { d++; tmp = catData.find(function(n){ return n.id===tmp.pid; }); }
+  var indent = (d+1)*18;
+
+  var typeNames = { module:'知识模块', category:'目录类别', item:'目录项目', catalog:'目录配置' };
+  var row = document.createElement('div');
+  row.id = 'catAddRow';
+  row.style.cssText = 'display:flex;align-items:center;padding:4px 4px 4px '+(12+indent)+'px;gap:4px;background:#f0faf7;border-bottom:1px solid #b7e8d8;';
+  row.innerHTML = '<span style="width:12px;flex-shrink:0;font-size:9px;color:#00b389;">✦</span>'
+    + '<input id="catAddInput" class="form-control" style="flex:1;min-width:60px;padding:3px 6px;height:26px;font-size:12px;" placeholder="输入'+(typeNames[childType]||'')+'名称，回车保存">'
+    + '<button class="btn btn-primary btn-sm" style="padding:2px 8px;height:24px;flex-shrink:0;" onclick="catAddSave('+pid+',\''+childType+'\')">保存</button>'
+    + '<button class="btn btn-default btn-sm" style="padding:2px 8px;height:24px;flex-shrink:0;" onclick="document.getElementById(\'catAddRow\').remove()">✕</button>';
+
+  // 插在父节点展开的子节点末尾，而非 container 末尾
+  // 找到父节点对应的 + 新增XXX 那个 addRow div，插在它之前
+  var addBtns = container.querySelectorAll('div[id="catAddRow"]');
+  // 找到父节点后面紧跟的「+ 新增XXX」按钮行（data-pid 匹配）
+  // 简化方案：找所有子节点中颜色为绿色、含「+」的行
+  var inserted = false;
+  var allDivs = container.querySelectorAll('div');
+  for (var i=0;i<allDivs.length;i++) {
+    var d2 = allDivs[i];
+    if (d2.id && d2.id.startsWith('catrow-')) {
+      var nodeId = parseInt(d2.id.replace('catrow-',''));
+      var nodeObj = catData.find(function(n){ return n.id===nodeId; });
+      if (nodeObj && nodeObj.pid === pid) {
+        // 找到最后一个同级节点，在其后插入
+        // 继续往后找，直到找不到同 pid 的节点
+      }
+    }
+  }
+  // 降级：追加到 container
+  container.appendChild(row);
+  catOpen[pid] = true;
+
+  var inp = document.getElementById('catAddInput');
+  if (inp) {
+    inp.focus();
+    inp.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') catAddSave(pid, childType);
+      if (e.key === 'Escape') row.remove();
+    });
+  }
+}
+
+function catAddSave(pid, childType) {
+  var inp = document.getElementById('catAddInput');
+  if (!inp) return;
+  var val = inp.value.trim();
+  if (!val) { showToast('名称不能为空', 'error'); return; }
+  var newId = Date.now();
+  catData.push({ id:newId, pid:pid, level:(catData.find(function(n){return n.id===pid;})||{level:0}).level+1, name:val, status:'enabled', type:childType });
+  catOpen[pid] = true;
+  var row = document.getElementById('catAddRow');
+  if (row) row.remove();
+  catRenderTree();
+  // 滚动到新节点
+  setTimeout(function(){
+    var el = document.getElementById('catrow-'+newId);
+    if (el) el.scrollIntoView({block:'nearest'});
+  }, 50);
+  showToast('新增成功');
+}
+
+function catToggleStatus(id) {
+  var node = catData.find(function(n){ return n.id===id; });
+  if (!node) return;
+  var newStatus = node.status==='enabled' ? 'disabled' : 'enabled';
+  node.status = newStatus;
+  catRenderTree();
+  showToast(newStatus==='enabled'?'已启用':'已停用', newStatus==='disabled'?'warning':'');
+}
+
+function catSelectNode(id) {
+  var node = catData.find(function(n){ return n.id===id; });
+  if (!node || node.type==='root') return;
+  catSelected = id;
+  catRenderTree();
+  if (!catOpen[node.pid]) { catOpen[node.pid]=true; catRenderTree(); }
+  if (node.type==='catalog') catShowForm(node);
+  else catClearForm();
+}
+
+function catShowForm(node) {
+  var area = document.getElementById('catFormArea');
+  if (!node || node.type!=='catalog') {
+    area.innerHTML = '<div class="placeholder-panel" style="height:100%;"><div class="p-icon">🗂️</div><p>点击左侧四级目录查看知识条目，其他层级可直接在树上点击编辑名称</p></div>';
+    return;
+  }
+  var disabledWarn = (node.status==='disabled'||catIsAncestorDisabled(node))
+    ? '<div style="background:#fff7e6;border:1px solid #ffd591;border-radius:4px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#d46b08;">⚠️ 该节点'+(node.status==='disabled'?'已停用':'的上级目录已停用')+'</div>' : '';
+  area.innerHTML = disabledWarn + catKnowledgeTable(node);
+}
+
+function catFormModule(node){ return ''; }
+function catFormCategory(node){ return ''; }
+function catFormItem(node){ return ''; }
+function catFormCatalog(node){ return ''; }
+
+function catKnowledgeTable(node) {
+  var rows = [
+    { id:'K-20240101', q:'如何在众安银行开立个人账户？', tags:['开户介绍01','开户介绍02'], hot:45, status:'enabled', updater:'覃国权', time:'2026-06-30', sort:1 },
+    { id:'K-20240102', q:'开户需要携带哪些证件材料？', tags:['0911-1'], hot:23, status:'enabled', updater:'Lucy', time:'2026-06-28', sort:2 },
+    { id:'K-20240103', q:'开户的手续费是多少？', tags:[], hot:8, status:'disabled', updater:'Tom', time:'2026-06-15', sort:3 },
+    { id:'K-20240104', q:'开户被系统拒绝怎么办？', tags:['开户被拒','风控'], hot:67, status:'enabled', updater:'覃国权', time:'2026-07-01', sort:4 }
+  ];
+  var rowsHtml = rows.map(function(r) {
+    var tagsHtml = r.tags.map(function(t){ return '<span class="badge badge-teal" style="font-size:10px;">'+t+'</span>'; }).join(' ') || '<span style="color:#ccc;">—</span>';
+    var stBadge = r.status==='enabled' ? '<span class="badge badge-green">启用</span>' : '<span class="badge badge-red">停用</span>';
+    var expandId = 'kexpand_'+r.id;
+
+    // 三语种内容数据
+    var langs = {
+      tc: { label:'繁', name:'繁体中文', q:r.id==='K-20240101'?'在众安银行如何开立个人账户？':(r.id==='K-20240102'?'开户需要携带哪些证件材料？':(r.id==='K-20240104'?'开户被系统拒绝怎么办？':r.q)),
+                  a:r.id==='K-20240101'?'18歲或以上香港居民，持有效香港身份證，通過App全程網上辦理。一般5-10分鐘完成，成功後即可使用戶口。':(r.id==='K-20240102'?'需要提供：有效香港身份證（正反面清晰圖片）、手機號碼、電郵地址。部分情況下可能需要提供地址證明。':(r.id==='K-20240104'?'開戶被拒常見原因：1. 身份證件問題（過期/模糊）；2. 制裁名單匹配；3. 內部風控規則觸發。建議客戶確認證件有效後重新嘗試，或聯絡客服跟進。':'（暫無內容）')) },
+      sc: { label:'简', name:'简体中文', q:r.id==='K-20240101'?'在众安银行如何开立个人账户？':(r.id==='K-20240102'?'开户需要携带哪些证件材料？':(r.id==='K-20240104'?'开户被系统拒绝怎么办？':r.q)),
+                  a:r.id==='K-20240101'?'18岁以上香港居民，持有效香港身份证，通过App全程网上办理。一般5-10分钟完成，成功后即可使用账户。':(r.id==='K-20240102'?'需要提供：有效香港身份证（正反面清晰图片）、手机号码、电子邮箱。部分情况下可能需要提供地址证明。':(r.id==='K-20240104'?'开户被拒常见原因：1. 身份证件问题（过期/模糊）；2. 制裁名单匹配；3. 内部风控规则触发。建议客户确认证件有效后重新尝试，或联系客服跟进。':'（暂无内容）')) },
+      en: { label:'EN', name:'English', q:r.id==='K-20240101'?'How to open a personal account at ZA Bank?':(r.id==='K-20240102'?'What documents are required to open an account?':(r.id==='K-20240104'?'What if my account opening is rejected?':r.q)),
+                  a:r.id==='K-20240101'?'Hong Kong residents aged 18+ with valid HK ID can open an account via the App. Usually takes 5-10 minutes.':(r.id==='K-20240102'?'Valid HK ID (clear front/back photos), mobile number, email. Address proof may be required in some cases.':(r.id==='K-20240104'?'Common reasons: 1. ID document issues (expired/blurry); 2. Sanctions list match; 3. Internal risk rules triggered. Please verify your documents and retry, or contact CS.':'(No content)'))}
+    };
+    var attachments = [
+      { name:'开户流程图.pdf', size:'1.2MB' },
+      { name:'FAQ汇总.docx', size:'256KB' }
+    ];
+    var attachHtml = attachments.map(function(a){
+      return '<div style="display:inline-flex;align-items:center;gap:8px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:4px;padding:6px 12px;font-size:12px;color:#555;margin-right:8px;margin-bottom:6px;">'
+        +'<span style="color:#00b389;">📎</span>'
+        +'<span style="font-weight:500;">'+a.name+'</span>'
+        +'<span style="color:#aaa;font-size:11px;">('+a.size+')</span>'
+        +'<span style="color:#00b389;cursor:pointer;font-size:11px;" onclick="showToast(\'下载 '+a.name+'\')">下载</span>'
+        +'</div>';
+    }).join('');
+
+    return '<tr style="cursor:pointer;" onclick="catToggleKRow(\''+expandId+'\')">'
+      +'<td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#00b389;" onchange="catKnowledgeCheck()"></td>'
+      +'<td style="color:#aaa;">'+r.id+'</td>'
+      +'<td style="font-weight:600;">'+r.q+' <span style="font-size:10px;color:#aaa;" id="karr_'+r.id+'">▶</span></td>'
+      +'<td>'+tagsHtml+'</td>'
+      +'<td style="color:#fa8c16;">🔥 '+r.hot+'</td>'
+      +'<td>'+stBadge+'</td>'
+      +'<td>'+r.updater+'</td>'
+      +'<td style="color:#aaa;">'+r.time+'</td>'
+      +'<td>'+r.sort+'</td>'
+      +'<td onclick="event.stopPropagation()"><span class="td-op" onclick="catOpenEntry('+(node?node.id:0)+', true)">修改</span></td>'
+      +'</tr>'
+      +'<tr id="'+expandId+'" style="display:none;"><td colspan="10" style="background:#f9fffe;padding:14px 18px;">'
+      // 第1行：路径 + 时间
+      +'<div style="display:flex;align-items:center;gap:16px;font-size:12px;color:#666;padding-bottom:10px;border-bottom:1px dashed #d9d9d9;flex-wrap:wrap;">'
+        +'<span>📂 知识路径：<strong style="color:#222;">'+(node?node.name:'未分类')+'</strong></span>'
+        +'<span>📅 创建：'+r.time+'</span>'
+        +'<span>🔄 更新：'+r.time+'</span>'
+        +'</div>'
+      // 第2行：三语种切换
+      +'<div style="display:flex;gap:6px;padding:10px 0;">'
+        +'<button class="lang-tab" id="lt_'+r.id+'_tc" onclick="switchKLang(\''+r.id+'\',\'tc\')" style="padding:5px 14px;border:1px solid #00b389;border-radius:14px;background:#00b389;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">繁 繁体中文</button>'
+        +'<button class="lang-tab" id="lt_'+r.id+'_sc" onclick="switchKLang(\''+r.id+'\',\'sc\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">简 简体中文</button>'
+        +'<button class="lang-tab" id="lt_'+r.id+'_en" onclick="switchKLang(\''+r.id+'\',\'en\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">EN English</button>'
+        +'</div>'
+      // 第3行：问题
+      +'<div id="kq_'+r.id+'_tc" class="kq-active" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题（繁体中文）</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.tc.q+'</div>'
+        +'</div>'
+      +'<div id="kq_'+r.id+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题（简体中文）</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.sc.q+'</div>'
+        +'</div>'
+      +'<div id="kq_'+r.id+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 Question (English)</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.en.q+'</div>'
+        +'</div>'
+      // 第4行：答案
+      +'<div id="ka_'+r.id+'_tc" class="ka-active" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案（繁体中文）</div>'
+        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+langs.tc.a+'</div>'
+        +'</div>'
+      +'<div id="ka_'+r.id+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案（简体中文）</div>'
+        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+langs.sc.a+'</div>'
+        +'</div>'
+      +'<div id="ka_'+r.id+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 Answer (English)</div>'
+        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+langs.en.a+'</div>'
+        +'</div>'
+      // 第5行：附件
+      +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:6px;">📎 附件</div>'
+        +attachHtml+'</div>'
+      +'</td></tr>';
+  }).join('');
+  return '<div class="table-wrap">'
+    +'<div style="padding:10px 14px;font-size:13px;font-weight:700;color:#222;border-bottom:1px solid #f0f0f0;">📋 知识条目管理<span style="font-size:11px;color:#aaa;font-weight:400;margin-left:6px;">'+node.name+'</span></div>'
+    +'<div class="table-toolbar">'
+    + '<button class="btn btn-primary btn-sm" onclick="catOpenEntry('+(node?node.id:0)+', false)">+ 新增</button>'
+    +'<button class="btn btn-default btn-sm" id="btnBatchEnable2" disabled onclick="showToast(\'已批量启用\')">启用</button>'
+    +'<button class="btn btn-default btn-sm" id="btnBatchDisable2" disabled onclick="showToast(\'已批量停用\',\'warning\')">停用</button>'
+    + '<button class="btn btn-default btn-sm" id="btnBatchAddTag" disabled onclick="openBatchTagModal(\'add\')">批量加标签</button>'
+    + '<button class="btn btn-default btn-sm" id="btnBatchDelTag" disabled onclick="openBatchTagModal(\'del\')">批量删标签</button>'
+    +'<input class="table-search" style="margin-left:auto;" placeholder="搜索问题关键词">'
+    +'</div>'
+    +'<table id="knowledgeTable"><thead><tr>'
+    +'<th><input type="checkbox" style="accent-color:#00b389;" onchange="catSelectAllKnowledge(this)"></th>'
+    +'<th>知识ID</th><th>问题</th><th>标签</th><th>热度</th><th>状态</th><th>更新人</th><th>更新时间</th><th>排序</th><th>操作</th>'
+    +'</tr></thead><tbody>'+rowsHtml+'</tbody></table>'
+    +'<div style="padding:10px 14px;font-size:11px;color:#aaa;text-align:right;">共 4 条</div>'
+    +'</div>';
+}
+
+function catToggleKRow(expandId) {
+  var row = document.getElementById(expandId);
+  if (!row) return;
+  var rid = expandId.replace('kexpand_','');
+  var arr = document.getElementById('karr_'+rid);
+  var isOpen = row.style.display !== 'none';
+  row.style.display = isOpen ? 'none' : 'table-row';
+  if (arr) arr.textContent = isOpen ? '▶' : '▼';
+}
+
+function switchKLang(rid, lang) {
+  ['tc','sc','en'].forEach(function(l){
+    var tab = document.getElementById('lt_'+rid+'_'+l);
+    var q = document.getElementById('kq_'+rid+'_'+l);
+    var a = document.getElementById('ka_'+rid+'_'+l);
+    var active = (l === lang);
+    if (tab) {
+      tab.style.background = active ? '#00b389' : '#fff';
+      tab.style.color = active ? '#fff' : '#555';
+      tab.style.borderColor = active ? '#00b389' : '#d9d9d9';
+      tab.style.fontWeight = active ? '600' : '400';
+    }
+    if (q) q.style.display = active ? 'block' : 'none';
+    if (a) a.style.display = active ? 'block' : 'none';
+  });
+}
+
+function catKnowledgeCheck() {
+  var boxes = document.querySelectorAll('#knowledgeTable tbody input[type=checkbox]');
+  var hasSel = Array.from(boxes).some(function(b){ return b.checked; });
+  ['btnBatchEnable2','btnBatchDisable2','btnBatchAddTag','btnBatchDelTag'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.disabled = !hasSel;
+  });
+}
+
+function catSelectAllKnowledge(cb) {
+  var boxes = document.querySelectorAll('#knowledgeTable tbody input[type=checkbox]');
+  boxes.forEach(function(b){ b.checked = cb.checked; });
+  catKnowledgeCheck();
+}
+
+function catClearForm() {
+  catSelected = null;
+  catRenderTree();
+  document.getElementById('catFormArea').innerHTML = '<div class="placeholder-panel" style="height:100%;"><div class="p-icon">🗂️</div><p>点击左侧四级目录查看知识条目，其他层级可直接在树上点击编辑名称</p></div>';
+}
+
+// catNewModule已由catStartInlineAdd替代
+
+var batchTagMode = 'add';
+function openBatchTagModal(mode) {
+  batchTagMode = mode;
+  var title = document.getElementById('batchTagTitle');
+  var label = document.getElementById('batchTagLabel');
+  if (title) title.textContent = mode==='add' ? '批量加标签' : '批量删标签';
+  if (label) label.textContent = mode==='add' ? '选择要添加的标签' : '选择要移除的标签';
+  openModal('modalBatchTag');
+}
+function executeBatchTag() {
+  var sel = document.getElementById('batchTagSelect');
+  var chosen = sel ? Array.from(sel.selectedOptions).map(function(o){ return o.text; }) : [];
+  if (chosen.length === 0) { showToast('请选择标签', 'error'); return; }
+  closeModal('modalBatchTag');
+  showToast('已'+(batchTagMode==='add'?'添加':'移除')+' '+chosen.join('、')+' 标签');
+}
+
+function catPreview(val, nodeId) {}
+
+// ── 富文本编辑器 ──
+function rtCmd(cmd, val) {
+  document.getElementById('rtEditor').focus();
+  document.execCommand(cmd, false, val || null);
+}
+function rtInsertImage() {
+  var input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = function() {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('rtEditor').focus();
+      document.execCommand('insertHTML', false, '<img src="'+e.target.result+'" style="max-width:100%;border-radius:4px;margin:4px 0;">');
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+function rtInsertTable() {
+  var html = '<table style="border-collapse:collapse;width:100%;margin:8px 0;">';
+  for (var r=0;r<3;r++) {
+    html += '<tr>';
+    for (var c=0;c<3;c++) {
+      html += r===0
+        ? '<th style="border:1px solid #d9d9d9;padding:6px 8px;background:#f5f5f5;font-size:12px;">表头'+(c+1)+'</th>'
+        : '<td style="border:1px solid #d9d9d9;padding:6px 8px;font-size:12px;">&nbsp;</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  document.getElementById('rtEditor').focus();
+  document.execCommand('insertHTML', false, html);
+}
+function rtHandlePaste(e) {
+  var items = (e.clipboardData||e.originalEvent.clipboardData).items;
+  for (var i=0;i<items.length;i++) {
+    if (items[i].type.indexOf('image')!==-1) {
+      e.preventDefault();
+      var blob = items[i].getAsFile();
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        document.execCommand('insertHTML', false, '<img src="'+ev.target.result+'" style="max-width:100%;border-radius:4px;margin:4px 0;">');
+      };
+      reader.readAsDataURL(blob);
+      return;
+    }
+  }
+}
+
+// ── 富文本全屏 + 大纲 ──
+function toggleRtFullscreen() {
+  var wrap = document.getElementById('rtWrap');
+  var modal = wrap && wrap.closest('.modal');
+  if (!wrap) return;
+  var isFs = wrap.dataset.fullscreen === '1';
+  if (!isFs) {
+    wrap.dataset.fullscreen = '1';
+    wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:2000;border-radius:0;border:none;display:flex;flex-direction:column;background:#fff;';
+    document.getElementById('rtEditor').style.flex = '1';
+  } else {
+    wrap.dataset.fullscreen = '0';
+    wrap.style.cssText = 'border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;';
+    document.getElementById('rtEditor').style.flex = '';
+  }
+}
+function toggleRtOutline() {
+  var outline = document.getElementById('rtOutline');
+  if (!outline) return;
+  outline.style.display = outline.style.display === 'none' ? 'block' : 'none';
+  rtUpdateOutline();
+}
+function rtUpdateOutline() {
+  var list = document.getElementById('rtOutlineList');
+  var editor = document.getElementById('rtEditor');
+  if (!list || !editor) return;
+  var headings = editor.querySelectorAll('h1,h2,h3');
+  if (headings.length === 0) { list.innerHTML = '<span style="color:#ccc;font-size:11px;">暂无标题</span>'; return; }
+  list.innerHTML = Array.from(headings).map(function(h, i) {
+    h.id = 'rth_'+i;
+    var indent = h.tagName==='H1'?0:h.tagName==='H2'?10:20;
+    return '<div style="padding:3px 0 3px '+indent+'px;cursor:pointer;color:#1890ff;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="document.getElementById(\'rth_'+i+'\').scrollIntoView({behavior:\'smooth\'})">'+h.textContent+'</div>';
+  }).join('');
+}
+function rtFormatBlock(val) {
+  if (!val) return;
+  document.getElementById('rtEditor').focus();
+  document.execCommand('formatBlock', false, val);
+  rtUpdateOutline();
+}
+function saveEntryModal() {
+  var isEdit = document.getElementById('modalEntryTitle').textContent.indexOf('修改') >= 0;
+  if (isEdit) {
+    var desc = document.getElementById('updateDesc');
+    if (desc && !desc.value.trim()) { showToast('请填写更新描述', 'error'); return; }
+  }
+  closeModal('modalEntry');
+  showToast('知识条目保存成功');
+}
+function catOpenEntry(nodeId, isEdit) {
+  var title = isEdit ? '修改知识条目' : '新增知识条目';
+  document.getElementById('modalEntryTitle').textContent = title;
+  var updateWrap = document.getElementById('updateDescWrap');
+  var continueBtn = document.getElementById('entryContinueBtn');
+  if (updateWrap) updateWrap.style.display = isEdit ? 'block' : 'none';
+  if (continueBtn) continueBtn.style.display = isEdit ? 'none' : '';
+  if (isEdit) { var desc = document.getElementById('updateDesc'); if(desc) desc.value=''; }
+  openModal('modalEntry');
+}
+
+function catSearch(q) {
+  if (!q.trim()) { catRenderTree(); return; }
+  catData.forEach(function(n){
+    if (n.name.indexOf(q)>=0) catOpen[n.pid]=true;
+  });
+  catRenderTree();
+}
+
+function switchEntryLang(lang) {
+  ['tc','sc','en'].forEach(function(l) {
+    var tab = document.getElementById('etab-' + l);
+    var content = document.getElementById('entry-lang-' + l);
+    if (l === lang) {
+      tab.style.borderBottomColor = '#00b389';
+      tab.style.color = '#00b389';
+      tab.style.fontWeight = '600';
+      content.style.display = 'block';
+    } else {
+      tab.style.borderBottomColor = 'transparent';
+      tab.style.color = '#888';
+      tab.style.fontWeight = '400';
+      content.style.display = 'none';
+    }
+  });
+}
+
+// 推荐学习切换
+function toggleRecommend(cb) {
+  var wrap = document.getElementById('recommendOrderWrap');
+  if (wrap) wrap.style.display = cb.checked ? 'flex' : 'none';
+}
+// 立即通知切换
+function toggleNotify(cb) {
+  var bootWrap = document.getElementById('cbBootWrap');
+  var recvWrap = document.getElementById('receiverWrap');
+  var personnelWrap = document.getElementById('personnelWrap');
+  if (bootWrap) bootWrap.style.display = cb.checked ? 'flex' : 'none';
+  if (recvWrap) recvWrap.style.display = cb.checked ? 'flex' : 'none';
+  if (personnelWrap) personnelWrap.style.display = cb.checked ? 'block' : 'none';
+}
+// 开机通知切换
+function toggleBoot(cb) {
+  var wrap = document.getElementById('learnTimeWrap');
+  if (wrap) wrap.style.display = cb.checked ? 'flex' : 'none';
+}
+// 人员选择
+function updatePersonnel(sel) {
+  var tags = document.getElementById('personnelTags');
+  if (!tags || !sel.value) return;
+  var existing = Array.from(tags.querySelectorAll('span')).map(function(s){ return s.dataset.val; });
+  if (existing.indexOf(sel.value) >= 0) return;
+  var label = sel.options[sel.selectedIndex].text;
+  var t = document.createElement('span');
+  t.dataset.val = sel.value;
+  t.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;padding:2px 8px;border-radius:10px;font-size:11px;';
+  t.innerHTML = label + ' <span style="cursor:pointer;opacity:0.7" onclick="this.parentNode.remove()">✕</span>';
+  tags.appendChild(t);
+  sel.value = '';
+}
+
+// 附件上传模拟
+var mockFiles = ['开户流程说明.pdf','话术参考.docx'];
+function simulateUpload() {
+  var list = document.getElementById('attachList');
+  if (!list) return;
+  var fname = mockFiles[list.children.length % mockFiles.length];
+  var item = document.createElement('div');
+  item.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:4px;padding:3px 10px;font-size:11px;color:#555;';
+  item.innerHTML = '📎 ' + fname + ' <span style="cursor:pointer;color:#aaa;" onclick="this.parentNode.remove()">✕</span>';
+  list.appendChild(item);
+}
+
+// 标签树选择器
+var tagPickerData = [
+  { type:'开户介绍', tags:['开户介绍00','开户介绍01','开户介绍02','0911-1','0911-2'] },
+  { type:'综合转账相关', tags:['综合转账相关','转账手续费','跨境转账'] },
+  { type:'卡交易争议', tags:['App操作','交易纠纷','退款处理'] },
+  { type:'个人银行', tags:['贷款业务','存款业务','转账业务','手机银行','ZA Card'] },
+  { type:'账户安全', tags:['密码重置','账户冻结','异常登录'] }
+];
+var selectedTagsSet = new Set(['开户介绍01']); // 默认已选
+
+function toggleTagPicker() {
+  var drop = document.getElementById('tagPickerDrop');
+  if (!drop) return;
+  var isOpen = drop.style.display !== 'none';
+  if (isOpen) { drop.style.display = 'none'; return; }
+  renderTagPickerTree();
+  drop.style.display = 'block';
+  // close on outside click
+  setTimeout(function() {
+    document.addEventListener('click', closeTagPickerOutside);
+  }, 0);
+}
+function closeTagPickerOutside(e) {
+  var drop = document.getElementById('tagPickerDrop');
+  var area = document.getElementById('entryTagArea');
+  if (drop && !drop.contains(e.target) && area && !area.contains(e.target)) {
+    drop.style.display = 'none';
+    document.removeEventListener('click', closeTagPickerOutside);
+  }
+}
+function renderTagPickerTree() {
+  var tree = document.getElementById('tagPickerTree');
+  if (!tree) return;
+  tree.innerHTML = tagPickerData.map(function(group) {
+    var tagsHtml = group.tags.map(function(t) {
+      var checked = selectedTagsSet.has(t) ? 'checked' : '';
+      return '<label style="display:flex;align-items:center;gap:6px;padding:5px 14px 5px 28px;cursor:pointer;font-size:12px;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'"><input type="checkbox" style="accent-color:#00b389;" ' + checked + ' onchange="togglePickerTag(this,\'' + t + '\')">' + t + '</label>';
+    }).join('');
+    return '<div>'
+      + '<div style="padding:6px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="togglePickerGroup(this)">'
+      + '▶ ' + group.type + '</div>'
+      + '<div class="picker-group-body">' + tagsHtml + '</div>'
+      + '</div>';
+  }).join('');
+}
+function togglePickerGroup(header) {
+  var body = header.nextElementSibling;
+  var isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  header.textContent = (isOpen ? '▶ ' : '▼ ') + header.textContent.substring(2);
+}
+function togglePickerTag(cb, tag) {
+  if (cb.checked) selectedTagsSet.add(tag);
+  else selectedTagsSet.delete(tag);
+  renderEntryTagArea();
+}
+function removeEntryTag(el) {
+  var tag = el.parentNode.querySelector('span:first-child') ? el.parentNode.textContent.replace('✕','').trim() : '';
+  selectedTagsSet.delete(tag);
+  el.parentNode.remove();
+}
+function renderEntryTagArea() {
+  var area = document.getElementById('entryTagArea');
+  if (!area) return;
+  var placeholder = area.querySelector('#entryTagPlaceholder');
+  // remove old tag spans (not placeholder, not arrow)
+  Array.from(area.children).forEach(function(c) {
+    if (c.id !== 'entryTagPlaceholder' && c.tagName !== 'INPUT' && !c.textContent.includes('▾')) c.remove();
+  });
+  if (placeholder) placeholder.style.display = selectedTagsSet.size > 0 ? 'none' : 'inline';
+  selectedTagsSet.forEach(function(t) {
+    var span = document.createElement('span');
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#e6fffb;border:1px solid #87e8de;color:#13c2c2;padding:2px 8px;border-radius:10px;font-size:11px;';
+    span.innerHTML = t + ' <span style="cursor:pointer;opacity:0.7" onclick="selectedTagsSet.delete(\'' + t + '\');renderEntryTagArea();renderTagPickerTree()">✕</span>';
+    var arrow = area.querySelector('span:last-child');
+    if (arrow) area.insertBefore(span, arrow);
+    else area.appendChild(span);
+  });
+}
+
+function addEntryTag(e, input) {
+  if (e.key !== 'Enter') return;
+  var val = input.value.trim();
+  if (!val) return;
+  selectedTagsSet.add(val);
+  renderEntryTagArea();
+  input.value = '';
+}
+
+// 拖拽排序
+function catDragStart(e, id) {
+  catDragSrc = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.4';
+}
+function catDragOver(e, id) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.cat-node').forEach(function(el){ el.style.borderTop = ''; });
+  if (catDragSrc !== id) e.currentTarget.style.borderTop = '2px solid #00b389';
+}
+function catDragLeave(e) { e.currentTarget.style.borderTop = ''; }
+function catDrop(e, id) {
+  e.preventDefault();
+  document.querySelectorAll('.cat-node').forEach(function(el){ el.style.borderTop = ''; el.style.opacity = ''; });
+  if (catDragSrc === id || catDragSrc === null) return;
+  var src = catData.find(function(n){ return n.id === catDragSrc; });
+  var tgt = catData.find(function(n){ return n.id === id; });
+  if (src && tgt && src.pid === tgt.pid) {
+    var siblings = catData.filter(function(n){ return n.pid === src.pid; });
+    var si = siblings.indexOf(src), ti = siblings.indexOf(tgt);
+    catData.splice(catData.indexOf(src), 1);
+    catData.splice(catData.indexOf(tgt) + (si > ti ? 0 : 1), 0, src);
+    catRenderTree();
+    showToast('排序已更新');
+  }
+  catDragSrc = null;
+}
+
+function catSearch(q) {
+  if (!q.trim()) { catRenderTree(); return; }
+  var matches = catData.filter(function(n){ return n.name.indexOf(q) >= 0; });
+  // expand all parents
+  matches.forEach(function(n) {
+    var cur = n;
+    while (cur.pid !== 0) { catOpen[cur.pid] = true; cur = catData.find(function(x){ return x.id === cur.pid; }) || {pid:0}; }
+  });
+  catRenderTree();
+  // highlight
+  document.querySelectorAll('.cat-node span').forEach(function(el){
+    if (el.textContent.indexOf(q) >= 0) el.style.color = '#00b389';
+  });
+}
+
+// ══════════════════════════════════════
+// 每日Briefing管理
+// ══════════════════════════════════════
+var briefingData = [
+  { id:1, date:'2026-07-02', title:'开户业务及转账规则更新说明', duration:'18:32', creator:'Lucy',   status:'published', watchRate:72, passRate:68,
+    supplement:'各位同事，今日主要涵盖两部分：一是开户流程的最新调整，二是转账规则的变更说明。\n\n【开户部分】从本月起，MCV开户新增视频验证步骤，在人脸识别之后进行，约需1-2分钟。\n\n【转账部分】本地转账手续费维持不变，港元转人民币跨境转账改为实时汇率计算。',
+    attachments:['开户流程最新说明.pdf','转账规则变更说明.docx'], video:'2026-07-02_briefing.mp4' },
+  { id:2, date:'2026-07-01', title:'VA账户新功能说明', duration:'12:15', creator:'Tom', status:'ai_done', watchRate:0, passRate:0,
+    supplement:'VA账户本次更新了三个功能：1. 支持更多货币类型；2. 转账限额提升；3. 新增账单导出功能。',
+    attachments:['VA账户功能说明.pdf'], video:'2026-07-01_briefing.mp4' },
+  { id:3, date:'2026-06-30', title:'基金相关查询处理流程', duration:'22:08', creator:'Lucy', status:'published', watchRate:65, passRate:43,
+    supplement:'基金查询处理流程详见附件，主要包括赎回、申购的处理时限和常见客诉处理路径。',
+    attachments:['基金查询SOP.pdf'], video:'2026-06-30_briefing.mp4' },
+  { id:4, date:'2026-07-03', title:'新增功能介绍', duration:'—', creator:'覃国权', status:'ai_processing', watchRate:0, passRate:0,
+    supplement:'', attachments:[], video:'' }
+];
+var currentBriefingId = null;
+
+function briefingRender() {
+  var tbody = document.getElementById('briefingTableBody');
+  if (!tbody) return;
+  var statusBadgeMap = { published:'badge-green', ai_done:'badge-blue', ai_processing:'badge-orange' };
+  var statusLabelMap = { published:'已发布', ai_done:'AI处理完成', ai_processing:'AI生成题目中' };
+  tbody.innerHTML = briefingData.map(function(b) {
+    var stBadge = '<span class="badge ' + (statusBadgeMap[b.status]||'badge-gray') + '">' + (statusLabelMap[b.status]||b.status) + '</span>';
+    var watchCol = b.status === 'published'
+      ? '<div style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#00b389;" onclick="openModal(\'modalWatchDetail\')">'
+        + '<div style="width:50px;height:6px;background:#f0f0f0;border-radius:3px;"><div style="width:' + b.watchRate + '%;height:100%;background:#00b389;border-radius:3px;"></div></div>'
+        + '<span style="text-decoration:underline;">' + b.watchRate + '%</span></div>'
+      : '<span style="color:#ccc;">—</span>';
+    var passCol = b.status === 'published'
+      ? '<div style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#1890ff;" onclick="openModal(\'modalPassDetail\')">'
+        + '<div style="width:50px;height:6px;background:#f0f0f0;border-radius:3px;"><div style="width:' + b.passRate + '%;height:100%;background:#1890ff;border-radius:3px;"></div></div>'
+        + '<span style="text-decoration:underline;">' + b.passRate + '%</span></div>'
+      : '<span style="color:#ccc;">—</span>';
+    return '<tr>'
+      + '<td>' + b.date + '</td>'
+      + '<td style="font-weight:600;max-width:200px;">' + b.title + '</td>'
+      + '<td>' + b.duration + '</td>'
+      + '<td>' + b.creator + '</td>'
+      + '<td>' + stBadge + '</td>'
+      + '<td>' + watchCol + '</td>'
+      + '<td>' + passCol + '</td>'
+      + '<td><div class="td-ops">'
+      + '<span class="td-op" onclick="briefingOpenDetail(' + b.id + ')">修改</span>'
+      + (b.status==='ai_done' ? '<span class="td-op" style="color:#52c41a;" onclick="briefingPublish(' + b.id + ')">发布</span>' : '')
+      + '<span class="td-op danger" onclick="briefingDelete(' + b.id + ')">删除</span>'
+      + '</div></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function briefingPublish(id) {
+  var b = briefingData.find(function(x){ return x.id===id; });
+  if (!b) return;
+  b.status = 'published';
+  briefingRender();
+  updateBriefingPublishBtn();
+  showToast('Briefing已发布');
+}
+
+function briefingDelete(id) {
+  if (!confirm('确认删除此Briefing？')) return;
+  briefingData = briefingData.filter(function(x){ return x.id!==id; });
+  briefingRender();
+  showToast('已删除', 'warning');
+}
+
+function briefingOpenDetail(id) {
+  var b = briefingData.find(function(x){ return x.id===id; });
+  if (!b) return;
+  currentBriefingId = id;
+  document.getElementById('briefing-list-view').style.display = 'none';
+  document.getElementById('briefing-detail-view').style.display = 'flex';
+  document.getElementById('briefingDetailTitle').textContent = b.date + ' ' + b.title;
+  updateBriefingPublishBtn();
+  switchBdTab('info');
+}
+
+function briefingBack() {
+  document.getElementById('briefing-detail-view').style.display = 'none';
+  document.getElementById('briefing-list-view').style.display = 'flex';
+  currentBriefingId = null;
+  var wrap = document.getElementById('briefingPublishBtnWrap');
+  if (wrap) wrap.innerHTML = '';
+}
+
+function updateBriefingPublishBtn() {
+  var wrap = document.getElementById('briefingPublishBtnWrap');
+  if (!wrap) return;
+  var b = briefingData.find(function(x){ return x.id===currentBriefingId; });
+  if (b && b.status === 'ai_done') {
+    wrap.innerHTML = '<button class="btn btn-primary btn-sm" style="background:#52c41a;border-color:#52c41a;margin-left:8px;" onclick="briefingPublish('+b.id+');updateBriefingPublishBtn()">🚀 发布</button>';
+  } else {
+    wrap.innerHTML = '';
+  }
+}
+
+function switchBdTab(tab) {
+  var tabs = ['info','supplement','quiz'];
+  tabs.forEach(function(t) {
+    var el = document.getElementById('bdtab-' + t);
+    if (!el) return;
+    if (t === tab) { el.style.borderBottomColor='#00b389'; el.style.color='#00b389'; el.style.fontWeight='600'; }
+    else { el.style.borderBottomColor='transparent'; el.style.color='#888'; el.style.fontWeight='400'; }
+  });
+  var body = document.getElementById('briefingDetailBody');
+  if (!body) return;
+  var b = briefingData.find(function(x){ return x.id===currentBriefingId; }) || briefingData[0];
+
+  if (tab === 'info') {
+    var attachHtml = (b.attachments||[]).map(function(a){
+      return '<div style="display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:4px;padding:3px 10px;font-size:11px;color:#555;margin:2px;">📎 '+a+'</div>';
+    }).join('') || '<span style="color:#ccc;font-size:12px;">暂无附件</span>';
+    body.innerHTML = '<div style="height:100%;overflow-y:auto;padding:16px 20px;">'
+      + '<div class="form-card">'
+      + '<div class="form-card-title">📋 基本信息</div>'
+      + '<div class="form-grid" style="gap:14px;">'
+      + '<div class="form-group"><div class="form-label">日期</div><input class="form-control" value="'+b.date+'" type="date"></div>'
+      + '<div class="form-group"><div class="form-label">标题</div><input class="form-control" value="'+b.title+'"></div>'
+      + '<div class="form-group span2"><div class="form-label">视频</div>'
+      + (b.video ? '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:12px;">🎬 '+b.video+'</span><button class="btn btn-default btn-sm" onclick="simulateBriefingUpload()">重新上传</button></div>'
+        : '<div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-default btn-sm" onclick="simulateBriefingUpload()">上传视频</button><span id="bnFileName" style="font-size:12px;color:#aaa;">支持mp4/mov</span></div>')
+      + '</div>'
+      + '<div class="form-group span2"><div class="form-label">附件</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">'+attachHtml+'</div>'
+      + '<button class="btn btn-default btn-sm" onclick="simulateBriefingAttachEdit()">+ 新增附件</button></div>'
+      + '</div>'
+      + '<div class="form-actions" style="margin-top:16px;">'
+      + '<button class="btn btn-primary" onclick="showToast(\'保存成功\')">保存</button>'
+      + '<button class="btn btn-default" onclick="briefingBack()">取消</button>'
+      + (b.status==='draft'?'<button class="btn btn-primary" style="background:#52c41a;border-color:#52c41a;margin-left:auto;" onclick="briefingPublish('+b.id+');briefingBack()">发布</button>':'')
+      + '</div>'
+      + '</div></div>';
+  } else if (tab === 'supplement') {
+    body.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;padding:16px 20px;overflow:hidden;">'
+      + '<div style="font-size:12px;color:#888;margin-bottom:8px;">Briefing补充内容（创建时填写，支持图文）</div>'
+      + '<div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;display:flex;flex-direction:column;flex:1;">'
+      + '<div style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;flex-shrink:0;">'
+      + '<button type="button" class="rt-btn" onclick="document.getElementById(\'suppEditor\').focus();document.execCommand(\'bold\')"><b>B</b></button>'
+      + '<button type="button" class="rt-btn" onclick="document.getElementById(\'suppEditor\').focus();document.execCommand(\'italic\')"><i>I</i></button>'
+      + '<button type="button" class="rt-btn" onclick="document.getElementById(\'suppEditor\').focus();document.execCommand(\'underline\')"><u>U</u></button>'
+      + '<button type="button" class="rt-btn" onclick="document.getElementById(\'suppEditor\').focus();document.execCommand(\'insertUnorderedList\')">• 列表</button>'
+      + '</div>'
+      + '<div id="suppEditor" contenteditable="true" style="flex:1;padding:12px;font-size:13px;line-height:1.9;outline:none;overflow-y:auto;background:#fff;min-height:200px;" onpaste="handleSupplementPaste(event)">'
+      + (b.supplement||'').replace(/\n/g,'<br>')
+      + '</div></div>'
+      + '<div style="margin-top:10px;display:flex;gap:8px;">'
+      + '<button class="btn btn-primary btn-sm" onclick="showToast(\'补充内容已保存\')">保存</button>'
+      + '<span style="font-size:11px;color:#aaa;align-self:center;">支持 Ctrl+V 粘贴图片（如飞书会议智能总结）</span>'
+      + '</div></div>';
+  } else if (tab === 'quiz') {
+    var quizItems = [
+      { id:'bq1', type:'单选', q:'MCV开户新增的视频验证步骤在哪个环节之后进行？', opts:['填写个人资料之后','人脸识别之后','同意条款之后','输入身份证之后'], ans:1, confirmed:false },
+      { id:'bq2', type:'多选', q:'以下哪些情况会导致视频验证失败？（多选）', opts:['光线不足','动作不符合要求','身份证过期','网络连接不稳定'], ans:[0,1,3], confirmed:true },
+      { id:'bq3', type:'单选', q:'本次转账规则调整主要影响哪类转账？', opts:['本地港元转账','港元转人民币跨境转账','美元转账','以上均有调整'], ans:1, confirmed:false }
+    ];
+    var quizHtml = quizItems.map(function(q, qi) {
+      var typeBadge = q.type==='单选' ? '<span class="badge badge-blue">单选</span>' : '<span class="badge badge-teal">多选</span>';
+      var ansArr = Array.isArray(q.ans) ? q.ans : [q.ans];
+      var optsHtml = q.opts.map(function(o,oi){
+        var isAns = ansArr.indexOf(oi)>=0;
+        return '<div style="font-size:12px;color:'+(isAns?'#52c41a':'#444')+';padding:2px 0;">'
+          + String.fromCharCode(65+oi)+'. '+o
+          + (isAns?' ✓':'')+'</div>';
+      }).join('');
+      var confirmBadge = q.confirmed ? '<span class="badge badge-green">已确认</span>' : '<span class="badge badge-gray" id="cbadge_'+q.id+'">待确认</span>';
+      var confirmBtn = q.confirmed ? '' : '<button class="btn btn-primary btn-sm" id="cBtn_'+q.id+'" onclick="bqConfirm(\''+q.id+'\')">✅ 确认</button>';
+      return '<div style="border:1px solid #f0f0f0;border-radius:6px;padding:12px 14px;margin-bottom:10px;" id="bqItem_'+q.id+'">'
+        + '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;">'
+        + typeBadge + ' ' + confirmBadge
+        + '<span style="font-size:12px;font-weight:600;color:#222;margin-left:4px;">'+(qi+1)+'. '+q.q+'</span></div>'
+        + '<div style="padding-left:8px;margin-bottom:8px;">'+optsHtml+'</div>'
+        + '<div style="display:flex;gap:8px;">'
+        + confirmBtn
+        + '<button class="btn btn-default btn-sm" onclick="bqEdit(\''+q.id+'\',\''+q.type+'\','+JSON.stringify(q.q)+')">✏️ 编辑</button>'
+        + '<button class="btn btn-default btn-sm" style="color:#ff4d4f;border-color:#ffa39e;" onclick="document.getElementById(\'bqItem_'+q.id+'\').remove();showToast(\'已删除\',\'warning\')">❌ 删除</button>'
+        + '</div></div>';
+    }).join('');
+
+    // 左侧：题目列表；右侧：发布设置表单
+    body.innerHTML = '<div style="height:100%;display:flex;overflow:hidden;">'
+      // ── 左侧题目区 ──
+      + '<div style="flex:3;overflow-y:auto;padding:16px 20px;border-right:1px solid #e8e8e8;">'
+      + '<div style="font-size:13px;font-weight:700;color:#222;margin-bottom:12px;">📝 小测题 <span style="font-size:11px;color:#aaa;font-weight:400;">共 '+quizItems.length+' 题</span></div>'
+      + quizHtml
+      + '<button class="btn btn-default btn-sm" onclick="bqAddManual()">+ 手动新增题目</button>'
+      + '</div>'
+      // ── 右侧发布设置 ──
+      + '<div style="flex:2;overflow-y:auto;padding:16px 20px;background:#fafafa;">'
+      + '<div style="font-size:13px;font-weight:700;color:#222;margin-bottom:14px;">⚙️ 小测发布设置</div>'
+      + '<div class="form-group" style="margin-bottom:12px;">'
+      + '<div class="form-label">及格标准</div>'
+      + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">'
+      + '<select class="form-control" style="width:120px;" onchange="updatePassInput()">'
+      + '<option value="score">分数</option><option value="rate">正确率</option><option value="count">答对数量</option>'
+      + '</select>'
+      + '<input class="form-control" style="width:70px;" value="60" type="number">'
+      + '<span style="font-size:12px;color:#666;">分</span>'
+      + '</div></div>'
+      + '<div class="form-group" style="margin-bottom:12px;">'
+      + '<div class="form-label">解锁前提</div>'
+      + '<select class="form-control"><option value="video">看完视频后解锁</option><option value="free">无限制，随时可作答</option></select>'
+      + '</div>'
+      + '<div class="form-group" style="margin-bottom:12px;">'
+      + '<div class="form-label">可重做次数</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
+      + '<input class="form-control" style="width:70px;" placeholder="不限" type="number">'
+      + '<span style="font-size:11px;color:#888;">次（不填则不限）</span>'
+      + '</div></div>'
+      + '<div class="form-group" style="margin-bottom:12px;">'
+      + '<div class="form-label">开始时间</div>'
+      + '<input class="form-control" type="datetime-local" value="2026-07-03T09:00">'
+      + '</div>'
+      + '<div class="form-group" style="margin-bottom:14px;">'
+      + '<div class="form-label">截止时间</div>'
+      + '<input class="form-control" type="datetime-local" value="2026-07-04T23:59">'
+      + '</div>'
+      + '<button class="btn btn-primary" onclick="showToast(\'小测发布规则已确认\')">确认发布规则</button>'
+      + '</div>'
+      + '</div>';
+  }
+}
+
+function handleBnPaste(e) {
+  var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      e.preventDefault();
+      var blob = items[i].getAsFile();
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var img = '<img src="'+ev.target.result+'" style="max-width:100%;border-radius:4px;margin:4px 0;">';
+        document.execCommand('insertHTML', false, img);
+      };
+      reader.readAsDataURL(blob);
+      return;
+    }
+  }
+}
+
+function handleSupplementPaste(e) { handleBnPaste(e); }
+
+function simulateBriefingUpload() {
+  var el = document.getElementById('bnFileName');
+  if (el) { el.textContent = '2026-07-03_briefing.mp4 (128MB)'; el.style.color='#333'; }
+}
+
+function simulateBnAttach() {
+  var list = document.getElementById('bnAttachList');
+  if (!list) return;
+  var files = ['开户流程说明.pdf','话术参考.docx','转账规则.xlsx'];
+  var fname = files[list.children.length % files.length];
+  var item = document.createElement('div');
+  item.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:4px;padding:3px 10px;font-size:11px;color:#555;';
+  item.innerHTML = '📎 '+fname+' <span style="cursor:pointer;color:#aaa;" onclick="this.parentNode.remove()">✕</span>';
+  list.appendChild(item);
+}
+
+function simulateBriefingAttachEdit() {
+  showToast('附件已添加：补充说明.pdf');
+}
+
+function briefingCreate() {
+  var title = document.getElementById('bnTitle').value.trim();
+  var date  = document.getElementById('bnDate').value;
+  if (!title) { showToast('请填写标题', 'error'); return; }
+  var supplement = document.getElementById('bnSupplementEditor') ? document.getElementById('bnSupplementEditor').innerText : '';
+  briefingData.unshift({ id:Date.now(), date:date, title:title, duration:'—', creator:'覃国权', status:'ai_processing', watchRate:0, passRate:0, supplement:supplement, attachments:[], video:'' });
+  closeModal('modalBriefingNew');
+  briefingRender();
+  showToast('Briefing创建成功');
+  // reset form
+  document.getElementById('bnTitle').value='';
+  var sup = document.getElementById('bnSupplementEditor');
+  if (sup) sup.innerHTML='';
+  document.getElementById('bnFileName').textContent='支持 mp4 / mov，建议≤500MB';
+  document.getElementById('bnFileName').style.color='#aaa';
+  var al = document.getElementById('bnAttachList');
+  if (al) al.innerHTML='';
+}
+
+function bnRtCmd(cmd, val) { document.getElementById('bnSupplementEditor') && document.getElementById('bnSupplementEditor').focus(); document.execCommand(cmd, false, val||null); }
+function bnRtInsertImage() {
+  var input = document.createElement('input'); input.type='file'; input.accept='image/*';
+  input.onchange = function(){ var f=input.files[0]; if(!f) return; var r=new FileReader(); r.onload=function(e){ document.getElementById('bnSupplementEditor').focus(); document.execCommand('insertHTML',false,'<img src="'+e.target.result+'" style="max-width:100%;">'); }; r.readAsDataURL(f); };
+  input.click();
+}
+
+// Briefing 小测题交互
+function bqConfirm(id) {
+  var badge = document.getElementById('cbadge_'+id);
+  var btn = document.getElementById('cBtn_'+id);
+  if (badge) { badge.className='badge badge-green'; badge.textContent='已确认'; }
+  if (btn) btn.remove();
+  showToast('题目已确认');
+}
+function bqEdit(id, type, stem) {
+  document.getElementById('qqTitle').textContent = '编辑题目';
+  var stemEl = document.getElementById('qqStem');
+  if (stemEl) stemEl.value = stem;
+  openModal('modalQuizQuestion');
+}
+function bqAddManual() {
+  document.getElementById('qqTitle').textContent = '新增题目';
+  var stemEl = document.getElementById('qqStem');
+  if (stemEl) stemEl.value = '';
+  openModal('modalQuizQuestion');
+}
+
+function handleSupplementPaste(e) { handleBnPaste(e); }
+
+function updateCpPassUnit() {
+  var t = document.getElementById('cpPassType');
+  var lbl = document.getElementById('cpPassUnitLabel');
+  if (!t||!lbl) return;
+  var map = {score:'（分）', rate:'（%）', count:'（题）'};
+  lbl.textContent = map[t.value]||'';
+}
+
+function updatePassInput() {
+  var type = document.getElementById('passType').value;
+  var unit = document.getElementById('passUnit');
+  var val  = document.getElementById('passValue');
+  if (type==='score') { unit.textContent='分'; val.value=60; val.max=100; }
+  else if (type==='rate') { unit.textContent='%'; val.value=60; val.max=100; }
+  else { unit.textContent='题'; val.value=2; val.max=20; }
+}
+
+// ══════════════════════════════════════
+// ══════════════════════════════════════
+// 题库管理
+// ══════════════════════════════════════
+var quizBankData = [
+  { id:1, type:'单选', stem:'MCV开户新增的视频验证步骤在哪个环节之后？', tags:['开户介绍'], src:'2026-07-02 开户业务及转账规则更新说明', created:'2026-07-02', updated:'2026-07-02' },
+  { id:2, type:'多选', stem:'以下哪些情况会导致开户被拒？（多选）', tags:['开户介绍'], src:'手动录入', created:'2026-06-15', updated:'2026-06-28' },
+  { id:3, type:'单选', stem:'本次转账规则调整主要影响哪类转账？', tags:['转账业务'], src:'2026-07-02 开户业务及转账规则更新说明', created:'2026-07-02', updated:'2026-07-02' },
+  { id:4, type:'多选', stem:'港元转人民币跨境转账的汇率计算说法正确的是？', tags:['转账业务'], src:'手动上传', created:'2026-06-20', updated:'2026-07-01' },
+  { id:5, type:'单选', stem:'客户反映视频验证失败，首要建议的处理步骤是？', tags:['开户介绍','账户安全'], src:'手动录入', created:'2026-06-10', updated:'2026-06-10' }
+];
+var selectedBankIds = new Set();
+
+function quizBankRender() {
+  var tbody = document.getElementById('quizBankBody');
+  if (!tbody) return;
+  tbody.innerHTML = quizBankData.map(function(q, i) {
+    var typeBadge = q.type==='单选' ? '<span class="badge badge-blue">单选</span>' : '<span class="badge badge-teal">多选</span>';
+    var tagsHtml = q.tags.map(function(t){ return '<span class="badge badge-teal" style="font-size:10px;">'+t+'</span>'; }).join(' ');
+    var srcDisplay = q.src==='手动录入'||q.src==='手动上传'
+      ? '<span style="color:#aaa;">'+q.src+'</span>'
+      : '<span style="color:#fa8c16;cursor:pointer;" title="'+q.src+'">📹 '+q.src.substring(0,18)+'…</span>';
+    var checked = selectedBankIds.has(q.id) ? 'checked' : '';
+    return '<tr>'
+      + '<td><input type="checkbox" style="accent-color:#00b389;" '+checked+' onchange="bankToggleSelect('+q.id+',this)"></td>'
+      + '<td style="color:#aaa;">'+(i+1)+'</td>'
+      + '<td>'+typeBadge+'</td>'
+      + '<td style="max-width:260px;">'+q.stem.substring(0,50)+(q.stem.length>50?'…':'')+'</td>'
+      + '<td>'+tagsHtml+'</td>'
+      + '<td>'+srcDisplay+'</td>'
+      + '<td style="color:#aaa;white-space:nowrap;">'+q.created+'</td>'
+      + '<td style="color:#aaa;white-space:nowrap;">'+q.updated+'</td>'
+      + '<td><div class="td-ops">'
+      + '<span class="td-op" onclick="previewQuestion('+q.id+')">预览</span>'
+      + '<span class="td-op" onclick="editQuestion('+q.id+')">编辑</span>'
+      + '</div></td>'
+      + '</tr>';
+  }).join('');
+  updateBankCreateBtn();
+}
+
+function bankToggleSelect(id, cb) {
+  if (cb.checked) selectedBankIds.add(id); else selectedBankIds.delete(id);
+  updateBankCreateBtn();
+}
+
+function bankSelectAll(cb) {
+  quizBankData.forEach(function(q){ if(cb.checked) selectedBankIds.add(q.id); else selectedBankIds.delete(q.id); });
+  quizBankRender();
+}
+
+function updateBankCreateBtn() {
+  var btn = document.getElementById('btnCreatePaperFromBank');
+  if (!btn) return;
+  btn.disabled = selectedBankIds.size === 0;
+  btn.textContent = selectedBankIds.size > 0 ? '从选中 '+selectedBankIds.size+' 题创建试卷' : '从选中题目创建试卷';
+}
+
+function openCreatePaperFromBank() {
+  document.getElementById('selectedBankCount').textContent = selectedBankIds.size;
+  openModal('modalCreatePaperFromBank');
+}
+
+function previewQuestion(id) {
+  var q = quizBankData.find(function(x){ return x.id===id; });
+  if (!q) return;
+  showToast('预览：'+q.stem.substring(0,20)+'…');
+}
+
+function editQuestion(id) {
+  document.getElementById('qqTitle').textContent = '编辑题目';
+  var q = quizBankData.find(function(x){ return x.id===id; });
+  if (q && document.getElementById('qqStem')) document.getElementById('qqStem').value = q.stem;
+  openModal('modalQuizQuestion');
+}
+
+function toggleBankStatus(id) {
+  var q = quizBankData.find(function(x){ return x.id===id; });
+  if (!q) return;
+  q.status = q.status==='enabled' ? 'disabled' : 'enabled';
+  quizBankRender();
+  showToast(q.status==='enabled'?'已启用':'已停用', q.status==='disabled'?'warning':'');
+}
+
+function saveQuizQuestion() {
+  closeModal('modalQuizQuestion');
+  showToast('题目保存成功');
+  quizBankRender();
+}
+
+var qqTags = [];
+function qqTagSearch(val) {
+  var create = document.getElementById('qqTagCreate');
+  var newEl = document.getElementById('qqTagNew');
+  if (val.trim()) { create.style.display='block'; if(newEl) newEl.textContent=val.trim(); }
+  else { create.style.display='none'; }
+}
+function qqAddTag(tag) {
+  if (qqTags.indexOf(tag)>=0) return;
+  qqTags.push(tag);
+  renderQqTags();
+  document.getElementById('qqTagInput').value='';
+}
+function qqCreateTag() {
+  var val = document.getElementById('qqTagInput').value.trim();
+  if (val) qqAddTag(val);
+}
+function renderQqTags() {
+  var list = document.getElementById('qqTagList');
+  if (!list) return;
+  list.innerHTML = qqTags.map(function(t){
+    return '<span style="display:inline-flex;align-items:center;gap:3px;background:#e6fffb;border:1px solid #87e8de;color:#13c2c2;padding:2px 8px;border-radius:10px;font-size:11px;">'
+      +t+' <span style="cursor:pointer;" onclick="qqRemoveTag(\''+t+'\')">✕</span></span>';
+  }).join('');
+}
+function qqRemoveTag(t) { qqTags = qqTags.filter(function(x){return x!==t;}); renderQqTags(); }
+
+// ══════════════════════════════════════
+// 试卷管理
+// ══════════════════════════════════════
+var quizPaperData = [
+  { id:1, name:'2026-07-02 Briefing小测', type:'Briefing小测', count:3,  full:100, pass:60, status:'published', created:'2026-07-02' },
+  { id:2, name:'2026年7月月测',           type:'月测',         count:20, full:100, pass:60, status:'published', created:'2026-07-01' },
+  { id:3, name:'开户业务专项考核',         type:'专项测验',     count:15, full:100, pass:70, status:'draft',     created:'2026-06-28' }
+];
+
+function quizPaperRender() {
+  var tbody = document.getElementById('quizPaperBody');
+  if (!tbody) return;
+  var stMap = { published:'已发布', draft:'草稿' };
+  var stBadge = { published:'badge-green', draft:'badge-gray' };
+  tbody.innerHTML = quizPaperData.map(function(p) {
+    return '<tr>'
+      + '<td style="font-weight:600;">'+p.name+'</td>'
+      + '<td><span class="badge badge-blue">'+p.type+'</span></td>'
+      + '<td>'+p.count+' 题</td>'
+      + '<td>'+p.full+' 分</td>'
+      + '<td>'+p.pass+' 分</td>'
+      + '<td><span class="badge '+(stBadge[p.status]||'badge-gray')+'">'+(stMap[p.status]||p.status)+'</span></td>'
+      + '<td style="color:#aaa;">'+p.created+'</td>'
+      + '<td><div class="td-ops">'
+      + '<span class="td-op" onclick="openPaperDetail('+p.id+')">查看/编辑</span>'
+      + '<span class="td-op" style="color:#1890ff;" onclick="openDispatchFromPaper('+p.id+')">派发</span>'
+      + '<span class="td-op danger" onclick="showToast(\'已删除\',\'warning\')">删除</span>'
+      + '</div></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function openDispatchFromPaper(paperId) {
+  var p = quizPaperData.find(function(x){ return x.id===paperId; });
+  if (!p) return;
+  // 预填试卷名
+  var sel = document.querySelector('#modalQuizDispatch select');
+  if (sel) { for (var i=0;i<sel.options.length;i++) { if (sel.options[i].text.indexOf(p.name)>=0) { sel.selectedIndex=i; break; } } }
+  openModal('modalQuizDispatch');
+}
+
+function openPaperDetail(id) {
+  var p = quizPaperData.find(function(x){ return x.id===id; });
+  if (!p) return;
+  document.getElementById('paperListView').style.display='none';
+  document.getElementById('paperDetailView').style.display='flex';
+  document.getElementById('paperDetailTitle').textContent = p.name;
+  var body = document.getElementById('paperDetailBody');
+  var paperQuestions = quizBankData.slice(0, p.count>quizBankData.length?quizBankData.length:p.count);
+  var qRows = paperQuestions.map(function(q,i){
+    return '<div draggable="true" ondragover="event.preventDefault()" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #f0f0f0;border-radius:6px;margin-bottom:6px;background:#fff;cursor:grab;">'
+      + '<span style="color:#ccc;font-size:16px;">⠿</span>'
+      + '<span style="color:#aaa;min-width:24px;">'+(i+1)+'.</span>'
+      + '<span style="font-size:12px;flex:1;">'+q.stem.substring(0,60)+(q.stem.length>60?'…':'')+'</span>'
+      + (q.type==='单选'?'<span class="badge badge-blue">单选</span>':'<span class="badge badge-teal">多选</span>')
+      + '<span class="td-op danger" onclick="this.closest(\'div[draggable]\').remove();showToast(\'已移除\',\'warning\')">移除</span>'
+      + '</div>';
+  }).join('');
+  // 派发记录
+  var dispatchRecords = quizDispatchData.filter(function(d){ return d.paper===p.name; });
+  var dispatchHtml = dispatchRecords.length === 0
+    ? '<div style="color:#ccc;font-size:12px;text-align:center;padding:12px;">暂无派发记录</div>'
+    : dispatchRecords.map(function(d){
+        var pct = Math.round(d.done/d.total*100);
+        return '<div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border:1px solid #f0f0f0;border-radius:6px;margin-bottom:6px;font-size:12px;">'
+          + '<span style="color:#666;">'+d.target+'</span>'
+          + '<span style="color:#aaa;">'+d.start+' ~ '+d.end+'</span>'
+          + '<div style="width:60px;height:6px;background:#f0f0f0;border-radius:3px;"><div style="width:'+pct+'%;height:100%;background:#00b389;border-radius:3px;"></div></div>'
+          + '<span>'+d.done+'/'+d.total+'</span>'
+          + '<span class="badge '+(d.status==='active'?'badge-green':'badge-gray')+'">'+(d.status==='active'?'进行中':'已截止')+'</span>'
+          + '</div>';
+      }).join('');
+  body.innerHTML = '<div class="form-card" style="margin-bottom:12px;">'
+    + '<div class="form-card-title">⚙️ 试卷规则</div>'
+    + '<div class="form-grid">'
+    + '<div class="form-group"><div class="form-label">试卷名称</div><input class="form-control" value="'+p.name+'"></div>'
+    + '<div class="form-group"><div class="form-label">试卷类型</div><select class="form-control"><option selected>'+p.type+'</option><option>月测</option><option>专项测验</option></select></div>'
+    + '<div class="form-group"><div class="form-label">及格线（分）</div><input class="form-control" type="number" value="'+p.pass+'"></div>'
+    + '<div class="form-group"><div class="form-label">满分</div><input class="form-control" type="number" value="'+p.full+'" readonly style="background:#f5f5f5;"></div>'
+    + '</div></div>'
+    + '<div class="form-card" style="margin-bottom:12px;">'
+    + '<div class="form-card-title" style="display:flex;justify-content:space-between;align-items:center;">📋 题目列表（可拖拽排序）<button class="btn btn-default btn-sm" onclick="showPanel(\'quiz-bank\')">+ 从题库添加</button></div>'
+    + qRows
+    + '</div>'
+    + '<div class="form-card">'
+    + '<div class="form-card-title" style="display:flex;justify-content:space-between;align-items:center;">📤 派发记录<button class="btn btn-primary btn-sm" onclick="openDispatchFromPaper('+p.id+')">+ 新建派发</button></div>'
+    + dispatchHtml
+    + '</div>';
+}
+
+function closePaperDetail() {
+  document.getElementById('paperDetailView').style.display='none';
+  document.getElementById('paperListView').style.display='flex';
+}
+
+// ══════════════════════════════════════
+// 派发管理
+// ══════════════════════════════════════
+var quizDispatchData = [
+  { id:1, paper:'2026-07-02 Briefing小测', target:'全员',       start:'2026-07-02 09:00', end:'2026-07-03 23:59', done:35, total:48, status:'active' },
+  { id:2, paper:'2026年7月月测',           target:'客服事业部', start:'2026-07-01 09:00', end:'2026-07-31 23:59', done:12, total:48, status:'active' },
+  { id:3, paper:'开户业务专项考核',         target:'全员',       start:'2026-06-01 09:00', end:'2026-06-30 23:59', done:48, total:48, status:'ended' }
+];
+
+function quizDispatchRender() {
+  var tbody = document.getElementById('quizDispatchBody');
+  if (!tbody) return;
+  var stMap = { active:'进行中', ended:'已截止', draft:'草稿' };
+  var stBadge = { active:'badge-green', ended:'badge-gray', draft:'badge-orange' };
+  tbody.innerHTML = quizDispatchData.map(function(d) {
+    var pct = Math.round(d.done/d.total*100);
+    var progress = '<div style="display:flex;align-items:center;gap:6px;">'
+      + '<div style="width:60px;height:6px;background:#f0f0f0;border-radius:3px;"><div style="width:'+pct+'%;height:100%;background:#00b389;border-radius:3px;"></div></div>'
+      + '<span style="font-size:11px;">'+d.done+'/'+d.total+'</span></div>';
+    return '<tr>'
+      + '<td style="font-weight:600;">'+d.paper+'</td>'
+      + '<td>'+d.target+'</td>'
+      + '<td style="color:#aaa;">'+d.start+'</td>'
+      + '<td style="color:#aaa;">'+d.end+'</td>'
+      + '<td>'+progress+'</td>'
+      + '<td><span class="badge '+(stBadge[d.status]||'badge-gray')+'">'+(stMap[d.status]||d.status)+'</span></td>'
+      + '<td><div class="td-ops">'
+      + '<span class="td-op" onclick="showPanel(\'quiz-score\')">成绩</span>'
+      + '<span class="td-op" onclick="showToast(\'编辑派发\')">编辑</span>'
+      + (d.status==='active'?'<span class="td-op danger" onclick="showToast(\'已截止\',\'warning\')">截止</span>':'')
+      + '</div></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function toggleDispatchPerson(sel) {
+  var wrap = document.getElementById('dispatchPersonWrap');
+  if (wrap) wrap.style.display = sel.value==='custom' ? 'block' : 'none';
+}
+
+function addDispatchPerson(sel) {
+  if (!sel.value) return;
+  var tags = document.getElementById('dispatchPersonTags');
+  var existing = Array.from(tags.querySelectorAll('span')).map(function(s){ return s.dataset.val; });
+  if (existing.indexOf(sel.value)>=0) { sel.value=''; return; }
+  var t = document.createElement('span');
+  t.dataset.val = sel.value;
+  t.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;padding:2px 8px;border-radius:10px;font-size:11px;';
+  t.innerHTML = sel.value+' <span style="cursor:pointer;" onclick="this.parentNode.remove()">✕</span>';
+  tags.appendChild(t);
+  sel.value = '';
+}
+
+// ══════════════════════════════════════
+// 成绩看板
+// ══════════════════════════════════════
+var scorePersons = [
+  { name:'覃国权', dept:'客服事业部', status:'done', score:92, time:'2026-07-02 10:15', duration:'8分钟',
+    answers:[{q:'MCV开户新增的视频验证步骤…',myAns:'B. 人脸识别之后',correct:true,rightAns:'B'},
+             {q:'以下哪些情况会导致视频验证失败…',myAns:'A、B',correct:false,rightAns:'A、B、D'},
+             {q:'本次转账规则调整主要影响哪类转账…',myAns:'B. 港元转人民币跨境转账',correct:true,rightAns:'B'}] },
+  { name:'Lucy',   dept:'客服事业部', status:'done', score:85, time:'2026-07-02 10:32', duration:'11分钟', answers:[] },
+  { name:'Tom',    dept:'运营部',     status:'done', score:78, time:'2026-07-02 11:05', duration:'14分钟', answers:[] },
+  { name:'Ines',   dept:'客服事业部', status:'done', score:100,time:'2026-07-02 09:58', duration:'7分钟',  answers:[] },
+  { name:'Amy',    dept:'运营部',     status:'done', score:55, time:'2026-07-02 14:22', duration:'18分钟', answers:[] },
+  { name:'Kevin',  dept:'客服事业部', status:'done', score:72, time:'2026-07-02 15:10', duration:'12分钟', answers:[] },
+  { name:'Sam',    dept:'运营部',     status:'pending', score:null, time:'—', duration:'—', answers:[] },
+  { name:'Chloe',  dept:'客服事业部', status:'pending', score:null, time:'—', duration:'—', answers:[] },
+  { name:'Brian',  dept:'运营部',     status:'pending', score:null, time:'—', duration:'—', answers:[] },
+  { name:'May',    dept:'客服事业部', status:'done', score:88, time:'2026-07-02 16:40', duration:'9分钟',  answers:[] }
+];
+
+function quizScoreRender() {
+  var body = document.getElementById('quizScoreBody');
+  if (!body) return;
+  var done = scorePersons.filter(function(p){ return p.status==='done'; });
+  var scores = done.map(function(p){ return p.score; });
+  var avg = scores.length ? (scores.reduce(function(a,b){return a+b;},0)/scores.length).toFixed(1) : 0;
+  var passCount = scores.filter(function(s){ return s>=60; }).length;
+  var total = scorePersons.length;
+
+  var cards = [
+    { label:'派发人数', value:total+' 人', color:'#00b389' },
+    { label:'已完成',   value:done.length+' / '+total, color:'#1890ff' },
+    { label:'平均分',   value:avg+' 分', color:'#fa8c16' },
+    { label:'通过率',   value:Math.round(passCount/done.length*100)+'%', color:'#52c41a' }
+  ];
+  var cardsHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">'
+    + cards.map(function(c){
+      return '<div style="background:#fff;border-radius:8px;padding:16px 20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);">'
+        +'<div style="font-size:24px;font-weight:700;color:'+c.color+';">'+c.value+'</div>'
+        +'<div style="font-size:12px;color:#888;margin-top:4px;">'+c.label+'</div>'
+        +'</div>';
+    }).join('')+'</div>';
+
+  var tableHtml = '<div class="table-wrap">'
+    +'<div class="table-toolbar">'
+    +'<select class="form-control" style="width:120px;"><option>全部状态</option><option>已完成</option><option>未完成</option></select>'
+    +'<select class="form-control" style="width:120px;"><option>全部部门</option><option>客服事业部</option><option>运营部</option></select>'
+    +'<button class="btn btn-default btn-sm" style="margin-left:auto;" onclick="showToast(\'正在导出...\')">📥 导出Excel</button>'
+    +'<button class="btn btn-default btn-sm" style="color:#fa8c16;border-color:#ffd591;" onclick="remindAllPending()">🔔 提醒未完成人员</button>'
+    +'</div>'
+    +'<table><thead><tr><th>姓名</th><th>部门</th><th>状态</th><th>得分</th><th>提交时间</th><th>用时</th><th>操作</th></tr></thead>'
+    +'<tbody>'+scorePersons.map(function(p){
+      var stBadge = p.status==='done' ? '<span class="badge badge-green">已完成</span>' : '<span class="badge badge-red">未完成</span>';
+      var scoreDisplay = p.score!==null ? '<span style="font-weight:700;color:'+(p.score>=60?'#52c41a':'#ff4d4f')+';">'+p.score+'</span>' : '<span style="color:#ccc;">—</span>';
+      var ops = p.status==='done'
+        ? '<span class="td-op" onclick="openPersonScore(\''+p.name+'\')">答题详情</span>'
+        : '<span class="td-op" style="color:#fa8c16;" onclick="remindPerson(\''+p.name+'\')">催促</span>';
+      return '<tr><td>'+p.name+'</td><td>'+p.dept+'</td><td>'+stBadge+'</td><td>'+scoreDisplay+'</td><td style="color:#aaa;">'+p.time+'</td><td style="color:#aaa;">'+p.duration+'</td><td>'+ops+'</td></tr>';
+    }).join('')+'</tbody></table>'
+    +'<div style="padding:10px 14px;font-size:11px;color:#aaa;text-align:right;">共 '+total+' 人</div>'
+    +'</div>';
+
+  body.innerHTML = cardsHtml + tableHtml;
+}
+
+function remindAllPending() {
+  var pending = scorePersons.filter(function(p){ return p.status==='pending'; });
+  showToast('已向 '+pending.length+' 位未完成人员发送提醒', 'warning');
+}
+
+function remindPerson(name) { showToast('已向 '+name+' 发送催促通知', 'warning'); }
+
+function openPersonScore(name) {
+  var p = scorePersons.find(function(x){ return x.name===name; });
+  if (!p) return;
+  document.getElementById('scoreListView').style.display='none';
+  document.getElementById('scorePersonView').style.display='flex';
+  document.getElementById('personScoreTitle').textContent = p.name+' — 答题详情';
+  var body = document.getElementById('personScoreBody');
+  var infoHtml = '<div class="form-card" style="margin-bottom:12px;">'
+    +'<div style="display:flex;gap:24px;font-size:12px;">'
+    +'<span>姓名：<strong>'+p.name+'</strong></span>'
+    +'<span>部门：'+p.dept+'</span>'
+    +'<span>得分：<strong style="color:'+(p.score>=60?'#52c41a':'#ff4d4f')+';">'+p.score+'分</strong></span>'
+    +'<span>提交时间：'+p.time+'</span>'
+    +'<span>用时：'+p.duration+'</span>'
+    +'</div></div>';
+  var ansHtml = (p.answers && p.answers.length > 0) ? p.answers.map(function(a,i){
+    return '<div style="border:1px solid '+(a.correct?'#b7eb8f':'#ffa39e')+';border-radius:6px;padding:12px 14px;margin-bottom:8px;background:'+(a.correct?'#f6ffed':'#fff1f0')+'">'
+      +'<div style="font-size:11px;font-weight:600;color:'+(a.correct?'#52c41a':'#ff4d4f');+'margin-bottom:4px;">'+(a.correct?'✅ 答对':'❌ 答错')+'</div>'
+      +'<div style="font-size:12px;font-weight:600;color:#222;margin-bottom:6px;">'+(i+1)+'. '+a.q+'</div>'
+      +'<div style="font-size:12px;color:#666;">我的答案：'+a.myAns+'</div>'
+      +(!a.correct?'<div style="font-size:12px;color:#52c41a;margin-top:2px;">正确答案：'+a.rightAns+'</div>':'')
+      +'</div>';
+  }).join('') : '<div style="color:#aaa;text-align:center;padding:20px;font-size:12px;">暂无答题详情记录</div>';
+  body.innerHTML = infoHtml + '<div class="form-card"><div class="form-card-title">📝 逐题答题情况</div>'+ansHtml+'</div>';
+}
+
+function closePersonScore() {
+  document.getElementById('scorePersonView').style.display='none';
+  document.getElementById('scoreListView').style.display='flex';
+}
+
+// init
+document.addEventListener('DOMContentLoaded', function() {
+  // 把所有弹窗从 .main 里移出到 body 末尾，避免影响布局
+  document.querySelectorAll('.modal-overlay').forEach(function(m) {
+    document.body.appendChild(m);
+  });
+  catRenderTree();
+  labelRenderTree();
+  briefingRender();
+  quizBankRender();
+  quizPaperRender();
+  quizScoreRender();
+});
+
+// ══════════════════════════════════════
+// 标签管理
+// ══════════════════════════════════════
+var labelTypes = [
+  { id:1, name:'开户介绍',       status:'enabled',  wiki:'是', seq:1,  desc:'' },
+  { id:2, name:'综合转账相关',   status:'enabled',  wiki:'是', seq:2,  desc:'' },
+  { id:3, name:'卡交易争议App操作', status:'enabled', wiki:'否', seq:3, desc:'' },
+  { id:4, name:'0904-B',         status:'disabled', wiki:'否', seq:4,  desc:'' },
+  { id:5, name:'个人银行',       status:'enabled',  wiki:'是', seq:5,  desc:'' },
+  { id:6, name:'0911测试',       status:'enabled',  wiki:'否', seq:6,  desc:'' },
+  { id:7, name:'C测试',          status:'enabled',  wiki:'否', seq:7,  desc:'' },
+  { id:8, name:'账户安全',       status:'enabled',  wiki:'是', seq:8,  desc:'' }
+];
+
+var labelTags = {
+  1: [
+    { id:101, name:'开户介绍00', level:'1', prodId:'',    status:'enabled',  created:'2024-09-11', updated:'2024-09-14' },
+    { id:102, name:'开户介绍01', level:'2', prodId:'',    status:'enabled',  created:'2024-09-11', updated:'2024-09-14' },
+    { id:103, name:'0911-1',     level:'',  prodId:'P001',status:'enabled',  created:'2024-09-11', updated:'2024-09-11' },
+    { id:104, name:'App操作指引',level:'2', prodId:'',    status:'disabled', created:'2024-09-10', updated:'2024-09-16' },
+    { id:105, name:'开户介绍02', level:'1', prodId:'',    status:'enabled',  created:'2024-09-11', updated:'2024-09-14' }
+  ],
+  2: [
+    { id:201, name:'综合转账相关', level:'1', prodId:'', status:'enabled', created:'2024-10-01', updated:'2024-10-01' },
+    { id:202, name:'转账手续费',   level:'2', prodId:'', status:'enabled', created:'2024-10-02', updated:'2024-10-10' },
+    { id:203, name:'跨境转账',     level:'2', prodId:'', status:'enabled', created:'2024-10-03', updated:'2024-10-03' }
+  ],
+  3: [
+    { id:301, name:'App操作',   level:'1', prodId:'', status:'enabled',  created:'2024-12-20', updated:'2024-12-20' },
+    { id:302, name:'交易纠纷',  level:'2', prodId:'', status:'enabled',  created:'2024-12-20', updated:'2024-12-22' }
+  ],
+  4: [
+    { id:401, name:'0904-B-1', level:'', prodId:'', status:'disabled', created:'2024-09-04', updated:'2024-09-04' }
+  ],
+  5: [
+    { id:501, name:'贷款业务', level:'1', prodId:'', status:'enabled', created:'2025-01-10', updated:'2025-01-10' },
+    { id:502, name:'存款业务', level:'1', prodId:'', status:'enabled', created:'2025-01-10', updated:'2025-01-10' },
+    { id:503, name:'转账业务', level:'1', prodId:'', status:'enabled', created:'2025-01-10', updated:'2025-01-10' },
+    { id:504, name:'手机银行', level:'2', prodId:'', status:'enabled', created:'2025-01-10', updated:'2025-02-01' },
+    { id:505, name:'ZA Card', level:'2',  prodId:'', status:'enabled', created:'2025-01-10', updated:'2025-01-10' }
+  ],
+  6: [{ id:601, name:'0911测试标签', level:'', prodId:'', status:'enabled', created:'2024-09-11', updated:'2024-09-14' }],
+  7: [{ id:701, name:'C测试标签',    level:'', prodId:'', status:'enabled', created:'2025-01-08', updated:'2025-01-08' }],
+  8: [
+    { id:801, name:'密码重置',  level:'1', prodId:'', status:'enabled',  created:'2025-03-01', updated:'2025-03-01' },
+    { id:802, name:'账户冻结',  level:'1', prodId:'', status:'enabled',  created:'2025-03-01', updated:'2025-03-01' },
+    { id:803, name:'异常登录',  level:'2', prodId:'', status:'disabled', created:'2025-03-02', updated:'2025-03-10' }
+  ]
+};
+
+var labelSelectedTypeId = 1;
+var labelEditingTypeId = null;
+var labelOpenTypes = {}; // 哪些类型展开了子标签
+var labelDragSrcType = null;
+
+function labelRenderTree() {
+  var container = document.getElementById('labelTreeView');
+  if (!container) return;
+  var html = '';
+  labelTypes.forEach(function(t) {
+    var isDisabled = t.status === 'disabled';
+    var tags = labelTags[t.id] || [];
+    var isOpen = labelOpenTypes[t.id];
+    var isEditingType = labelInlineEditTypeId === t.id;
+
+    if (isEditingType) {
+      // 标签类型行内编辑状态
+      html += '<div style="display:flex;align-items:center;padding:6px 12px;border-bottom:1px solid #f5f5f5;background:#e6faf5;gap:6px;">'
+        + '<span style="color:#ccc;margin-right:4px;font-size:13px;">⠿</span>'
+        + '<input id="labelTypeInlineInput_'+t.id+'" class="form-control" style="flex:1;height:26px;padding:2px 8px;font-size:12px;" value="'+t.name+'" placeholder="输入标签类型名称" onkeydown="if(event.key===\'Enter\')labelSaveType();if(event.key===\'Escape\')labelCancelEditType()">'
+        + '<button class="btn btn-primary btn-sm" style="height:26px;padding:0 10px;flex-shrink:0;" onclick="labelSaveType()">✓</button>'
+        + '<button class="btn btn-default btn-sm" style="height:26px;padding:0 10px;flex-shrink:0;" onclick="labelCancelEditType()">✕</button>'
+        + '</div>';
+    } else {
+      var nameStyle = isDisabled ? 'color:#bbb;text-decoration:line-through;' : 'color:#222;font-weight:600;';
+      html += '<div style="display:flex;align-items:center;padding:8px 12px 8px 16px;border-bottom:1px solid #f5f5f5;'+(isDisabled?'background:#fafafa;':'')+'" draggable="true" id="ltrow_'+t.id+'" ondragstart="labelDragStart(event,'+t.id+')" ondragover="labelDragOver(event,'+t.id+')" ondrop="labelDrop(event,'+t.id+')" ondragleave="labelDragLeave(event)">'
+        + '<span style="color:#ccc;margin-right:6px;cursor:grab;font-size:13px;">⠿</span>'
+        + '<span style="font-size:12px;'+nameStyle+';cursor:pointer;" onclick="labelToggleType('+t.id+')">'+(isOpen?'▼ ':'▶ ')+t.name+'</span>'
+        + (isDisabled ? '<span class="badge badge-red" style="font-size:9px;margin-left:6px;">停用</span>' : '')
+        + '<span style="flex:1;"></span>'
+        + (isDisabled
+            ? '<span style="font-size:11px;color:#52c41a;cursor:pointer;margin-right:8px;white-space:nowrap;" onclick="event.stopPropagation();labelTypeToggleStatus('+t.id+')">启用</span>'
+            : '<span style="font-size:11px;color:#ff4d4f;cursor:pointer;margin-right:8px;white-space:nowrap;" onclick="event.stopPropagation();labelTypeToggleStatus('+t.id+')">停用</span>')
+        + '<span style="font-size:11px;color:#00b389;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();labelStartEditType('+t.id+')">编辑</span>'
+        + '</div>';
+    }
+
+    if (isOpen && !isEditingType) {
+      tags.forEach(function(tag) {
+        var tagDisabled = tag.status === 'disabled';
+        var isEditingTag = labelInlineEditTagId === tag.id;
+        if (isEditingTag) {
+          html += '<div style="display:flex;align-items:center;padding:5px 12px 5px 36px;border-bottom:1px solid #fafafa;background:#f0faf7;gap:6px;">'
+            + '<input id="labelTagInlineInput_'+tag.id+'" class="form-control" style="flex:1;height:24px;padding:2px 8px;font-size:12px;" value="'+tag.name+'" onkeydown="if(event.key===\'Enter\')labelSaveTagEdit('+tag.id+','+t.id+');if(event.key===\'Escape\')labelCancelTagEdit()">'
+            + '<button class="btn btn-primary btn-sm" style="height:24px;padding:0 8px;flex-shrink:0;" onclick="labelSaveTagEdit('+tag.id+','+t.id+')">✓</button>'
+            + '<button class="btn btn-default btn-sm" style="height:24px;padding:0 8px;flex-shrink:0;" onclick="labelCancelTagEdit()">✕</button>'
+            + '</div>';
+        } else {
+          html += '<div style="display:flex;align-items:center;padding:6px 12px 6px 36px;border-bottom:1px solid #fafafa;'+(tagDisabled?'background:#fefefe;':'')+'">'
+            + '<span style="font-size:12px;flex:1;'+(tagDisabled?'color:#bbb;text-decoration:line-through;':'color:#444;')+'">'+tag.name+'</span>'
+            + (tagDisabled ? '<span class="badge badge-red" style="font-size:9px;margin-right:6px;">停用</span>' : '')
+            + (tagDisabled
+                ? '<span style="font-size:11px;color:#52c41a;cursor:pointer;margin-right:8px;" onclick="labelToggleTagStatus('+tag.id+','+t.id+')">启用</span>'
+                : '<span style="font-size:11px;color:#ff4d4f;cursor:pointer;margin-right:8px;" onclick="labelToggleTagStatus('+tag.id+','+t.id+')">停用</span>')
+            + '<span style="font-size:11px;color:#00b389;cursor:pointer;" onclick="labelEditTagInline('+tag.id+','+t.id+')">编辑</span>'
+            + '</div>';
+        }
+      });
+
+      // 新建标签的行内输入
+      if (labelInlineEditTagId === 'new_' + t.id) {
+        html += '<div style="display:flex;align-items:center;padding:5px 12px 5px 36px;border-bottom:1px solid #f0f0f0;background:#f0faf7;gap:6px;">'
+          + '<input id="labelTagInlineInput_new_'+t.id+'" class="form-control" style="flex:1;height:24px;padding:2px 8px;font-size:12px;" placeholder="输入标签名称，回车保存" onkeydown="if(event.key===\'Enter\')labelSaveNewTag('+t.id+');if(event.key===\'Escape\')labelCancelTagEdit()">'
+          + '<button class="btn btn-primary btn-sm" style="height:24px;padding:0 8px;flex-shrink:0;" onclick="labelSaveNewTag('+t.id+')">✓</button>'
+          + '<button class="btn btn-default btn-sm" style="height:24px;padding:0 8px;flex-shrink:0;" onclick="labelCancelTagEdit()">✕</button>'
+          + '</div>';
+      } else {
+        html += '<div style="padding:6px 12px 6px 36px;font-size:11px;color:#00b389;cursor:pointer;border-bottom:1px solid #f0f0f0;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'" onclick="labelAddTagInline('+t.id+')">'
+          + '+ 新建标签</div>';
+      }
+    }
+  });
+
+  html += '<div style="padding:10px 16px;font-size:12px;color:#00b389;cursor:pointer;border-top:1px dashed #e8e8e8;margin-top:4px;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'" onclick="labelNewType()">+ 新增标签类型</div>';
+  container.innerHTML = html;
+}
+
+function labelToggleType(id) {
+  labelOpenTypes[id] = !labelOpenTypes[id];
+  labelRenderTree();
+}
+
+function labelTypeToggleStatus(id) {
+  var t = labelTypes.find(function(x){ return x.id===id; });
+  if (!t) return;
+  t.status = t.status==='enabled' ? 'disabled' : 'enabled';
+  labelRenderTree();
+  showToast(t.status==='enabled'?'已启用':'已停用', t.status==='disabled'?'warning':'');
+}
+
+// 拖拽排序
+function labelDragStart(e, id) { labelDragSrcType=id; e.currentTarget.style.opacity='0.5'; e.dataTransfer.effectAllowed='move'; }
+function labelDragOver(e, id) { e.preventDefault(); e.dataTransfer.dropEffect='move'; document.querySelectorAll('[id^="ltrow_"]').forEach(function(el){el.style.borderTop='';}); if(labelDragSrcType!==id){var el=document.getElementById('ltrow_'+id);if(el)el.style.borderTop='2px solid #00b389';} }
+function labelDragLeave(e) { e.currentTarget.style.borderTop=''; }
+function labelDrop(e, id) {
+  e.preventDefault();
+  document.querySelectorAll('[id^="ltrow_"]').forEach(function(el){el.style.borderTop='';el.style.opacity='';});
+  if (labelDragSrcType===id||!labelDragSrcType) return;
+  var src = labelTypes.find(function(t){return t.id===labelDragSrcType;});
+  var tgt = labelTypes.find(function(t){return t.id===id;});
+  if (src&&tgt) {
+    labelTypes.splice(labelTypes.indexOf(src),1);
+    labelTypes.splice(labelTypes.indexOf(tgt),0,src);
+    labelRenderTree();
+    showToast('排序已更新');
+  }
+  labelDragSrcType=null;
+}
+
+// ── 标签类型行内编辑（不弹窗，直接在树上修改名字）──
+var labelInlineEditTypeId = null;
+var labelInlineEditTagId = null;
+
+function labelStartEditType(id) {
+  labelInlineEditTypeId = id;
+  labelRenderTree();
+  setTimeout(function(){
+    var inp = document.getElementById('labelTypeInlineInput_'+id);
+    if (inp) { inp.focus(); inp.select(); }
+  }, 30);
+}
+
+function labelSaveType() {
+  var id = labelInlineEditTypeId;
+  var t = labelTypes.find(function(x){ return x.id===id; });
+  if (!t) return;
+  var inp = document.getElementById('labelTypeInlineInput_'+id);
+  var val = inp ? inp.value.trim() : '';
+  if (!val) { showToast('类型名称不能为空','error'); return; }
+  t.name = val;
+  labelInlineEditTypeId = null;
+  labelRenderTree();
+  showToast('保存成功');
+}
+
+function labelCancelEditType() {
+  // 如果是新建的空类型则删掉
+  if (labelInlineEditTypeId) {
+    var t = labelTypes.find(function(x){ return x.id===labelInlineEditTypeId; });
+    if (t && t.name === '') labelTypes = labelTypes.filter(function(x){ return x.id!==labelInlineEditTypeId; });
+  }
+  labelInlineEditTypeId = null;
+  labelRenderTree();
+}
+
+function labelNewType() {
+  var newId = Date.now();
+  labelTypes.push({ id:newId, name:'', status:'enabled', wiki:'否', seq:labelTypes.length+1, desc:'' });
+  labelInlineEditTypeId = newId;
+  labelRenderTree();
+  setTimeout(function(){
+    var inp = document.getElementById('labelTypeInlineInput_'+newId);
+    if (inp) inp.focus();
+  }, 30);
+}
+
+// ── 标签行内编辑（不弹窗）──
+function labelAddTagInline(typeId) {
+  labelInlineEditTagId = 'new_' + typeId;
+  labelOpenTypes[typeId] = true;
+  labelRenderTree();
+  setTimeout(function(){
+    var inp = document.getElementById('labelTagInlineInput_new_'+typeId);
+    if (inp) inp.focus();
+  }, 30);
+}
+
+function labelSaveNewTag(typeId) {
+  var inp = document.getElementById('labelTagInlineInput_new_'+typeId);
+  var val = inp ? inp.value.trim() : '';
+  if (!val) { showToast('标签名称不能为空','error'); return; }
+  var newId = Date.now();
+  if (!labelTags[typeId]) labelTags[typeId] = [];
+  labelTags[typeId].push({ id:newId, name:val, level:'', prodId:'', status:'enabled', created:'2026-07-06', updated:'2026-07-06' });
+  labelInlineEditTagId = null;
+  labelRenderTree();
+  showToast('标签已添加');
+}
+
+function labelEditTagInline(tagId, typeId) {
+  labelInlineEditTagId = tagId;
+  labelRenderTree();
+  setTimeout(function(){
+    var inp = document.getElementById('labelTagInlineInput_'+tagId);
+    if (inp) { inp.focus(); inp.select(); }
+  }, 30);
+}
+
+function labelSaveTagEdit(tagId, typeId) {
+  var inp = document.getElementById('labelTagInlineInput_'+tagId);
+  var val = inp ? inp.value.trim() : '';
+  if (!val) { showToast('标签名称不能为空','error'); return; }
+  var tags = labelTags[typeId]||[];
+  var tag = tags.find(function(t){ return t.id===tagId; });
+  if (tag) tag.name = val;
+  labelInlineEditTagId = null;
+  labelRenderTree();
+  showToast('保存成功');
+}
+
+function labelCancelTagEdit() {
+  labelInlineEditTagId = null;
+  labelRenderTree();
+}
+
+function labelToggleTagStatus(tagId, typeId) {
+  var tags = labelTags[typeId]||[];
+  var tag = tags.find(function(t){return t.id===tagId;});
+  if (!tag) return;
+  tag.status = tag.status==='enabled'?'disabled':'enabled';
+  labelRenderTree();
+  showToast(tag.status==='enabled'?'已启用':'已停用', tag.status==='disabled'?'warning':'');
+}
+
+function labelSaveTag() { labelRenderTree(); }
+
+function labelSearch(q) {
+  var searchResult = document.getElementById('labelSearchResult');
+  var treeView = document.getElementById('labelTreeView');
+  if (!q||!q.trim()) {
+    if(searchResult) searchResult.style.display='none';
+    if(treeView) treeView.style.display='block';
+    return;
+  }
+  if(searchResult) searchResult.style.display='block';
+  if(treeView) treeView.style.display='none';
+  var rows = [];
+  labelTypes.forEach(function(t){
+    (labelTags[t.id]||[]).forEach(function(tag){
+      if (tag.name.indexOf(q)>=0) rows.push({tag:tag, typeName:t.name});
+    });
+  });
+  var tbody = document.getElementById('labelSearchBody');
+  if (!tbody) return;
+  tbody.innerHTML = rows.length===0
+    ? '<tr><td colspan="5" style="text-align:center;color:#ccc;padding:20px;">未找到相关标签</td></tr>'
+    : rows.map(function(r){
+        var tag=r.tag;
+        var st = tag.status==='enabled'?'<span class="badge badge-green">启用</span>':'<span class="badge badge-red">停用</span>';
+        return '<tr><td>'+tag.name+'</td><td><span class="badge badge-blue">'+r.typeName+'</span></td><td>'+st+'</td><td style="color:#aaa;">'+tag.created+'</td>'
+          +'<td><span class="td-op" onclick="showToast(\'编辑标签\')">编辑</span></td></tr>';
+      }).join('');
+}
+
+// 兼容旧调用
+function labelRenderTypes() { labelRenderTree(); }
+function labelSelectType(id) { labelSelectedTypeId=id; labelOpenTypes[id]=true; labelRenderTree(); }
+function labelRenderTags() {}
+function labelEditMode() {}
+
+// init label panel when switching to it
+
+// ─── EXAM SUBMENU TOGGLE ───
+function toggleExamMenu(el) {
+  var sub = document.getElementById('exam-submenu');
+  var arrow = document.getElementById('examArrow');
+  var isOpen = sub.style.display !== 'none';
+  sub.style.display = isOpen ? 'none' : 'block';
+  if (arrow) { arrow.style.transform = isOpen ? '' : 'rotate(90deg)'; }
+}
+
+// ─── PANEL ROUTER ───
+var menuMap = {
+  'catalog': 'menu-catalog',
+  'label': 'menu-label',
+  'briefing': 'menu-briefing',
+  'error-handle': 'menu-error-handle',
+  'audit-handle': 'menu-audit-handle',
+  'quiz-bank': 'menu-quiz-bank',
+  'quiz-paper': 'menu-quiz-paper',
+  'quiz-score': 'menu-quiz-score'
+};
+
+function showPanel(name) {
+  // deactivate all panels
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  // deactivate all menu items
+  document.querySelectorAll('.menu-item').forEach(function(m) { m.classList.remove('active'); });
+
+  var panelId = name === 'placeholder' ? 'panel-placeholder' : 'panel-' + name;
+  var panel = document.getElementById(panelId);
+  if (panel) panel.classList.add('active');
+
+  if (menuMap[name]) {
+    var mi = document.getElementById(menuMap[name]);
+    if (mi) mi.classList.add('active');
+  }
+
+  // 面板初始化钩子
+  if (name === 'label') {
+    labelRenderTree();
+  }
+  if (name === 'briefing') { briefingRender && briefingRender(); }
+  if (name === 'quiz-bank') { quizBankRender && quizBankRender(); }
+  if (name === 'quiz-score') { quizScoreRender && quizScoreRender(); }
+}
+
+// ─── SIDEBAR TOGGLE ───
+function toggleMenu(titleEl) {
+  var arrow = titleEl.querySelector('.arrow');
+  var sub = titleEl.nextElementSibling;
+  if (!sub || !sub.classList.contains('menu-sub')) return;
+  var isOpen = sub.classList.contains('open');
+  sub.classList.toggle('open', !isOpen);
+  if (arrow) arrow.classList.toggle('open', !isOpen);
+}
+
+// ─── TOAST ───
+function showToast(msg, type) {
+  var c = document.getElementById('toastContainer');
+  var t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.innerHTML = (type === 'error' ? '❌ ' : type === 'warning' ? '⚠️ ' : '✅ ') + msg;
+  c.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2000);
+}
+
+// ─── MODAL HELPERS ───
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// click overlay to close (except entries marked no-overlay-close)
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal-overlay') && !e.target.dataset.noOverlayClose) {
+    e.target.classList.remove('open');
+  }
+});
+</script>
+
+</body>
+</html>

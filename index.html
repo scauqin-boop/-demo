@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>知识库优化 Demo 导航</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'PingFang HK', 'Microsoft YaHei', sans-serif; font-size: 13px; color: #333; background: #f0f2f5; }
+
+.topbar { height: 56px; background: #00b389; display: flex; align-items: center; padding: 0 24px; }
+.topbar-logo { color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+
+.wrap { max-width: 1040px; margin: 0 auto; padding: 32px 24px 64px; }
+.wrap-intro { color: #666; font-size: 13px; margin-bottom: 28px; line-height: 1.6; }
+
+.group { margin-bottom: 32px; }
+.group-title { font-size: 14px; font-weight: 700; color: #001529; margin-bottom: 12px; padding-left: 10px; border-left: 3px solid #00b389; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.card { display: block; background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px; text-decoration: none; color: inherit; transition: all 0.15s; }
+.card:hover { border-color: #00b389; box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
+.card-title { font-size: 13px; font-weight: 700; color: #001529; margin-bottom: 6px; }
+.card-desc { font-size: 12px; color: #888; line-height: 1.5; }
+.card-file { font-size: 11px; color: #bbb; margin-top: 8px; font-family: Consolas, monospace; }
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-logo">知识库优化 Demo 导航</div></div>
+<div class="wrap">
+  <div class="wrap-intro">以下均为纯前端静态 Demo，点击卡片即可在线预览；Demo 之间可通过页面内的导航链接互相跳转。</div>
+
+  <div class="group">
+    <div class="group-title">管理系统</div>
+    <div class="cards">
+      <a class="card" href="demo-admin-system.html">
+        <div class="card-title">众安客服管理系统</div>
+        <div class="card-desc">管理系统总入口，含侧边菜单，可跳转到 Briefing、题库、试卷、成绩看板等子系统</div>
+        <div class="card-file">demo-admin-system.html</div>
+      </a>
+      <a class="card" href="demo-briefing.html">
+        <div class="card-title">每日 Briefing 管理</div>
+        <div class="card-desc">每日简报内容的创建与管理</div>
+        <div class="card-file">demo-briefing.html</div>
+      </a>
+      <a class="card" href="demo-quiz-bank.html">
+        <div class="card-title">题库管理</div>
+        <div class="card-desc">试题的录入、分类与维护</div>
+        <div class="card-file">demo-quiz-bank.html</div>
+      </a>
+      <a class="card" href="demo-quiz-paper.html">
+        <div class="card-title">试卷管理</div>
+        <div class="card-desc">组卷、派发设置与派发规则联动</div>
+        <div class="card-file">demo-quiz-paper.html</div>
+      </a>
+      <a class="card" href="demo-quiz-score.html">
+        <div class="card-title">成绩看板</div>
+        <div class="card-desc">派发后的答题完成情况与成绩统计</div>
+        <div class="card-file">demo-quiz-score.html</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-title">知识库</div>
+    <div class="cards">
+      <a class="card" href="demo-ark-knowledge.html">
+        <div class="card-title">ARK 知识库查询</div>
+        <div class="card-desc">知识库重构后的查询与检索界面</div>
+        <div class="card-file">demo-ark-knowledge.html</div>
+      </a>
+      <a class="card" href="demo-exam-student.html">
+        <div class="card-title">考试管理 — 学员端</div>
+        <div class="card-desc">学员视角的考试作答界面</div>
+        <div class="card-file">demo-exam-student.html</div>
+      </a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

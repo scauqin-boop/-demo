@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARK 知识库查询 — 重构Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'PingFang HK', 'Microsoft YaHei', sans-serif; font-size: 13px; background: #f0f2f5; color: #333; }
+
+  /* ── TOP BAR ── */
+  .topbar { background: #00b389; height: 48px; display: flex; align-items: center; padding: 0 16px; gap: 16px; }
+  .topbar .logo { color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+  .topbar .tabs { display: flex; gap: 4px; flex: 1; }
+  .topbar .tab { background: rgba(255,255,255,0.15); color: #fff; padding: 6px 14px; border-radius: 4px 4px 0 0; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .topbar .tab.active { background: #fff; color: #00b389; font-weight: 600; }
+  .topbar .tab .close { opacity: 0.6; font-size: 10px; }
+  .topbar .nav-icons { display: flex; gap: 12px; align-items: center; color: #fff; font-size: 12px; }
+  .topbar .nav-icons span { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+  /* ── LAYOUT ── */
+  .container { display: flex; height: calc(100vh - 48px); }
+
+  /* ── LEFT SIDEBAR ── */
+  .sidebar { width: 230px; background: #fff; border-right: 1px solid #e8e8e8; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-header { padding: 10px 12px 8px; border-bottom: 1px solid #f0f0f0; }
+  .sidebar-title { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .sidebar-search { position: relative; }
+  .sidebar-search input { width: 100%; border: 1px solid #e0e0e0; border-radius: 4px; padding: 5px 8px 5px 26px; font-size: 12px; outline: none; color: #333; }
+  .sidebar-search input:focus { border-color: #00b389; }
+  .sidebar-search .s-icon { position: absolute; left: 7px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 11px; }
+
+  /* mode toggle */
+  .mode-toggle { display: flex; padding: 8px 12px; gap: 6px; border-bottom: 1px solid #f0f0f0; }
+  .mode-btn { flex: 1; padding: 5px 0; text-align: center; font-size: 12px; border: 1px solid #e0e0e0; border-radius: 4px; cursor: pointer; color: #666; transition: all 0.2s; }
+  .mode-btn.active { background: #00b389; color: #fff; border-color: #00b389; font-weight: 600; }
+
+  /* tree */
+  .tree { flex: 1; overflow-y: auto; padding: 6px 0; }
+  .tree-section { padding: 6px 12px 2px; font-size: 11px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tree-item { display: flex; align-items: center; padding: 5px 12px; cursor: pointer; gap: 4px; border-left: 3px solid transparent; transition: all 0.15s; }
+  .tree-item:hover { background: #f5fffe; }
+  .tree-item.active { background: #e6faf5; border-left-color: #00b389; color: #00b389; font-weight: 600; }
+  .tree-item .arrow { width: 14px; font-size: 9px; color: #aaa; flex-shrink: 0; transition: transform 0.2s; }
+  .tree-item .arrow.open { transform: rotate(90deg); }
+  .tree-item .dot { width: 6px; height: 6px; border-radius: 50%; background: #00b389; flex-shrink: 0; margin-left: 2px; }
+  .tree-item .label { flex: 1; font-size: 12px; line-height: 1.4; }
+  .tree-item .wiki-btn { font-size: 10px; background: #00b389; color: #fff; border-radius: 3px; padding: 1px 5px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
+  .tree-item:hover .wiki-btn { opacity: 1; }
+  .tree-sub { padding-left: 10px; }
+
+  /* tag cloud sidebar */
+  .tag-sidebar { flex: 1; overflow-y: auto; padding: 8px 12px; display: none; }
+  .tag-group { margin-bottom: 10px; }
+  .tag-group-header { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; cursor: pointer; font-size: 12px; font-weight: 600; color: #444; border-bottom: 1px solid #f0f0f0; margin-bottom: 6px; }
+  .tag-group-header .g-arrow { font-size: 9px; color: #aaa; transition: transform 0.2s; }
+  .tag-group-header .g-arrow.open { transform: rotate(90deg); }
+  .tag-cloud { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag-chip-wrap { display: inline-flex; align-items: stretch; background: #f0faf7; border: 1px solid #b7e8d8; border-radius: 12px; overflow: hidden; transition: all 0.15s; }
+  .tag-chip-wrap:hover { border-color: #00b389; }
+  .tag-chip-wrap.selected { background: #00b389; border-color: #00b389; }
+  .tag-chip { padding: 3px 8px; font-size: 11px; color: #00956d; cursor: pointer; background: transparent; border: none; outline: none; transition: color 0.15s; white-space: nowrap; }
+  .tag-chip-wrap:hover .tag-chip { color: #00875a; }
+  .tag-chip-wrap.selected .tag-chip { color: #fff; }
+  .tag-wiki-btn { font-size: 10px; background: rgba(0,179,137,0.12); border: none; border-left: 1px solid #b7e8d8; color: #00956d; padding: 0 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap; line-height: 1; }
+  .tag-chip-wrap:hover .tag-wiki-btn { background: rgba(0,179,137,0.2); border-left-color: #00b389; }
+  .tag-chip-wrap.selected .tag-wiki-btn { background: rgba(255,255,255,0.2); border-left-color: rgba(255,255,255,0.35); color: #fff; }
+  .tag-wiki-btn:hover { background: rgba(0,0,0,0.15) !important; }
+
+  /* ── MAIN CONTENT ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* search bar */
+  .search-area { background: #fff; padding: 12px 16px; border-bottom: 1px solid #e8e8e8; }
+  .search-row { display: flex; gap: 8px; align-items: center; }
+  .search-box { flex: 1; position: relative; }
+  .search-box input { width: 100%; border: 2px solid #00b389; border-radius: 6px; padding: 8px 40px 8px 36px; font-size: 13px; outline: none; color: #333; transition: all 0.2s; }
+  .search-box input.ai-mode { border-color: #7c3aed; background: #faf5ff; }
+  .search-box .s-ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #00b389; font-size: 14px; }
+  .search-box.ai-active .s-ico { color: #7c3aed; }
+  .search-btn { background: #00b389; color: #fff; border: none; border-radius: 6px; padding: 8px 18px; font-size: 13px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .search-btn:hover { background: #009e7a; }
+  .ai-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; white-space: nowrap; cursor: pointer; padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 6px; transition: all 0.2s; }
+  .ai-toggle.on { border-color: #7c3aed; color: #7c3aed; background: #faf5ff; }
+  .ai-toggle .toggle-pill { width: 28px; height: 16px; border-radius: 8px; background: #ddd; position: relative; transition: background 0.2s; }
+  .ai-toggle.on .toggle-pill { background: #7c3aed; }
+  .ai-toggle .toggle-knob { width: 12px; height: 12px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; transition: left 0.2s; }
+  .ai-toggle.on .toggle-knob { left: 14px; }
+  .fav-btn { padding: 7px 12px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 12px; cursor: pointer; color: #666; white-space: nowrap; background: #fff; }
+  .fav-btn:hover { border-color: #00b389; color: #00b389; }
+
+  .lang-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; font-size: 12px; color: #666; }
+  .lang-row label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .lang-row input[type=checkbox] { accent-color: #00b389; }
+
+  /* content header */
+  .content-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa; }
+  .breadcrumb { font-size: 12px; color: #999; display: flex; align-items: center; gap: 4px; }
+  .breadcrumb span { color: #00b389; cursor: pointer; }
+  .breadcrumb span:hover { text-decoration: underline; }
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+  .today-btn { position: relative; display: flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1px solid #e0e0e0; border-radius: 5px; font-size: 12px; cursor: pointer; color: #555; background: #fff; transition: all 0.15s; }
+  .today-btn:hover { border-color: #00b389; color: #00b389; }
+  .badge { position: absolute; top: -5px; right: -5px; background: #f5222d; color: #fff; border-radius: 10px; padding: 1px 5px; font-size: 10px; font-weight: 700; }
+
+  /* ── KNOWLEDGE LIST ── */
+  .knowledge-area { flex: 1; overflow-y: auto; padding: 12px 16px; }
+
+  /* AI summary box */
+  .ai-summary { background: linear-gradient(135deg, #f5f0ff 0%, #faf5ff 100%); border: 1px solid #d6b5ff; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; display: none; }
+  .ai-summary.visible { display: block; }
+  .ai-summary-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 700; color: #5b21b6; }
+  .ai-summary-header .ai-icon { font-size: 16px; }
+  .ai-summary-header .loading { font-size: 11px; color: #9b6fd0; font-weight: 400; }
+  .ai-summary-body { font-size: 12px; line-height: 1.8; color: #444; }
+  .ai-summary-body ol { padding-left: 16px; }
+  .ai-summary-body li { margin-bottom: 4px; }
+  .ai-summary-body li .src-link { color: #7c3aed; text-decoration: underline; cursor: pointer; font-size: 11px; margin-left: 4px; }
+  .ai-disclaimer { margin-top: 10px; padding: 6px 10px; background: #fff8e1; border-left: 3px solid #ffc107; font-size: 11px; color: #795548; border-radius: 0 4px 4px 0; }
+
+  /* result stats */
+  .result-stats { font-size: 12px; color: #999; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .result-stats .warn { color: #fa8c16; background: #fff7e6; border: 1px solid #ffd591; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+
+  /* knowledge card */
+  .k-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; margin-bottom: 8px; transition: box-shadow 0.2s; overflow: hidden; }
+  .k-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .k-card-header { display: flex; align-items: flex-start; padding: 10px 12px; cursor: pointer; gap: 10px; }
+  .k-id { font-size: 11px; color: #aaa; min-width: 36px; flex-shrink: 0; padding-top: 2px; }
+  .k-main { flex: 1; }
+  .k-title { font-size: 13px; font-weight: 600; color: #222; line-height: 1.5; margin-bottom: 4px; }
+  .k-title mark { background: #fff3b0; color: #333; border-radius: 2px; padding: 0 2px; font-style: normal; }
+  .k-path { font-size: 11px; color: #999; margin-bottom: 4px; }
+  .k-path span { color: #00b389; cursor: pointer; }
+  .k-path span:hover { text-decoration: underline; }
+  .k-excerpt { font-size: 12px; color: #666; line-height: 1.6; background: #f9f9f9; border-radius: 4px; padding: 6px 8px; margin-top: 4px; display: none; }
+  .k-excerpt mark { background: #fff3b0; border-radius: 2px; padding: 0 2px; }
+  .k-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .k-tag { font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+  .k-tag.title-match { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+  .k-tag.content-match { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .k-tag.keyword-match { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+  .k-tag.lang { background: #f0f0f0; color: #666; }
+  .k-meta { display: flex; align-items: center; gap: 10px; padding: 0 12px 0 58px; padding-bottom: 8px; font-size: 11px; color: #bbb; }
+  .k-meta .hot { color: #fa8c16; }
+  .k-expand-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #e0e0e0; background: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; color: #aaa; flex-shrink: 0; transition: all 0.2s; }
+  .k-expand-btn:hover { border-color: #00b389; color: #00b389; }
+  .k-expand-btn.open { background: #00b389; color: #fff; border-color: #00b389; }
+  .k-body { padding: 0 12px 12px 58px; display: none; border-top: 1px solid #f0f0f0; }
+  .k-body.open { display: block; }
+  .lang-tabs { display: flex; gap: 0; margin: 10px 0 8px; }
+  .lang-tab { padding: 4px 12px; font-size: 12px; border: 1px solid #e0e0e0; cursor: pointer; color: #666; transition: all 0.15s; }
+  .lang-tab:first-child { border-radius: 4px 0 0 4px; }
+  .lang-tab:last-child { border-radius: 0 4px 4px 0; }
+  .lang-tab.active { background: #00b389; color: #fff; border-color: #00b389; }
+  .k-answer { font-size: 12px; line-height: 1.8; color: #444; }
+  .k-answer table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 11px; }
+  .k-answer td, .k-answer th { border: 1px solid #e0e0e0; padding: 4px 8px; }
+  .k-answer th { background: #f5f5f5; font-weight: 600; }
+  .k-answer .note { background: #fffbe6; border-left: 3px solid #ffe58f; padding: 6px 10px; margin: 6px 0; font-size: 11px; color: #614700; border-radius: 0 4px 4px 0; }
+  .k-footer-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .k-action-btn { padding: 4px 10px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 11px; cursor: pointer; color: #666; background: #fff; transition: all 0.15s; }
+  .k-action-btn:hover { border-color: #00b389; color: #00b389; }
+
+  /* today drawer */
+  .today-drawer { position: fixed; right: -320px; top: 48px; width: 320px; height: calc(100vh - 48px); background: #fff; box-shadow: -4px 0 16px rgba(0,0,0,0.12); transition: right 0.3s ease; z-index: 100; display: flex; flex-direction: column; }
+  .today-drawer.open { right: 0; }
+  .drawer-header { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+  .drawer-header h3 { font-size: 14px; font-weight: 700; color: #222; }
+  .drawer-header h3 span { font-size: 11px; font-weight: 400; color: #999; margin-left: 6px; }
+  .drawer-close { cursor: pointer; color: #aaa; font-size: 16px; padding: 4px; }
+  .drawer-close:hover { color: #333; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .drawer-item { padding: 10px 16px; border-bottom: 1px solid #f9f9f9; cursor: pointer; transition: background 0.15s; }
+  .drawer-item:hover { background: #f5fffe; }
+  .drawer-item .d-type { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-bottom: 4px; font-weight: 600; }
+  .drawer-item .d-type.new { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .drawer-item .d-type.update { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+  .drawer-item .d-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 3px; line-height: 1.4; }
+  .drawer-item .d-path { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+  .drawer-item .d-time { font-size: 10px; color: #ccc; }
+
+  /* wiki view */
+  .wiki-view { display: none; padding: 14px 16px; }
+  .wiki-view.open { display: block; }
+  .wiki-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .wiki-back { cursor: pointer; color: #00b389; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .wiki-back:hover { text-decoration: underline; }
+  .wiki-title { font-size: 15px; font-weight: 700; color: #222; }
+  .wiki-item { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 12px; margin-bottom: 8px; }
+  .wiki-item-num { font-size: 11px; color: #aaa; margin-bottom: 4px; }
+  .wiki-item-q { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 6px; }
+  .wiki-item-a { font-size: 12px; line-height: 1.8; color: #555; }
+
+  /* overlay */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 99; display: none; }
+  .overlay.show { display: block; }
+
+  /* empty state */
+  .empty-state { text-align: center; padding: 60px 20px; color: #bbb; }
+  .empty-state .e-icon { font-size: 40px; margin-bottom: 10px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── DRAWER TABS ── */
+  .drawer-tabs { display: flex; border-bottom: 1px solid #f0f0f0; }
+  .drawer-tab { flex: 1; padding: 9px 8px; text-align: center; font-size: 12px; cursor: pointer; color: #666; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .drawer-tab.active { color: #00b389; border-bottom-color: #00b389; font-weight: 600; }
+  .dtab-badge { display: inline-block; background: #f5222d; color: #fff; border-radius: 10px; padding: 0 5px; font-size: 10px; margin-left: 3px; }
+
+  /* ── BRIEFING ── */
+  .briefing-item { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.15s; }
+  .briefing-item:hover { background: #f5fffe; }
+  .briefing-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .briefing-date { font-size: 11px; color: #aaa; }
+  .briefing-title { font-size: 12px; font-weight: 600; color: #222; margin-bottom: 3px; }
+  .briefing-meta { font-size: 11px; color: #aaa; }
+  .briefing-status { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+  .briefing-status.watching { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+  .briefing-status.watched { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .briefing-status.quiz-pending { background: #f0f0f0; color: #888; }
+  .briefing-status.quiz-pass { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .briefing-status.quiz-fail { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
+  .briefing-progress-bar { height: 3px; background: #f0f0f0; border-radius: 2px; margin-top: 6px; }
+  .briefing-progress-fill { height: 100%; background: #fa8c16; border-radius: 2px; }
+  .briefing-progress-label { font-size: 10px; color: #aaa; margin-top: 3px; }
+
+  /* ── VIDEO PLAYER ── */
+  .video-player { background: #1a1a2e; padding: 12px 16px; }
+  .video-mock { background: #16213e; border-radius: 6px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; margin-bottom: 8px; cursor: pointer; }
+  .video-mock:hover { background: #0f3460; }
+  .video-controls { }
+  .video-progress { height: 4px; background: #444; border-radius: 2px; cursor: pointer; }
+  .video-progress-fill { height: 100%; background: #00b389; border-radius: 2px; }
+  .speed-btn { background: transparent; border: 1px solid #555; color: #aaa; border-radius: 3px; padding: 2px 6px; font-size: 10px; cursor: pointer; }
+  .speed-btn.active { border-color: #00b389; color: #00b389; }
+
+  /* ── BRIEFING CONTENT TABS ── */
+  .briefing-content-tab { flex: 1; padding: 8px; text-align: center; font-size: 12px; cursor: pointer; color: #666; border-bottom: 2px solid transparent; }
+  .briefing-content-tab.active { color: #00b389; border-bottom-color: #00b389; font-weight: 600; }
+
+  /* ── QUIZ ── */
+  .quiz-q { background: #f9f9f9; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
+  .quiz-q-title { font-size: 12px; font-weight: 600; color: #222; margin-bottom: 8px; line-height: 1.5; }
+  .quiz-option { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: #444; margin-bottom: 5px; cursor: pointer; padding: 3px 0; }
+  .quiz-option input { margin-top: 2px; accent-color: #00b389; flex-shrink: 0; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">zabank</div>
+  <div class="tabs">
+    <div class="tab">📋 BBC业务</div>
+    <div class="tab active">📚 知识库 <span class="close">✕</span></div>
+  </div>
+  <div class="nav-icons">
+    <span>🎯 当日指标</span>
+    <span>🖥 服务台 <span style="background:#f5222d;color:#fff;border-radius:10px;padding:1px 5px;font-size:10px;">5</span></span>
+    <span>📚 知识库</span>
+    <span>👤 覃国权 ▾</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <span>目录</span>
+        <span style="font-size:10px;color:#aaa;font-weight:400;cursor:pointer;">收起</span>
+      </div>
+      <div class="sidebar-search">
+        <span class="s-icon">🔍</span>
+        <input type="text" id="sidebarSearchInput" placeholder="搜索目录">
+      </div>
+    </div>
+
+    <div class="mode-toggle">
+      <div class="mode-btn active" id="modeDir" onclick="switchMode('dir')">目录模式</div>
+      <div class="mode-btn" id="modeTag" onclick="switchMode('tag')">标签模式</div>
+    </div>
+
+    <!-- Directory Tree -->
+    <div class="tree" id="treeView">
+      <div class="tree-section">通用知识</div>
+      <div class="tree-item" onclick="toggleTree(this)">
+        <span class="arrow">▶</span>
+        <span class="label">众安银行介绍</span>
+      </div>
+
+      <div class="tree-section">银行事业部</div>
+      <div class="tree-item" onclick="toggleTree(this)">
+        <span class="arrow open">▶</span>
+        <span class="label">个人银行</span>
+      </div>
+      <div class="tree-sub" id="sub-personal" style="display:block">
+        <div class="tree-item" onclick="toggleTree(this)">
+          <span class="arrow open">▶</span>
+          <span class="label">开户业务</span>
+        </div>
+        <div class="tree-sub" id="sub-openaccount" style="display:block">
+          <div class="tree-item active" onclick="selectLeaf(this,'开户介绍')">
+            <span style="width:14px"></span>
+            <span class="dot"></span>
+            <span class="label">开户介绍</span>
+            <span class="wiki-btn">百科</span>
+          </div>
+          <div class="tree-item" onclick="selectLeaf(this,'开户被拒')">
+            <span style="width:14px"></span>
+            <span class="dot"></span>
+            <span class="label">开户被拒</span>
+            <span class="wiki-btn">百科</span>
+          </div>
+          <div class="tree-item" onclick="selectLeaf(this,'开户话术助手')">
+            <span style="width:14px"></span>
+            <span class="dot"></span>
+            <span class="label">开户话术助手</span>
+            <span class="wiki-btn">百科</span>
+          </div>
+        </div>
+        <div class="tree-item" onclick="toggleTree(this)">
+          <span class="arrow">▶</span>
+          <span class="label">手机银行</span>
+        </div>
+        <div class="tree-item" onclick="toggleTree(this)">
+          <span class="arrow">▶</span>
+          <span class="label">账户管理</span>
+        </div>
+        <div class="tree-item" onclick="toggleTree(this)">
+          <span class="arrow">▶</span>
+          <span class="label">存款业务</span>
+        </div>
+        <div class="tree-item" onclick="toggleTree(this)">
+          <span class="arrow">▶</span>
+          <span class="label">转账业务</span>
+        </div>
+      </div>
+      <div class="tree-item" onclick="toggleTree(this)">
+        <span class="arrow">▶</span>
+        <span class="label">合作业务</span>
+      </div>
+      <div class="tree-item" onclick="toggleTree(this)">
+        <span class="arrow">▶</span>
+        <span class="label">基金相關查詢</span>
+      </div>
+      <div class="tree-item" onclick="toggleTree(this)">
+        <span class="arrow">▶</span>
+        <span class="label">美股相關查詢</span>
+      </div>
+      <div class="tree-item" onclick="toggleTree(this)">
+        <span class="arrow">▶</span>
+        <span class="label">VA相關查詢</span>
+      </div>
+    </div>
+
+    <!-- Tag Cloud -->
+    <div class="tag-sidebar" id="tagView">
+      <div class="tag-group">
+        <div class="tag-group-header" onclick="toggleTagGroup(this)">
+          <span>开户介绍</span>
+          <span class="g-arrow open">▶</span>
+        </div>
+        <div class="tag-cloud">
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">开户介绍00</span><button class="tag-wiki-btn" onclick="openTagWiki('开户介绍00',event)">百科</button></div>
+          <div class="tag-chip-wrap selected"><span class="tag-chip" onclick="selectTag(this)">开户介绍01</span><button class="tag-wiki-btn" onclick="openTagWiki('开户介绍01',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">开户介绍02</span><button class="tag-wiki-btn" onclick="openTagWiki('开户介绍02',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">0911-1</span><button class="tag-wiki-btn" onclick="openTagWiki('0911-1',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">0911-2</span><button class="tag-wiki-btn" onclick="openTagWiki('0911-2',event)">百科</button></div>
+        </div>
+      </div>
+      <div class="tag-group">
+        <div class="tag-group-header" onclick="toggleTagGroup(this)">
+          <span>综合转账相关</span>
+          <span class="g-arrow open">▶</span>
+        </div>
+        <div class="tag-cloud">
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">综合转账相关</span><button class="tag-wiki-btn" onclick="openTagWiki('综合转账相关',event)">百科</button></div>
+        </div>
+      </div>
+      <div class="tag-group">
+        <div class="tag-group-header" onclick="toggleTagGroup(this)">
+          <span>个人银行</span>
+          <span class="g-arrow open">▶</span>
+        </div>
+        <div class="tag-cloud">
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">贷款业务</span><button class="tag-wiki-btn" onclick="openTagWiki('贷款业务',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">存款业务</span><button class="tag-wiki-btn" onclick="openTagWiki('存款业务',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">转账业务</span><button class="tag-wiki-btn" onclick="openTagWiki('转账业务',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">手机银行</span><button class="tag-wiki-btn" onclick="openTagWiki('手机银行',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">ZA Card</span><button class="tag-wiki-btn" onclick="openTagWiki('ZA Card',event)">百科</button></div>
+        </div>
+      </div>
+      <div class="tag-group">
+        <div class="tag-group-header" onclick="toggleTagGroup(this)">
+          <span>卡交易争议</span>
+          <span class="g-arrow">▶</span>
+        </div>
+        <div class="tag-cloud" style="display:none">
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">App操作</span><button class="tag-wiki-btn" onclick="openTagWiki('App操作',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">交易纠纷</span><button class="tag-wiki-btn" onclick="openTagWiki('交易纠纷',event)">百科</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Search Area -->
+    <div class="search-area">
+      <div class="search-row">
+        <div class="search-box" id="searchBox">
+          <span class="s-ico">🔍</span>
+          <input type="text" id="searchInput" placeholder="全局搜索知识条目" onkeydown="if(event.key==='Enter')doSearch()">
+        </div>
+        <button class="search-btn" onclick="doSearch()">搜 索</button>
+        <div class="ai-toggle" id="aiToggle" onclick="toggleAI()">
+          <div class="toggle-pill"><div class="toggle-knob"></div></div>
+          🤖 AI搜索
+        </div>
+        <button class="fav-btn">⭐ 我的收藏</button>
+      </div>
+    </div>
+
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="breadcrumb" id="breadcrumb">
+        银行事业部 › <span>个人银行</span> › <span>开户业务</span> › <span style="color:#333;font-weight:600;">开户介绍</span>
+      </div>
+      <div class="header-actions">
+        <div class="today-btn" onclick="openDrawer()">
+          📅 今日更新
+          <span class="badge">3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Knowledge Area -->
+    <div class="knowledge-area" id="knowledgeArea">
+
+      <!-- AI Summary (hidden by default) -->
+      <div class="ai-summary" id="aiSummary">
+        <div class="ai-summary-header">
+          <span class="ai-icon">🤖</span>
+          AI 参考摘要
+          <span class="loading" id="aiLoading">生成中...</span>
+        </div>
+        <div class="ai-summary-body" id="aiBody"></div>
+        <div class="ai-disclaimer">⚠️ 以上内容由AI综合知识库生成，仅供参考，请以知识库原文为准，切勿直接作为话术告知客户。</div>
+      </div>
+
+      <!-- Result stats -->
+      <div class="result-stats" id="resultStats" style="display:none">
+        <span id="statsText"></span>
+        <span class="warn" id="warnText" style="display:none">⚠️ 关键词过于宽泛，建议添加更多词语以精确定位</span>
+      </div>
+
+      <!-- Default list -->
+      <div id="defaultList">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#fafafa;border-bottom:2px solid #f0f0f0;">
+              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;white-space:nowrap;">知识ID</th>
+              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;">问题</th>
+              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;">标签</th>
+              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;text-align:center;">繁体中文</th>
+              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;text-align:center;">简体中文</th>
+              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;text-align:center;">英文</th>
+              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;cursor:pointer;white-space:nowrap;" onclick="sortByHot()">热度 ↕</th>
+              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;cursor:pointer;white-space:nowrap;" onclick="sortByTime()">更新时间 ↕</th>
+            </tr>
+          </thead>
+          <tbody id="arkKnowledgeBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Search results (hidden by default) -->
+      <div id="searchResults" style="display:none"></div>
+
+      <!-- Wiki view (hidden by default) -->
+      <div class="wiki-view" id="wikiView">
+        <div class="wiki-header">
+          <span class="wiki-back" onclick="closeWiki()">◀ 返回列表</span>
+          <span class="wiki-title" id="wikiTitle"></span>
+          <span style="font-size:11px;color:#aaa;margin-left:8px;">百科视图（繁体中文，自动编号）</span>
+        </div>
+        <div id="wikiContent"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Today Drawer -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="today-drawer" id="todayDrawer">
+  <div class="drawer-header">
+    <h3>今日更新 <span>2026-07-02</span></h3>
+    <span class="drawer-close" onclick="closeDrawer()">✕</span>
+  </div>
+  <!-- Drawer Tabs -->
+  <div class="drawer-tabs">
+    <div class="drawer-tab active" id="dtab-knowledge" onclick="switchDrawerTab('knowledge')">📋 知识更新 <span class="dtab-badge">3</span></div>
+    <div class="drawer-tab" id="dtab-briefing" onclick="switchDrawerTab('briefing')">🎬 每日Briefing <span class="dtab-badge" style="background:#7c3aed;">1</span></div>
+  </div>
+
+  <!-- Tab: 知识更新 -->
+  <div class="drawer-body" id="drawer-knowledge">
+    <div class="drawer-item" onclick="jumpToKnowledge('开户MCV申请流程最新说明','个人银行 › 开户业务 › 开户介绍')">
+      <span class="d-type new">新增</span>
+      <div class="d-title">开户MCV申请流程最新说明</div>
+      <div class="d-path">个人银行 › 开户业务 › 开户介绍</div>
+      <div class="d-time">今日 09:32 · 更新人：Lucy</div>
+    </div>
+    <div class="drawer-item" onclick="jumpToKnowledge('转账手续费收费标准（2026年7月版）','个人银行 › 转账业务 › 转账收费')">
+      <span class="d-type update">修改</span>
+      <div class="d-title">转账手续费收费标准（2026年7月版）</div>
+      <div class="d-path">个人银行 › 转账业务 › 转账收费</div>
+      <div class="d-time">今日 11:15 · 更新人：Tom</div>
+    </div>
+    <div class="drawer-item" onclick="jumpToKnowledge('VA账户开设常见拒绝原因整理','VA相關查詢 › 开户 › 开户被拒')">
+      <span class="d-type new">新增</span>
+      <div class="d-title">VA账户开设常见拒绝原因整理</div>
+      <div class="d-path">VA相關查詢 › 开户 › 开户被拒</div>
+      <div class="d-time">今日 14:48 · 更新人：Ines</div>
+    </div>
+  </div>
+
+  <!-- Tab: 每日Briefing -->
+  <div class="drawer-body" id="drawer-briefing" style="display:none">
+    <!-- Briefing list view -->
+    <div id="briefing-list-view">
+      <div class="briefing-item" onclick="openBriefingDetail()">
+        <div class="briefing-item-header">
+          <span class="briefing-date">今日 · 2026-07-02</span>
+          <div style="display:flex;gap:4px;">
+            <span class="briefing-status watching">观看中</span>
+            <span class="briefing-status quiz-pending">小测未做</span>
+          </div>
+        </div>
+        <div class="briefing-title">📹 2026-07-02 开户业务及转账规则更新说明</div>
+        <div class="briefing-meta">时长 18:32 · 今日 09:00 · 主讲：Lucy</div>
+        <div class="briefing-progress-bar"><div class="briefing-progress-fill" style="width:45%"></div></div>
+        <div class="briefing-progress-label">已观看 45%，完成观看后可解锁小测</div>
+      </div>
+      <div style="padding:8px 16px;font-size:11px;color:#aaa;font-weight:600;border-top:1px solid #f5f5f5;margin-top:4px;">历史记录</div>
+      <div class="briefing-item" onclick="openBriefingDetail2()">
+        <div class="briefing-item-header">
+          <span class="briefing-date">2026-07-01</span>
+          <div style="display:flex;gap:4px;">
+            <span class="briefing-status watched">已观看</span>
+            <span class="briefing-status quiz-pass">小测通过 92分</span>
+          </div>
+        </div>
+        <div class="briefing-title">📹 2026-07-01 VA账户新功能说明</div>
+        <div class="briefing-meta">时长 12:15 · 主讲：Tom</div>
+      </div>
+      <div class="briefing-item">
+        <div class="briefing-item-header">
+          <span class="briefing-date">2026-06-30</span>
+          <div style="display:flex;gap:4px;">
+            <span class="briefing-status watched">已观看</span>
+            <span class="briefing-status quiz-fail">小测未通过 52分</span>
+          </div>
+        </div>
+        <div class="briefing-title">📹 2026-06-30 基金相关查询处理流程</div>
+        <div class="briefing-meta">时长 22:08 · 主讲：Lucy</div>
+        <div style="margin-top:6px;"><button onclick="event.stopPropagation()" style="font-size:11px;padding:3px 10px;border:1px solid #7c3aed;border-radius:4px;color:#7c3aed;background:#fff;cursor:pointer;">重做小测</button></div>
+      </div>
+    </div>
+
+    <!-- Briefing detail view (hidden by default) -->
+    <div id="briefing-detail-view" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid #f0f0f0;">
+        <span style="cursor:pointer;color:#00b389;font-size:12px;" onclick="closeBriefingDetail()">◀ 返回</span>
+        <span style="font-size:13px;font-weight:700;color:#222;">2026-07-02 Briefing</span>
+      </div>
+      <!-- Video player mock -->
+      <div class="video-player">
+        <div class="video-mock">
+          <div style="font-size:32px;margin-bottom:8px;">▶</div>
+          <div style="font-size:12px;">2026-07-02 开户业务及转账规则更新说明</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px;">时长 18:32 · 主讲：Lucy</div>
+        </div>
+        <div class="video-controls">
+          <div class="video-progress"><div class="video-progress-fill" id="vidProgress" style="width:45%"></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:10px;color:#aaa;">08:20 / 18:32</span>
+            <div style="display:flex;gap:6px;">
+              <button class="speed-btn active" onclick="setSpeed(this,'1x')">1x</button>
+              <button class="speed-btn" onclick="setSpeed(this,'1.5x')">1.5x</button>
+              <button class="speed-btn" onclick="setSpeed(this,'2x')">2x</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs: 补充 / 小测 / 附件 -->
+      <div style="display:flex;border-bottom:1px solid #f0f0f0;">
+        <div class="briefing-content-tab active" id="bct-text" onclick="switchBriefingContent('text')">📄 补充</div>
+        <div class="briefing-content-tab" id="bct-quiz" onclick="switchBriefingContent('quiz')">📝 小测 <span style="font-size:10px;color:#aaa;">（观看≥80%后解锁）</span></div>
+        <div class="briefing-content-tab" id="bct-attach" onclick="switchBriefingContent('attach')">📎 附件</div>
+      </div>
+
+      <!-- 补充 -->
+      <div id="bc-text" style="padding:12px 16px;overflow-y:auto;max-height:280px;font-size:12px;line-height:1.8;color:#444;">
+        <p style="color:#aaa;font-size:11px;margin-bottom:8px;">KM补充内容</p>
+        <p><strong>【开户业务更新】</strong></p>
+        <p>各位同事，今日Briefing主要涵盖两个部分：一是开户流程的最新调整，二是转账规则的变更说明。</p>
+        <p style="margin-top:8px;"><strong>开户部分：</strong>从本月起，MCV开户新增了一个步骤——客户需要在App内完成视频验证。这个步骤是在人脸识别之后进行的，大约需要1-2分钟……</p>
+        <p style="margin-top:8px;"><strong>转账部分：</strong>本地转账手续费维持不变，跨境转账方面，港元转人民币的汇率计算方式有所调整……</p>
+      </div>
+
+      <!-- 附件 -->
+      <div id="bc-attach" style="display:none;padding:12px 16px;overflow-y:auto;max-height:280px;">
+        <p style="font-size:11px;color:#aaa;margin-bottom:10px;">本次Briefing附件</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9f9f9;border:1px solid #f0f0f0;border-radius:6px;cursor:pointer;" onclick="showToast('正在下载...')">
+            <span style="font-size:18px;">📄</span>
+            <div><div style="font-size:12px;font-weight:600;color:#333;">开户流程最新说明.pdf</div><div style="font-size:11px;color:#aaa;">1.2MB</div></div>
+            <span style="margin-left:auto;font-size:11px;color:#00b389;">下载</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9f9f9;border:1px solid #f0f0f0;border-radius:6px;cursor:pointer;" onclick="showToast('正在下载...')">
+            <span style="font-size:18px;">📊</span>
+            <div><div style="font-size:12px;font-weight:600;color:#333;">转账规则变更说明.docx</div><div style="font-size:11px;color:#aaa;">856KB</div></div>
+            <span style="margin-left:auto;font-size:11px;color:#00b389;">下载</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 小测 -->
+      <div id="bc-quiz" style="display:none;padding:12px 16px;overflow-y:auto;max-height:280px;">
+        <div id="quiz-locked" style="text-align:center;padding:30px 0;color:#aaa;">
+          <div style="font-size:28px;margin-bottom:8px;">🔒</div>
+          <p style="font-size:12px;">请先完成80%以上的视频观看</p>
+          <p style="font-size:11px;margin-top:4px;">当前进度：45%</p>
+          <button onclick="simulateWatchComplete()" style="margin-top:12px;padding:6px 16px;background:#00b389;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;">模拟完成观看（Demo用）</button>
+        </div>
+        <div id="quiz-content" style="display:none">
+          <p style="font-size:12px;color:#888;margin-bottom:12px;">共 3 题 · 单选+多选混合 · 满分100分</p>
+          <div class="quiz-q">
+            <div class="quiz-q-title">1.【单选】MCV开户新增的视频验证步骤在哪个环节之后进行？</div>
+            <label class="quiz-option"><input type="radio" name="q1"> 填写个人资料之后</label>
+            <label class="quiz-option"><input type="radio" name="q1"> 人脸识别之后</label>
+            <label class="quiz-option"><input type="radio" name="q1"> 同意条款之后</label>
+            <label class="quiz-option"><input type="radio" name="q1"> 输入身份证之后</label>
+          </div>
+          <div class="quiz-q">
+            <div class="quiz-q-title">2.【多选】以下哪些情况会导致开户被拒？（多选）</div>
+            <label class="quiz-option"><input type="checkbox"> 身份证件过期</label>
+            <label class="quiz-option"><input type="checkbox"> 存在制裁名单匹配</label>
+            <label class="quiz-option"><input type="checkbox"> 客户年龄18岁</label>
+            <label class="quiz-option"><input type="checkbox"> 内部风控规则触发</label>
+          </div>
+          <div class="quiz-q">
+            <div class="quiz-q-title">3.【单选】本次转账规则调整主要影响哪类转账？</div>
+            <label class="quiz-option"><input type="radio" name="q3"> 本地港元转账</label>
+            <label class="quiz-option"><input type="radio" name="q3"> 港元转人民币跨境转账</label>
+            <label class="quiz-option"><input type="radio" name="q3"> 美元转账</label>
+            <label class="quiz-option"><input type="radio" name="q3"> 以上均有调整</label>
+          </div>
+          <button onclick="submitQuiz()" style="width:100%;margin-top:12px;padding:8px;background:#00b389;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">提交答案</button>
+        </div>
+        <div id="quiz-result" style="display:none;text-align:center;padding:20px 0;">
+          <div style="font-size:36px;font-weight:700;color:#00b389;">85分</div>
+          <div style="font-size:12px;color:#666;margin-top:6px;">✅ 通过（满分100，通过线60分）</div>
+          <div style="margin-top:12px;font-size:12px;color:#aaa;">错题解析：</div>
+          <div style="text-align:left;margin-top:8px;font-size:12px;background:#f9f9f9;border-radius:6px;padding:10px;">
+            <p><strong>第2题</strong>：正确答案应选 A、B、D。<br>客户年龄18岁符合开户条件，不会被拒。</p>
+          </div>
+          <button onclick="resetQuiz()" style="margin-top:12px;padding:6px 16px;border:1px solid #00b389;color:#00b389;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;">重做小测</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── KNOWLEDGE LIST TABLE ───
+var arkKnowledgeData = [
+  { id:'#514', q:'测试赵受林（開戶介紹）', tags:['开户介绍01','测试标签'], tc:true, sc:true, en:false, hot:19, updated:'2024-08-23',
+    tcAns:'眾安銀行開戶，18歲以上香港居民，持有效身份證，通過App全程網上辦理，一般5-10分鐘。', path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' },
+  { id:'#519', q:'开户流程详解', tags:['开户介绍02'], tc:true, sc:false, en:false, hot:45, updated:'2024-11-01',
+    tcAns:'開戶步驟：下載App → 輸入身份證 → 人臉識別 → 填寫資料 → 同意條款 → 開戶成功。', path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' },
+  { id:'#521', q:'开户常见问题FAQ', tags:[], tc:true, sc:true, en:false, hot:88, updated:'2025-01-15',
+    tcAns:'Q: 開戶需要多長時間？A: 一般5-10分鐘。Q: 可以代辦開戶嗎？A: 不可以，必須本人親自辦理。', path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' }
+];
+var arkSortHotAsc = false, arkSortTimeAsc = false;
+
+function renderArkKnowledge(data) {
+  var tbody = document.getElementById('arkKnowledgeBody');
+  if (!tbody) return;
+  tbody.innerHTML = (data||arkKnowledgeData).map(function(r) {
+    var tagsHtml = r.tags.map(function(t){ return '<span style="font-size:10px;background:#e6fffb;border:1px solid #87e8de;color:#13c2c2;padding:1px 5px;border-radius:8px;margin-right:2px;">'+t+'</span>'; }).join('') || '<span style="color:#ddd;font-size:11px;">—</span>';
+    var eid = 'arkexp_'+r.id.replace('#','');
+    return '<tr style="border-bottom:1px solid #f5f5f5;cursor:pointer;" onclick="arkToggleRow(\''+eid+'\')">'
+      +'<td style="padding:8px 12px;font-size:11px;color:#aaa;">'+r.id+'</td>'
+      +'<td style="padding:8px 12px;font-size:12px;font-weight:600;color:#222;">'+r.q+' <span style="font-size:10px;color:#aaa;" id="aarr_'+eid+'">▶</span></td>'
+      +'<td style="padding:8px 12px;">'+tagsHtml+'</td>'
+      +'<td style="padding:8px 12px;text-align:center;">'+(r.tc?'<span style="color:#52c41a;font-size:14px;">✓</span>':'<span style="color:#eee;">—</span>')+'</td>'
+      +'<td style="padding:8px 12px;text-align:center;">'+(r.sc?'<span style="color:#52c41a;font-size:14px;">✓</span>':'<span style="color:#eee;">—</span>')+'</td>'
+      +'<td style="padding:8px 12px;text-align:center;">'+(r.en?'<span style="color:#52c41a;font-size:14px;">✓</span>':'<span style="color:#eee;">—</span>')+'</td>'
+      +'<td style="padding:8px 12px;color:#fa8c16;font-size:12px;">🔥 '+r.hot+'</td>'
+      +'<td style="padding:8px 12px;font-size:11px;color:#aaa;white-space:nowrap;">'+r.updated+'</td>'
+      +'</tr>'
+      +'<tr id="'+eid+'" style="display:none;background:#f9fffe;"><td colspan="8" style="padding:12px 16px;">'
+      +'<div style="display:flex;gap:8px;margin-bottom:8px;">'
+      +(r.tc?'<button style="padding:3px 10px;border:1px solid #00b389;border-radius:4px;background:#00b389;color:#fff;font-size:11px;" onclick="event.stopPropagation()">繁体中文</button>':'')
+      +(r.sc?'<button style="padding:3px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#666;font-size:11px;" onclick="event.stopPropagation()">简体中文</button>':'')
+      +'</div>'
+      +'<div style="font-size:12px;line-height:1.9;color:#444;background:#fff;padding:10px 12px;border-radius:4px;border:1px solid #f0f0f0;margin-bottom:10px;">'+r.tcAns+'</div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<button class="k-action-btn" onclick="event.stopPropagation();openLogBubble(this,\''+r.id+'\')">📋 更新日志</button>'
+      +'<button class="k-action-btn" onclick="event.stopPropagation()">⭐ 收藏</button>'
+      +'<button class="k-action-btn" onclick="event.stopPropagation();openErrorModal(\''+r.path+'\')" style="color:#ff4d4f;border-color:#ffa39e;">⚠️ 报错</button>'
+      +'</div></td></tr>';
+  }).join('');
+}
+function arkToggleRow(eid) {
+  var row = document.getElementById(eid);
+  if (!row) return;
+  var arr = document.getElementById('aarr_'+eid);
+  var isOpen = row.style.display !== 'none';
+  row.style.display = isOpen ? 'none' : 'table-row';
+  if (arr) arr.textContent = isOpen ? '▶' : '▼';
+}
+function sortByHot() { arkSortHotAsc=!arkSortHotAsc; renderArkKnowledge(arkKnowledgeData.slice().sort(function(a,b){return arkSortHotAsc?a.hot-b.hot:b.hot-a.hot;})); }
+function sortByTime() { arkSortTimeAsc=!arkSortTimeAsc; renderArkKnowledge(arkKnowledgeData.slice().sort(function(a,b){return arkSortTimeAsc?a.updated.localeCompare(b.updated):b.updated.localeCompare(a.updated);})); }
+
+// ─── MODE SWITCH ───
+function switchMode(mode) {
+  document.getElementById('modeDir').classList.toggle('active', mode==='dir');
+  document.getElementById('modeTag').classList.toggle('active', mode==='tag');
+  document.getElementById('treeView').style.display = mode==='dir' ? 'block' : 'none';
+  document.getElementById('tagView').style.display = mode==='tag' ? 'flex' : 'none';
+  if (mode === 'tag') document.getElementById('tagView').style.flexDirection = 'column';
+  document.getElementById('sidebarSearchInput').placeholder = mode==='tag' ? '搜索标签' : '搜索目录';
+}
+
+// ─── TREE ───
+function toggleTree(el) {
+  const arrow = el.querySelector('.arrow');
+  if (!arrow) return;
+  const subId = el.nextElementSibling;
+  if (subId && subId.classList.contains('tree-sub')) {
+    const isOpen = subId.style.display !== 'none';
+    subId.style.display = isOpen ? 'none' : 'block';
+    arrow.classList.toggle('open', !isOpen);
+  }
+}
+
+function selectLeaf(el, name) {
+  document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  closeWiki();
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('defaultList').style.display = 'block';
+  document.getElementById('resultStats').style.display = 'none';
+  document.getElementById('aiSummary').classList.remove('visible');
+  // Update breadcrumb
+  document.getElementById('breadcrumb').innerHTML = `银行事业部 › <span>个人银行</span> › <span>开户业务</span> › <span style="color:#333;font-weight:600;">${name}</span>`;
+
+  // Wiki button
+  el.querySelector('.wiki-btn').onclick = function(e) {
+    e.stopPropagation();
+    openWiki(name);
+  };
+}
+
+// ─── WIKI ───
+function openWiki(name) {
+  document.getElementById('defaultList').style.display = 'none';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('wikiView').classList.add('open');
+  document.getElementById('wikiTitle').textContent = name + '（百科）';
+  document.getElementById('wikiContent').innerHTML = `
+    <div class="wiki-item"><div class="wiki-item-num">1.</div><div class="wiki-item-q">測試趙受林</div><div class="wiki-item-a">眾安銀行（ZA Bank）開戶介紹，18歲以上香港居民持有效身份證，通過App全程網上辦理，一般5-10分鐘完成。</div></div>
+    <div class="wiki-item"><div class="wiki-item-num">2.</div><div class="wiki-item-q">开户流程详解</div><div class="wiki-item-a">下載App → 輸入身份證 → 人臉識別 → 填寫資料 → 同意條款 → 開戶成功。</div></div>
+    <div class="wiki-item"><div class="wiki-item-num">3.</div><div class="wiki-item-q">开户常见问题FAQ</div><div class="wiki-item-a">Q: 開戶需要多長時間？A: 一般5-10分鐘。<br>Q: 可以代辦開戶嗎？A: 不可以，必須本人親自辦理。</div></div>
+  `;
+}
+function closeWiki() {
+  document.getElementById('wikiView').classList.remove('open');
+  document.getElementById('defaultList').style.display = 'block';
+}
+
+// ─── CARD EXPAND ───
+function toggleCard(header) {
+  const card = header.closest('.k-card');
+  const body = card.querySelector('.k-body');
+  const btn = card.querySelector('.k-expand-btn');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '+' : '−';
+}
+function toggleExpand(btn) {
+  const card = btn.closest('.k-card');
+  const body = card.querySelector('.k-body');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.textContent = isOpen ? '+' : '−';
+}
+
+// ─── LANG TABS ───
+function switchLang(tab, lang) {
+  const card = tab.closest('.k-card');
+  card.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const id = card.querySelector('.k-id').textContent.replace('#','');
+  const tc = card.querySelector(`#ans-${id}-tc`);
+  const sc = card.querySelector(`#ans-${id}-sc`);
+  if (tc) tc.style.display = lang==='tc' ? 'block' : 'none';
+  if (sc) sc.style.display = lang==='sc' ? 'block' : 'none';
+}
+
+// ─── AI TOGGLE ───
+let aiOn = false;
+function toggleAI() {
+  aiOn = !aiOn;
+  const toggle = document.getElementById('aiToggle');
+  const box = document.getElementById('searchBox');
+  const input = document.getElementById('searchInput');
+  toggle.classList.toggle('on', aiOn);
+  box.classList.toggle('ai-active', aiOn);
+  input.classList.toggle('ai-mode', aiOn);
+  input.placeholder = aiOn ? '请用自然语言提问，如"客户开户被拒有哪些原因"...' : '请输入搜索内容，支持自然语言提问...';
+}
+
+// ─── SEARCH ───
+function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+
+  document.getElementById('defaultList').style.display = 'none';
+  document.getElementById('wikiView').classList.remove('open');
+  document.getElementById('searchResults').style.display = 'block';
+  document.getElementById('resultStats').style.display = 'flex';
+  document.getElementById('breadcrumb').innerHTML = `搜索结果：<span style="color:#333;font-weight:600;">"${q}"</span>`;
+
+  // Broad keyword warning
+  const broadWords = ['客户','业务','处理','查询','银行','账户'];
+  const isBroad = q.length <= 2 || broadWords.some(w => q === w);
+  document.getElementById('warnText').style.display = isBroad ? 'inline-block' : 'none';
+
+  if (aiOn) {
+    showAISearch(q);
+  } else {
+    document.getElementById('aiSummary').classList.remove('visible');
+    showNormalSearch(q);
+  }
+}
+
+function showNormalSearch(q) {
+  document.getElementById('statsText').textContent = `找到 5 条相关知识（全文搜索 · 繁简自动互搜）`;
+  document.getElementById('searchResults').innerHTML = buildSearchResults(q, false);
+}
+
+function showAISearch(q) {
+  const summary = document.getElementById('aiSummary');
+  summary.classList.add('visible');
+  document.getElementById('aiLoading').style.display = 'inline';
+  document.getElementById('aiBody').innerHTML = '<span style="color:#aaa;">正在检索知识库并生成摘要...</span>';
+  document.getElementById('statsText').textContent = `AI 已召回 8 条相关知识点`;
+
+  setTimeout(() => {
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiBody').innerHTML = `
+      <p style="margin-bottom:8px;font-weight:600;">关于"${q}"，知识库中的相关信息整合如下：</p>
+      <ol>
+        <li>開戶被拒的常見原因包括：<strong>身份證件不符合要求</strong>（如證件過期、模糊）<a class="src-link" onclick="highlightCard(1)">[#512]</a></li>
+        <li>存在<strong>制裁名單匹配</strong>的情況會觸發自動拒絕，需由合規部門處理，客服無法操作<a class="src-link" onclick="highlightCard(2)">[#513]</a></li>
+        <li><strong>內部風控規則觸發</strong>（具體條件屬內部規則，可告知客戶聯絡客服跟進）<a class="src-link" onclick="highlightCard(3)">[#516]</a></li>
+        <li>客戶信息填寫錯誤或與現有記錄<strong>不一致</strong>也會導致被拒<a class="src-link" onclick="highlightCard(4)">[#518]</a></li>
+      </ol>
+      <div style="margin-top:12px;padding:10px 12px;background:#f0faf7;border:1px solid #b7e8d8;border-radius:6px;">
+        <div style="font-size:11px;font-weight:600;color:#00956d;margin-bottom:6px;">💬 建议回答话术（仅供参考，请根据实际情况调整）</div>
+        <div style="font-size:12px;color:#444;line-height:1.8;">感謝您的耐心等候。關於您的開戶申請被拒的情況，可能原因包括：證件資料不符合要求、系統風控規則觸發等。建議您確認提交的身份證件是否清晰有效，並重新嘗試開戶流程。如問題持續，請聯絡我們的客戶服務團隊，我們將為您跟進處理。</div>
+        <div style="font-size:10px;color:#aaa;margin-top:6px;">⚠️ 以上话术由AI综合知识库生成，仅供参考，请以知识库原文为准，切勿直接作为话术告知客户。</div>
+      </div>`;
+    document.getElementById('searchResults').innerHTML = buildSearchResults(q, true);
+  }, 1800);
+}
+
+function buildSearchResults(q, isAI) {
+  const results = [
+    { id:512, title:`開戶被拒 — 身份證件問題`, path:'个人银行 › 开户业务 › 开户被拒', matchType:'title', excerpt:`...客戶提交的<mark>${q}</mark>資料中，若身份證件已過期或圖片模糊，系統將自動拒絕開戶申請...`, tags:['繁','简'], hot:23, updated:'2025-03-10' },
+    { id:513, title:`開戶被拒 — 制裁名單核查`, path:'个人银行 › 开户业务 › 开户被拒', matchType:'content', excerpt:`...在進行<mark>${q}</mark>相關查詢時，若客戶名字出現在制裁名單中...`, tags:['繁'], hot:15, updated:'2025-02-28' },
+    { id:516, title:`開戶被拒 — 內部風控規則`, path:'个人银行 › 开户业务 › 开户被拒', matchType:'content', excerpt:`...針對<mark>${q}</mark>場景，以下為內部處理規則（勿告知客戶具體條件）...`, tags:['繁','简'], hot:31, updated:'2025-04-01' },
+    { id:518, title:`开户拒绝原因 — 信息不一致`, path:'个人银行 › 开户业务 › 开户被拒', matchType:'keyword', excerpt:`关键字命中：<mark>${q}</mark>...客户填写信息与现有记录不一致将触发人工审核...`, tags:['简'], hot:8, updated:'2025-01-20' },
+    { id:521, title:`开户常见问题FAQ`, path:'个人银行 › 开户业务 › 开户介绍', matchType:'title', excerpt:``, tags:['繁','简'], hot:88, updated:'2025-01-15' },
+  ];
+
+  return results.map((r,i) => {
+    const matchLabel = r.matchType === 'title' ? '<span class="k-tag title-match">标题匹配</span>' :
+                       r.matchType === 'content' ? '<span class="k-tag content-match">答案匹配</span>' :
+                       '<span class="k-tag keyword-match">关键字匹配</span>';
+    const langTags = r.tags.map(t => `<span class="k-tag lang">${t}</span>`).join('');
+    const excerptHtml = r.excerpt ? `<div class="k-excerpt" style="display:block">${r.excerpt}</div>` : '';
+    return `
+    <div class="k-card" id="result-card-${i+1}">
+      <div class="k-card-header" onclick="toggleCard(this)">
+        <div class="k-id">#${r.id}</div>
+        <div class="k-main">
+          <div class="k-title">${r.title}</div>
+          <div class="k-path">🗂 ${r.path.replace(/›/g, ' › ')}</div>
+          ${excerptHtml}
+          <div class="k-tags">${langTags}${matchLabel}</div>
+        </div>
+        <button class="k-expand-btn" onclick="event.stopPropagation();toggleExpand(this)">+</button>
+      </div>
+      <div class="k-meta"><span class="hot">🔥 热度 ${r.hot}</span><span>更新 ${r.updated}</span></div>
+      <div class="k-body">
+        <div class="lang-tabs"><div class="lang-tab active">繁体中文</div>${r.tags.includes('简') ? '<div class="lang-tab">简体中文</div>' : ''}</div>
+        <div class="k-answer"><p>（点击展开查看完整内容）</p></div>
+        <div class="k-footer-actions">
+          <button class="k-action-btn" onclick="openLogBubble(this,'sr')">📋 更新日志</button>
+          <button class="k-action-btn">⭐ 收藏</button>
+          <button class="k-action-btn" onclick="openErrorModal()" style="color:#ff4d4f;border-color:#ffa39e;">⚠️ 报错</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function highlightCard(n) {
+  const el = document.getElementById(`result-card-${n}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+  el.style.boxShadow = '0 0 0 2px #7c3aed';
+  setTimeout(() => el.style.boxShadow = '', 2000);
+}
+
+function jumpToKnowledge(title, path) {
+  closeDrawer();
+  // 先找知识列表里匹配的条目
+  var matched = arkKnowledgeData.find(function(r){ return r.q.indexOf(title)>=0 || title.indexOf(r.q)>=0; });
+  document.getElementById('wikiView').classList.remove('open');
+  document.getElementById('resultStats').style.display = 'none';
+  document.getElementById('aiSummary').classList.remove('visible');
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('defaultList').style.display = 'block';
+  document.getElementById('breadcrumb').innerHTML = path.split(' › ').map(function(p,i,arr){
+    return i===arr.length-1 ? '<span style="color:#333;font-weight:600;">'+p+'</span>' : '<span>'+p+'</span>';
+  }).join(' › ');
+
+  if (matched) {
+    // 重新渲染列表并展开该条目
+    renderArkKnowledge();
+    setTimeout(function(){
+      var eid = 'arkexp_'+matched.id.replace('#','');
+      arkToggleRow(eid);
+      var row = document.getElementById(eid);
+      if (row) row.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 50);
+  } else {
+    // 找不到时构造一个临时展示卡片
+    var list = document.getElementById('defaultList');
+    list.innerHTML = '<table style="width:100%;border-collapse:collapse;">'
+      + '<thead><tr style="background:#fafafa;border-bottom:2px solid #f0f0f0;">'
+      + '<th style="padding:8px 12px;font-size:11px;color:#666;">知识ID</th>'
+      + '<th style="padding:8px 12px;font-size:11px;color:#666;">问题</th>'
+      + '<th style="padding:8px 12px;font-size:11px;color:#666;">标签</th>'
+      + '<th style="padding:8px 12px;font-size:11px;color:#666;text-align:center;">繁体中文</th>'
+      + '<th style="padding:8px 12px;font-size:11px;color:#666;text-align:center;">简体中文</th>'
+      + '<th style="padding:8px 12px;font-size:11px;color:#666;text-align:center;">英文</th>'
+      + '<th style="padding:8px 12px;font-size:11px;color:#666;">热度</th>'
+      + '<th style="padding:8px 12px;font-size:11px;color:#666;">更新时间</th>'
+      + '</tr></thead>'
+      + '<tbody id="arkKnowledgeBody">'
+      + '<tr style="border-bottom:2px solid #00b389;background:#e6faf5;">'
+      + '<td style="padding:8px 12px;font-size:11px;color:#aaa;">#NEW</td>'
+      + '<td style="padding:8px 12px;font-size:12px;font-weight:600;color:#00b389;">'+title+' <span class="k-tag" style="background:#e6f7ff;color:#1890ff;border:1px solid #91d5ff;font-size:10px;padding:1px 5px;border-radius:4px;">今日更新</span></td>'
+      + '<td style="padding:8px 12px;">—</td>'
+      + '<td style="padding:8px 12px;text-align:center;color:#52c41a;">✓</td>'
+      + '<td style="padding:8px 12px;text-align:center;color:#ddd;">—</td>'
+      + '<td style="padding:8px 12px;text-align:center;color:#ddd;">—</td>'
+      + '<td style="padding:8px 12px;color:#fa8c16;">🔥 0</td>'
+      + '<td style="padding:8px 12px;font-size:11px;color:#aaa;">今日</td>'
+      + '</tr>'
+      + '<tr style="background:#f9fffe;"><td colspan="8" style="padding:12px 16px;">'
+      + '<div style="font-size:12px;line-height:1.9;color:#444;background:#fff;padding:10px 12px;border-radius:4px;border:1px solid #f0f0f0;margin-bottom:10px;">（最新更新内容，请联系KM获取详情）</div>'
+      + '<div style="display:flex;gap:6px;">'
+      + '<button class="k-action-btn" onclick="openLogBubble(this,\'new\')">📋 更新日志</button>'
+      + '<button class="k-action-btn">⭐ 收藏</button>'
+      + '<button class="k-action-btn" onclick="openErrorModal(\''+path+'\')" style="color:#ff4d4f;border-color:#ffa39e;">⚠️ 报错</button>'
+      + '</div></td></tr>'
+      + '</tbody></table>';
+  }
+}
+
+// ─── DRAWER ───
+function openDrawer() {
+  document.getElementById('todayDrawer').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeDrawer() {
+  document.getElementById('todayDrawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+function switchDrawerTab(tab) {
+  document.getElementById('dtab-knowledge').classList.toggle('active', tab==='knowledge');
+  document.getElementById('dtab-briefing').classList.toggle('active', tab==='briefing');
+  document.getElementById('drawer-knowledge').style.display = tab==='knowledge' ? 'block' : 'none';
+  document.getElementById('drawer-briefing').style.display = tab==='briefing' ? 'block' : 'none';
+}
+
+// ─── BRIEFING ───
+function openBriefingDetail() {
+  document.getElementById('briefing-list-view').style.display = 'none';
+  document.getElementById('briefing-detail-view').style.display = 'block';
+}
+function openBriefingDetail2() {
+  document.getElementById('briefing-list-view').style.display = 'none';
+  document.getElementById('briefing-detail-view').style.display = 'block';
+  // Simulate fully watched
+  document.getElementById('vidProgress').style.width = '100%';
+  simulateWatchComplete();
+}
+function closeBriefingDetail() {
+  document.getElementById('briefing-detail-view').style.display = 'none';
+  document.getElementById('briefing-list-view').style.display = 'block';
+}
+function switchBriefingContent(tab) {
+  ['text','quiz','attach'].forEach(function(t) {
+    var tabEl = document.getElementById('bct-' + t);
+    var body  = document.getElementById('bc-'  + t);
+    var isActive = t === tab;
+    if (tabEl) { tabEl.style.borderBottomColor = isActive ? '#00b389' : 'transparent'; tabEl.style.color = isActive ? '#00b389' : '#666'; tabEl.style.fontWeight = isActive ? '600' : '400'; }
+    if (body)  body.style.display = isActive ? 'block' : 'none';
+  });
+}
+function setSpeed(btn, speed) {
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function simulateWatchComplete() {
+  document.getElementById('vidProgress').style.width = '100%';
+  document.getElementById('quiz-locked').style.display = 'none';
+  document.getElementById('quiz-content').style.display = 'block';
+  switchBriefingContent('quiz');
+}
+function submitQuiz() {
+  document.getElementById('quiz-content').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+}
+function resetQuiz() {
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-content').style.display = 'block';
+  document.querySelectorAll('.quiz-option input').forEach(i => i.checked = false);
+}
+
+// ─── TAG WIKI ───
+function openTagWiki(tagName, e) {
+  e.stopPropagation();
+  document.getElementById('defaultList').style.display = 'none';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('resultStats').style.display = 'none';
+  document.getElementById('aiSummary').classList.remove('visible');
+  document.getElementById('wikiView').classList.add('open');
+  document.getElementById('wikiTitle').textContent = tagName + '（百科）';
+  document.getElementById('breadcrumb').innerHTML = `标签百科：<span style="color:#333;font-weight:600;">${tagName}</span>`;
+  document.getElementById('wikiContent').innerHTML = `
+    <div style="font-size:12px;color:#aaa;margin-bottom:12px;padding:0 0 8px;border-bottom:1px solid #f0f0f0;">
+      标签：<strong style="color:#00b389;">${tagName}</strong> 下共 3 条关联知识点
+    </div>
+    <div class="wiki-item">
+      <div class="wiki-item-num">1.</div>
+      <div class="wiki-item-q">${tagName} — 基本介绍</div>
+      <div class="wiki-item-a">与标签「${tagName}」关联的第1条知识点，包括业务背景与常见问题解答，供客服参考使用，不可直接作为话术告知客户。</div>
+    </div>
+    <div class="wiki-item">
+      <div class="wiki-item-num">2.</div>
+      <div class="wiki-item-q">${tagName} — 常见问题处理</div>
+      <div class="wiki-item-a">与标签「${tagName}」关联的第2条知识点，包含内部处理规则和注意事项，仅供内部参考。</div>
+    </div>
+    <div class="wiki-item">
+      <div class="wiki-item-num">3.</div>
+      <div class="wiki-item-q">${tagName} — 特殊场景说明</div>
+      <div class="wiki-item-a">与标签「${tagName}」关联的第3条知识点，说明特殊情况下的处理方式及升级路径。</div>
+    </div>
+  `;
+}
+
+// ─── TAG MODE ───
+function toggleTagGroup(header) {
+  const cloud = header.nextElementSibling;
+  const arrow = header.querySelector('.g-arrow');
+  const isOpen = cloud.style.display !== 'none';
+  cloud.style.display = isOpen ? 'none' : 'flex';
+  arrow.classList.toggle('open', !isOpen);
+}
+
+let selectedTag = null;
+function selectTag(chip) {
+  const tag = chip.textContent;
+  const wrap = chip.closest('.tag-chip-wrap');
+
+  // 取消之前选中的标签高亮
+  document.querySelectorAll('.tag-chip-wrap.selected').forEach(w => w.classList.remove('selected'));
+
+  if (selectedTag === tag) {
+    // 再次点击同一标签 = 取消筛选
+    selectedTag = null;
+    document.getElementById('resultStats').style.display = 'none';
+    document.getElementById('breadcrumb').innerHTML = `银行事业部 › <span>个人银行</span> › <span>开户业务</span> › <span style="color:#333;font-weight:600;">开户介绍</span>`;
+    return;
+  }
+
+  selectedTag = tag;
+  if (wrap) wrap.classList.add('selected');
+
+  document.getElementById('wikiView').classList.remove('open');
+  document.getElementById('defaultList').style.display = 'block';
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('breadcrumb').innerHTML = `标签筛选：<span>${tag}</span>`;
+  document.getElementById('resultStats').style.display = 'flex';
+  document.getElementById('statsText').textContent = `标签"${tag}"下共 3 条知识`;
+}
+
+// ─── 报错 & 更新日志 ───
+function openErrorModal(path) {
+  var p = document.getElementById('errorPath');
+  if (p) p.textContent = path || '银行事业部 / 个人银行 / 开户业务 / 开户介绍';
+  document.getElementById('modalError').style.display = 'flex';
+}
+function closeErrorModal() { document.getElementById('modalError').style.display = 'none'; }
+function selectErrType(label) {
+  document.querySelectorAll('[name="errType"]').forEach(function(r){ r.parentNode.style.borderColor='#d9d9d9'; r.parentNode.style.color=''; });
+  label.style.borderColor = '#ff4d4f'; label.style.color = '#ff4d4f';
+}
+function submitError() { closeErrorModal(); alert('报错已提交，感谢反馈！KM将在1个工作日内处理。'); }
+
+var updateLogs = [
+  { time:'2026-07-02 09:32', user:'Lucy', desc:'更新开户MCV申请流程最新说明' },
+  { time:'2026-06-28 14:15', user:'Tom', desc:'修正开户年龄要求描述' },
+  { time:'2026-06-15 10:00', user:'覃国权', desc:'新增开户被拒常见原因整理' }
+];
+function openLogBubble(btn, kId) {
+  var bubble = document.getElementById('logBubble');
+  var content = document.getElementById('logBubbleContent');
+  content.innerHTML = updateLogs.map(function(l){
+    return '<div style="padding:8px 14px;border-bottom:1px solid #f9f9f9;">'
+      +'<div style="display:flex;justify-content:space-between;font-size:11px;color:#aaa;margin-bottom:2px;"><span>'+l.time+'</span><span>'+l.user+'</span></div>'
+      +'<div style="font-size:12px;color:#444;">'+l.desc+'</div></div>';
+  }).join('');
+  var rect = btn.getBoundingClientRect();
+  bubble.style.top = (rect.bottom + 6) + 'px';
+  bubble.style.left = Math.max(10, rect.left - 180) + 'px';
+  bubble.style.display = 'block';
+  setTimeout(function(){ document.addEventListener('click', closeBubbleOutside, {once:true}); }, 0);
+}
+document.addEventListener('DOMContentLoaded', function() { renderArkKnowledge(); });
+</script>
+
+<!-- 报错弹窗 -->
+<div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;align-items:center;justify-content:center;" id="modalError" onclick="if(event.target===this)closeErrorModal()">
+  <div style="background:#fff;border-radius:8px;width:440px;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+    <div style="padding:14px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:14px;font-weight:700;color:#222;">知识报错</span>
+      <span style="cursor:pointer;color:#aaa;font-size:16px;" onclick="closeErrorModal()">✕</span>
+    </div>
+    <div style="padding:18px 20px;">
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:#666;margin-bottom:4px;">知识路径</div>
+        <div style="font-size:12px;color:#444;background:#f5f5f5;padding:6px 10px;border-radius:4px;" id="errorPath">银行事业部 / 个人银行 / 开户业务 / 开户介绍</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:#666;margin-bottom:6px;">请选择问题类型 <span style="color:#ff4d4f;">*</span></div>
+        <div style="display:flex;gap:8px;">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:6px 12px;border:1px solid #d9d9d9;border-radius:4px;" onclick="selectErrType(this)"><input type="radio" name="errType" style="accent-color:#ff4d4f;"> 知识缺失</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:6px 12px;border:1px solid #d9d9d9;border-radius:4px;" onclick="selectErrType(this)"><input type="radio" name="errType" style="accent-color:#ff4d4f;"> 知识错误</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:6px 12px;border:1px solid #d9d9d9;border-radius:4px;" onclick="selectErrType(this)"><input type="radio" name="errType" style="accent-color:#ff4d4f;"> 知识矛盾</label>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#666;margin-bottom:4px;">错误描述</div>
+        <textarea style="width:100%;border:1px solid #d9d9d9;border-radius:4px;padding:8px;font-size:12px;height:80px;resize:none;outline:none;" placeholder="请描述具体问题..."></textarea>
+      </div>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:8px;">
+      <button style="padding:6px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" onclick="closeErrorModal()">取消</button>
+      <button style="padding:6px 14px;border:1px solid #ff4d4f;border-radius:4px;background:#ff4d4f;color:#fff;cursor:pointer;font-size:12px;" onclick="submitError()">提交报错</button>
+    </div>
+  </div>
+</div>
+
+<!-- 更新日志气泡 -->
+<div style="display:none;position:fixed;z-index:2000;background:#fff;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.15);min-width:280px;border:1px solid #f0f0f0;" id="logBubble">
+  <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;font-size:12px;font-weight:700;color:#222;display:flex;justify-content:space-between;align-items:center;">
+    更新日志 <span style="cursor:pointer;color:#aaa;" onclick="document.getElementById('logBubble').style.display='none'">✕</span>
+  </div>
+  <div id="logBubbleContent" style="padding:8px 0;max-height:200px;overflow-y:auto;"></div>
+</div>
+
+</body>
+</html>

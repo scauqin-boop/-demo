@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>每日Briefing管理</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,'PingFang HK','Microsoft YaHei',sans-serif; font-size:13px; color:#333; background:#f0f2f5; }
+.topbar { position:fixed; top:0; left:0; right:0; height:48px; background:#00b389; display:flex; align-items:center; padding:0 16px; justify-content:space-between; z-index:100; }
+.topbar-logo { color:#fff; font-size:15px; font-weight:700; }
+.topbar-nav { color:rgba(255,255,255,0.85); font-size:12px; display:flex; align-items:center; gap:12px; }
+.topbar-nav a { color:rgba(255,255,255,0.75); text-decoration:none; padding:4px 8px; border-radius:4px; }
+.topbar-nav a:hover { background:rgba(255,255,255,0.15); color:#fff; }
+.content { position:fixed; top:48px; left:0; right:0; bottom:0; overflow:hidden; display:flex; flex-direction:column; }
+.toolbar { background:#fff; padding:10px 16px; border-bottom:1px solid #e8e8e8; display:flex; gap:10px; align-items:center; flex-wrap:wrap; flex-shrink:0; }
+.list-view { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+.detail-view { display:none; flex-direction:column; flex:1; overflow:hidden; }
+.detail-view.open { display:flex; }
+.list-view.hidden { display:none; }
+.page-header { background:#fff; padding:12px 16px; border-bottom:1px solid #e8e8e8; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.page-title { font-size:15px; font-weight:700; color:#222; }
+.tab-bar { background:#fff; border-bottom:1px solid #e8e8e8; display:flex; flex-shrink:0; }
+.tab-item { padding:10px 20px; cursor:pointer; font-size:12px; border-bottom:2px solid transparent; color:#888; }
+.tab-item.active { border-bottom-color:#00b389; color:#00b389; font-weight:600; }
+.scroll-area { flex:1; overflow-y:auto; padding:14px 16px; }
+.btn { display:inline-flex; align-items:center; gap:4px; padding:6px 14px; border-radius:4px; font-size:12px; cursor:pointer; border:1px solid transparent; white-space:nowrap; }
+.btn-primary { background:#00b389; color:#fff; border-color:#00b389; }
+.btn-primary:hover { background:#009e7a; }
+.btn-default { background:#fff; color:#555; border-color:#d9d9d9; }
+.btn-default:hover { border-color:#00b389; color:#00b389; }
+.btn-sm { padding:3px 10px; font-size:11px; }
+.form-control { border:1px solid #d9d9d9; border-radius:4px; padding:5px 8px; font-size:12px; outline:none; }
+.form-control:focus { border-color:#00b389; }
+.badge { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10px; font-weight:600; }
+.badge-green { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+.badge-orange { background:#fff7e6; color:#fa8c16; border:1px solid #ffd591; }
+.badge-blue { background:#e6f7ff; color:#1890ff; border:1px solid #91d5ff; }
+.badge-gray { background:#f5f5f5; color:#aaa; border:1px solid #e8e8e8; }
+table { width:100%; border-collapse:collapse; }
+thead tr { background:#fafafa; }
+th { padding:9px 12px; text-align:left; font-size:12px; font-weight:600; color:#555; border-bottom:1px solid #f0f0f0; white-space:nowrap; }
+td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8f8; vertical-align:middle; }
+.td-op { color:#00b389; cursor:pointer; font-size:11px; margin-right:8px; }
+.td-op.danger { color:#ff4d4f; }
+.table-wrap { background:#fff; border-radius:6px; overflow:hidden; }
+.form-card { background:#fff; border-radius:6px; padding:16px 20px; margin-bottom:12px; }
+.form-card-title { font-size:13px; font-weight:700; color:#222; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #f0f0f0; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; }
+.form-group { display:flex; flex-direction:column; gap:4px; }
+.form-group.span2 { grid-column:span 2; }
+.form-label { font-size:11px; color:#666; }
+.form-label .req { color:#ff4d4f; }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:none; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:#fff; border-radius:8px; box-shadow:0 8px 32px rgba(0,0,0,0.18); display:flex; flex-direction:column; max-height:90vh; width:580px; }
+.modal-header { padding:14px 20px; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.modal-header h3 { font-size:14px; font-weight:700; }
+.modal-close { cursor:pointer; color:#aaa; font-size:16px; }
+.modal-body { padding:16px 20px; overflow-y:auto; flex:1; }
+.modal-footer { padding:12px 20px; border-top:1px solid #f0f0f0; display:flex; justify-content:flex-end; gap:8px; flex-shrink:0; }
+.rt-btn { padding:2px 7px; border:1px solid #e0e0e0; border-radius:3px; background:#fff; cursor:pointer; font-size:12px; color:#444; }
+.rt-btn:hover { border-color:#00b389; color:#00b389; }
+.progress-bar { width:50px; height:6px; background:#f0f0f0; border-radius:3px; display:inline-block; }
+.progress-fill { height:100%; border-radius:3px; }
+.toast-wrap { position:fixed; top:60px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { background:#fff; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.15); padding:10px 16px; font-size:12px; border-left:3px solid #00b389; min-width:200px; animation:fi 0.2s; }
+@keyframes fi { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
+::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:#d9d9d9; border-radius:3px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-logo">众安客服管理系统 — 每日Briefing管理</div>
+  <div class="topbar-nav">
+    <a href="demo-admin-system.html">← 返回管理系统</a>
+    <a href="demo-quiz-bank.html">题库管理</a>
+    <a href="demo-quiz-paper.html">试卷管理</a>
+    <a href="demo-quiz-score.html">成绩看板</a>
+  </div>
+</div>
+
+<div class="content">
+  <!-- 列表视图 -->
+  <div class="list-view" id="listView">
+    <div class="page-header">
+      <div class="page-title">每日Briefing管理</div>
+      <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="openModal('modalNew')">+ 新建Briefing</button></div>
+    </div>
+    <div class="toolbar">
+      <span style="font-size:12px;color:#666;">日期：</span>
+      <input type="date" class="form-control" style="width:140px;" value="2026-07-01">
+      <span style="font-size:12px;color:#666;">～</span>
+      <input type="date" class="form-control" style="width:140px;" value="2026-07-06">
+      <span style="font-size:12px;color:#666;margin-left:8px;">状态：</span>
+      <select class="form-control" style="width:140px;"><option>全部</option><option>AI生成题目中</option><option>AI处理完成</option><option>已发布</option></select>
+      <button class="btn btn-primary btn-sm" onclick="showToast('查询完成')">查询</button>
+      <button class="btn btn-default btn-sm" onclick="showToast('已重置')">重置</button>
+    </div>
+    <div class="scroll-area">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>日期</th><th>标题</th><th>时长</th><th>创建人</th><th>状态</th><th>观看完成率</th><th>小测通过率</th><th>操作</th></tr></thead>
+          <tbody id="briefingBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 详情视图 -->
+  <div class="detail-view" id="detailView">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="color:#00b389;cursor:pointer;font-size:12px;" onclick="goBack()">◀ 返回列表</span>
+        <span style="color:#ddd;">|</span>
+        <div class="page-title" id="detailTitle"></div>
+        <span id="publishBtnWrap"></span>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item active" id="tab-info" onclick="switchTab('info')">📋 基本信息</div>
+      <div class="tab-item" id="tab-supplement" onclick="switchTab('supplement')">📄 Briefing补充</div>
+      <div class="tab-item" id="tab-quiz" onclick="switchTab('quiz')">📝 小测题</div>
+    </div>
+    <div class="scroll-area" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- 新建弹窗 -->
+<div class="modal-overlay" id="modalNew">
+  <div class="modal">
+    <div class="modal-header"><h3>新建Briefing</h3><span class="modal-close" onclick="closeModal('modalNew')">✕</span></div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="form-group"><div class="form-label">日期 <span class="req">*</span></div><input class="form-control" type="date" id="bnDate" value="2026-07-06"></div>
+        <div class="form-group"><div class="form-label">标题 <span class="req">*</span></div><input class="form-control" id="bnTitle" placeholder="如：2026-07-06 开户业务更新说明"></div>
+        <div class="form-group">
+          <div class="form-label">上传视频</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn btn-default btn-sm" onclick="document.getElementById('bnFileName').textContent='2026-07-06_briefing.mp4 (128MB)';document.getElementById('bnFileName').style.color='#333'">选择文件</button>
+            <span id="bnFileName" style="font-size:12px;color:#aaa;">支持 mp4/mov，建议≤500MB</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Briefing补充 <span style="font-size:11px;color:#aaa;">（支持Ctrl+V粘贴图片）</span></div>
+          <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
+            <div style="display:flex;gap:2px;padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
+              <button type="button" class="rt-btn" onclick="document.getElementById('bnEditor').focus();document.execCommand('bold')"><b>B</b></button>
+              <button type="button" class="rt-btn" onclick="document.getElementById('bnEditor').focus();document.execCommand('italic')"><i>I</i></button>
+              <button type="button" class="rt-btn" onclick="document.getElementById('bnEditor').focus();document.execCommand('insertUnorderedList')">• 列表</button>
+            </div>
+            <div id="bnEditor" contenteditable="true" style="min-height:80px;padding:8px;font-size:12px;line-height:1.8;outline:none;" onpaste="handlePaste(event)"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">上传附件</div>
+          <div style="border:1px dashed #d9d9d9;border-radius:4px;padding:8px 12px;background:#fafafa;">
+            <button class="btn btn-default btn-sm" onclick="addAttach()">+ 选择文件</button>
+            <span style="font-size:11px;color:#aaa;margin-left:8px;">doc/docx/pdf/xls/jpg/png，≤50MB</span>
+            <div id="attachList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modalNew')">取消</button>
+      <button class="btn btn-primary" onclick="createBriefing()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 小测发布设置弹窗 -->
+<div class="modal-overlay" id="modalPublish">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header"><h3>小测发布设置</h3><span class="modal-close" onclick="closeModal('modalPublish')">✕</span></div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="form-group">
+          <div class="form-label">及格标准</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="form-control" style="width:130px;" id="passType" onchange="updatePassUnit()"><option value="score">分数</option><option value="rate">正确率（%）</option><option value="count">答对题数</option></select>
+            <input type="number" class="form-control" style="width:80px;" id="passVal" value="60">
+            <span id="passUnit" style="font-size:12px;color:#666;">分</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">解锁前提</div>
+          <select class="form-control"><option>看完视频后解锁</option><option>无限制，随时可作答</option></select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><div class="form-label">可重做次数</div><input class="form-control" placeholder="不填则不限" type="number"></div>
+          <div class="form-group"><div class="form-label">作答时限（分钟）</div><input class="form-control" placeholder="不填则不限" type="number"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><div class="form-label">开始时间</div><input class="form-control" type="datetime-local" value="2026-07-06T09:00"></div>
+          <div class="form-group"><div class="form-label">截止时间</div><input class="form-control" type="datetime-local" value="2026-07-07T23:59"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modalPublish')">取消</button>
+      <button class="btn btn-primary" onclick="closeModal('modalPublish');showToast('小测发布规则已确认')">确认小测发布规则</button>
+    </div>
+  </div>
+</div>
+
+<!-- 观看/通过率详情弹窗 -->
+<div class="modal-overlay" id="modalStats">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header"><h3 id="statsTitle">观看完成率详情</h3><span class="modal-close" onclick="closeModal('modalStats')">✕</span></div>
+    <div class="modal-body" id="statsBody"></div>
+    <div class="modal-footer"><button class="btn btn-default" onclick="closeModal('modalStats')">关闭</button></div>
+  </div>
+</div>
+
+<!-- 编辑/新增题目弹窗 -->
+<div class="modal-overlay" id="modalQuizEdit">
+  <div class="modal" style="width:620px;">
+    <div class="modal-header"><h3 id="qEditTitle">编辑题目</h3><span class="modal-close" onclick="closeModal('modalQuizEdit')">✕</span></div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="form-group">
+          <div class="form-label">题型 <span class="req">*</span></div>
+          <div style="display:flex;gap:16px;padding-top:4px;">
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="qeType" value="单选" checked> 单选</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="qeType" value="多选"> 多选</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">题干 <span class="req">*</span></div>
+          <textarea class="form-control" id="qeStem" style="height:70px;resize:vertical;" placeholder="请输入题目内容"></textarea>
+        </div>
+        <div>
+          <div class="form-label" style="margin-bottom:6px;">选项（勾选正确答案）<span class="req">*</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:6px;">
+              <input type="checkbox" id="qeAnsA"><span style="font-size:12px;color:#666;width:18px;">A.</span><input class="form-control" id="qeOptA" placeholder="选项A" style="flex:1;">
+            </div>
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:6px;">
+              <input type="checkbox" id="qeAnsB"><span style="font-size:12px;color:#666;width:18px;">B.</span><input class="form-control" id="qeOptB" placeholder="选项B" style="flex:1;">
+            </div>
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:6px;">
+              <input type="checkbox" id="qeAnsC"><span style="font-size:12px;color:#666;width:18px;">C.</span><input class="form-control" id="qeOptC" placeholder="选项C" style="flex:1;">
+            </div>
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:6px;">
+              <input type="checkbox" id="qeAnsD"><span style="font-size:12px;color:#666;width:18px;">D.</span><input class="form-control" id="qeOptD" placeholder="选项D" style="flex:1;">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">解析（选填）</div>
+          <textarea class="form-control" id="qeAnalysis" style="height:50px;resize:vertical;" placeholder="答题后展示的解析说明"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('modalQuizEdit')">取消</button>
+      <button class="btn btn-primary" onclick="saveQuizEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+var briefingData = [
+  { id:1, date:'2026-07-02', title:'开户业务及转账规则更新说明', duration:'18:32', creator:'Lucy', status:'published', watchRate:72, passRate:68,
+    supplement:'各位同事，今日主要涵盖：一是开户流程最新调整，二是转账规则变更说明。\n\n【开户部分】MCV开户新增视频验证步骤，在人脸识别之后进行，约需1-2分钟。\n\n【转账部分】港元转人民币跨境转账改为实时汇率计算。',
+    attachments:['开户流程说明.pdf','转账规则变更.docx'], video:'2026-07-02_briefing.mp4' },
+  { id:2, date:'2026-07-01', title:'VA账户新功能说明', duration:'12:15', creator:'Tom', status:'ai_done', watchRate:0, passRate:0,
+    supplement:'VA账户本次更新：1.支持更多货币；2.转账限额提升；3.新增账单导出。',
+    attachments:['VA账户说明.pdf'], video:'2026-07-01_briefing.mp4' },
+  { id:3, date:'2026-06-30', title:'基金相关查询处理流程', duration:'22:08', creator:'Lucy', status:'published', watchRate:65, passRate:43,
+    supplement:'基金查询处理流程详见附件。', attachments:['基金查询SOP.pdf'], video:'2026-06-30_briefing.mp4' },
+  { id:4, date:'2026-07-06', title:'新增功能介绍', duration:'—', creator:'覃国权', status:'ai_processing', watchRate:0, passRate:0,
+    supplement:'', attachments:[], video:'' }
+];
+var currentId = null;
+var currentTab = 'info';
+
+var statusMap = { published:'已发布', ai_done:'AI处理完成', ai_processing:'AI生成题目中' };
+var statusColor = { published:'badge-green', ai_done:'badge-blue', ai_processing:'badge-orange' };
+
+function render() {
+  var tbody = document.getElementById('briefingBody');
+  tbody.innerHTML = briefingData.map(function(b) {
+    var st = '<span class="badge '+(statusColor[b.status]||'badge-gray')+'">'+(statusMap[b.status]||b.status)+'</span>';
+    var watchBar = function(v) {
+      return '<div style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="showStats(\'watch\','+b.id+')">'
+        +'<div class="progress-bar"><div class="progress-fill" style="width:'+v+'%;background:#00b389;"></div></div>'
+        +'<span style="text-decoration:underline;color:#00b389;">'+v+'%</span></div>';
+    };
+    var passBar = function(v) {
+      return '<div style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="window.open(\'demo-quiz-score.html\',\'_blank\')">'
+        +'<div class="progress-bar"><div class="progress-fill" style="width:'+v+'%;background:#1890ff;"></div></div>'
+        +'<span style="text-decoration:underline;color:#1890ff;">'+v+'%</span></div>';
+    };
+    return '<tr>'
+      +'<td>'+b.date+'</td>'
+      +'<td style="font-weight:600;max-width:220px;">'+b.title+'</td>'
+      +'<td>'+b.duration+'</td>'
+      +'<td>'+b.creator+'</td>'
+      +'<td>'+st+'</td>'
+      +'<td>'+(b.status==='published'?watchBar(b.watchRate):'<span style="color:#ccc;">—</span>')+'</td>'
+      +'<td>'+(b.status==='published'?passBar(b.passRate):'<span style="color:#ccc;">—</span>')+'</td>'
+      +'<td><div style="display:flex;gap:8px;">'
+      +'<span class="td-op" onclick="openDetail('+b.id+')">修改</span>'
+      +(b.status==='ai_done'?'<span class="td-op" style="color:#52c41a;" onclick="publish('+b.id+')">发布</span>':'')
+      +'<span class="td-op danger" onclick="del('+b.id+')">删除</span>'
+      +'</div></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function showStats(type, id) {
+  var b = briefingData.find(function(x){return x.id===id;});
+  if (!b) return;
+  document.getElementById('statsTitle').textContent = type==='watch'?'观看完成率详情':'小测通过率详情';
+  var data = type==='watch'
+    ? [{n:'覃国权',v:100,s:'已完成'},{n:'Lucy',v:85,s:'已完成'},{n:'Tom',v:45,s:'进行中'},{n:'Sam',v:0,s:'未开始'}]
+    : [{n:'覃国权',v:92,s:'通过'},{n:'Ines',v:100,s:'通过'},{n:'Amy',v:55,s:'未通过'},{n:'Sam',v:null,s:'未作答'}];
+  var col = type==='watch'?'#00b389':'#1890ff';
+  document.getElementById('statsBody').innerHTML = '<table><thead><tr><th>姓名</th><th>'+(type==='watch'?'观看进度':'得分')+'</th><th>状态</th></tr></thead><tbody>'
+    +data.map(function(d){
+      var val = d.v!==null?d.v+'%':'—';
+      var badge = d.s==='通过'?'badge-green':d.s==='未通过'?'badge-red':d.s==='已完成'?'badge-green':d.s==='进行中'?'badge-orange':'badge-gray';
+      return '<tr><td>'+d.n+'</td><td><div style="display:flex;align-items:center;gap:6px;">'
+        +(d.v!==null?'<div class="progress-bar"><div class="progress-fill" style="width:'+d.v+'%;background:'+col+';"></div></div>':'')
+        +'<span>'+val+'</span></div></td><td><span class="badge '+badge+'">'+d.s+'</span></td></tr>';
+    }).join('')+'</tbody></table>';
+  openModal('modalStats');
+}
+
+function publish(id) {
+  var b = briefingData.find(function(x){return x.id===id;});
+  if (b) { b.status='published'; render(); updatePublishBtn(); showToast('已发布'); }
+}
+
+function del(id) {
+  if (!confirm('确认删除？')) return;
+  briefingData = briefingData.filter(function(x){return x.id!==id;});
+  render(); showToast('已删除');
+}
+
+function openDetail(id) {
+  currentId = id;
+  var b = briefingData.find(function(x){return x.id===id;});
+  if (!b) return;
+  document.getElementById('detailTitle').textContent = b.date+' '+b.title;
+  document.getElementById('listView').classList.add('hidden');
+  document.getElementById('detailView').classList.add('open');
+  updatePublishBtn();
+  switchTab('info');
+}
+
+function goBack() {
+  document.getElementById('detailView').classList.remove('open');
+  document.getElementById('listView').classList.remove('hidden');
+  document.getElementById('publishBtnWrap').innerHTML = '';
+}
+
+function updatePublishBtn() {
+  var wrap = document.getElementById('publishBtnWrap');
+  if (!wrap) return;
+  var b = briefingData.find(function(x){return x.id===currentId;});
+  if (b && b.status === 'ai_done') {
+    wrap.innerHTML = '<button class="btn btn-primary btn-sm" style="background:#52c41a;border-color:#52c41a;margin-left:8px;" onclick="publish('+b.id+')">🚀 发布</button>';
+  } else {
+    wrap.innerHTML = '';
+  }
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  ['info','supplement','quiz'].forEach(function(t){
+    var el = document.getElementById('tab-'+t);
+    if (el) el.className = 'tab-item'+(t===tab?' active':'');
+  });
+  var b = briefingData.find(function(x){return x.id===currentId;}) || briefingData[0];
+  var body = document.getElementById('detailBody');
+
+  if (tab==='info') {
+    var attachHtml = (b.attachments||[]).map(function(a){
+      return '<div style="display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:4px;padding:3px 10px;font-size:11px;">📎 '+a+'</div>';
+    }).join(' ') || '<span style="color:#ccc;font-size:12px;">暂无附件</span>';
+    body.innerHTML = '<div class="form-card"><div class="form-card-title">📋 基本信息</div>'
+      +'<div class="form-grid" style="gap:14px;">'
+      +'<div class="form-group"><div class="form-label">日期</div><input class="form-control" value="'+b.date+'" type="date"></div>'
+      +'<div class="form-group"><div class="form-label">标题</div><input class="form-control" value="'+b.title+'"></div>'
+      +'<div class="form-group span2"><div class="form-label">视频</div>'
+      +(b.video?'<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:12px;">🎬 '+b.video+'</span><button class="btn btn-default btn-sm" onclick="showToast(\'重新选择文件\')">重新上传</button></div>'
+        :'<button class="btn btn-default btn-sm" onclick="showToast(\'选择视频文件\')">上传视频</button>')
+      +'</div>'
+      +'<div class="form-group span2"><div class="form-label">附件</div><div style="margin-bottom:6px;">'+attachHtml+'</div><button class="btn btn-default btn-sm" onclick="showToast(\'文件已添加\')">+ 新增附件</button></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;margin-top:14px;">'
+      +'<button class="btn btn-primary" onclick="showToast(\'保存成功\')">保存</button>'
+      +'<button class="btn btn-default" onclick="goBack()">取消</button>'
+      +'</div></div>';
+  } else if (tab==='supplement') {
+    body.innerHTML = '<div class="form-card" style="height:calc(100% - 32px);display:flex;flex-direction:column;">'
+      +'<div class="form-card-title">📄 Briefing补充 <span style="font-size:11px;color:#aaa;font-weight:400;">（支持Ctrl+V粘贴图片）</span></div>'
+      +'<div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;display:flex;flex-direction:column;flex:1;">'
+      +'<div style="display:flex;gap:2px;padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;flex-shrink:0;">'
+      +'<button type="button" class="rt-btn" onclick="document.getElementById(\'suppEd\').focus();document.execCommand(\'bold\')"><b>B</b></button>'
+      +'<button type="button" class="rt-btn" onclick="document.getElementById(\'suppEd\').focus();document.execCommand(\'italic\')"><i>I</i></button>'
+      +'<button type="button" class="rt-btn" onclick="document.getElementById(\'suppEd\').focus();document.execCommand(\'insertUnorderedList\')">• 列表</button>'
+      +'</div>'
+      +'<div id="suppEd" contenteditable="true" style="flex:1;padding:12px;font-size:13px;line-height:1.9;outline:none;overflow-y:auto;" onpaste="handlePaste(event)">'
+      +(b.supplement||'').replace(/\n/g,'<br>')
+      +'</div></div>'
+      +'<div style="margin-top:10px;flex-shrink:0;"><button class="btn btn-primary btn-sm" onclick="showToast(\'补充内容已保存\')">保存</button></div>'
+      +'</div>';
+  } else {
+    var quizItems = [
+      { id:'q1', type:'单选', q:'MCV开户新增的视频验证步骤在哪个环节之后进行？', opts:['填写个人资料之后','人脸识别之后','同意条款之后','输入身份证之后'], ans:1, confirmed:false, source:'ai' },
+      { id:'q2', type:'多选', q:'以下哪些情况会导致视频验证失败？（多选）', opts:['光线不足','动作不符合要求','身份证过期','网络连接不稳定'], ans:[0,1,3], confirmed:true, source:'ai' },
+      { id:'q3', type:'单选', q:'本次转账规则调整主要影响哪类转账？', opts:['本地港元转账','港元转人民币跨境转账','美元转账','以上均有调整'], ans:1, confirmed:false, source:'ai' }
+    ];
+    var qHtml = quizItems.map(function(q, qi) {
+      var typeBadge = q.type==='单选'?'<span class="badge" style="background:#e6f7ff;color:#1890ff;border:1px solid #91d5ff;">单选</span>':'<span class="badge" style="background:#e6fffb;color:#13c2c2;border:1px solid #87e8de;">多选</span>';
+      var sourceBadge = q.source==='manual'
+        ?'<span class="badge" style="background:#fff7e6;color:#fa8c16;border:1px solid #ffd591;">手动创建</span>'
+        :'<span class="badge" style="background:#f0f5ff;color:#722ed1;border:1px solid #d3adf7;">AI生成</span>';
+      var ansArr = Array.isArray(q.ans)?q.ans:[q.ans];
+      var opts = q.opts.map(function(o,oi){
+        var isAns = ansArr.indexOf(oi)>=0;
+        return '<div style="font-size:12px;color:'+(isAns?'#52c41a':'#444')+';padding:2px 0;">'
+          +String.fromCharCode(65+oi)+'. '+o+(isAns?' ✓':'')+'</div>';
+      }).join('');
+      var confirmBadge = q.confirmed
+        ?'<span class="badge badge-green">已确认</span>'
+        :'<span class="badge badge-gray" id="cbadge_'+q.id+'">待确认</span>';
+      var confirmBtn = q.confirmed?''
+        :'<button class="btn btn-primary btn-sm" id="cBtn_'+q.id+'" onclick="confirmQ(\''+q.id+'\')">✅ 确认</button>';
+      return '<div style="border:1px solid #f0f0f0;border-radius:6px;padding:12px;margin-bottom:10px;" id="qitem_'+q.id+'">'
+        +'<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;">'+typeBadge+' '+sourceBadge+' '+confirmBadge
+        +'<span style="font-size:12px;font-weight:600;color:#222;margin-left:4px;">'+(qi+1)+'. '+q.q+'</span></div>'
+        +'<div style="padding-left:8px;margin-bottom:8px;">'+opts+'</div>'
+        +'<div style="display:flex;gap:8px;">'+confirmBtn
+        +'<button class="btn btn-default btn-sm" onclick="editQ(\''+q.id+'\',\''+q.type+'\',\''+q.q.replace(/'/g,"\\'")+'\')">✏️ 编辑</button>'
+        +'<button class="btn btn-default btn-sm" style="color:#ff4d4f;border-color:#ffa39e;" onclick="document.getElementById(\'qitem_'+q.id+'\').remove();showToast(\'已删除\')">❌ 删除</button>'
+        +'</div></div>';
+    }).join('');
+
+    // 左右分栏：左侧题目列表，右侧发布设置
+    body.innerHTML = '<div style="display:flex;height:100%;overflow:hidden;">'
+      // ── 左侧题目区 ──
+      +'<div style="flex:3;overflow-y:auto;padding:14px 16px;border-right:1px solid #e8e8e8;">'
+      +'<div style="font-size:13px;font-weight:700;color:#222;margin-bottom:12px;">📝 小测题 <span style="font-size:11px;color:#aaa;font-weight:400;">共 '+quizItems.length+' 题</span></div>'
+      +qHtml
+      +'<button class="btn btn-default btn-sm" onclick="addQ()">+ 手动新增题目</button>'
+      +'</div>'
+      // ── 右侧发布设置 ──
+      +'<div style="flex:2;overflow-y:auto;padding:14px 16px;background:#fafafa;">'
+      +'<div style="font-size:13px;font-weight:700;color:#222;margin-bottom:14px;">⚙️ 小测发布设置</div>'
+      +'<div class="form-group" style="margin-bottom:12px;">'
+      +'<div class="form-label">及格标准</div>'
+      +'<div style="display:flex;gap:8px;align-items:center;">'
+      +'<select class="form-control" style="width:120px;" onchange="updatePassUnit()"><option value="score">分数</option><option value="rate">正确率（%）</option><option value="count">答对题数</option></select>'
+      +'<input type="number" class="form-control" style="width:70px;" value="60">'
+      +'<span style="font-size:12px;color:#666;">分</span>'
+      +'</div></div>'
+      +'<div class="form-group" style="margin-bottom:12px;">'
+      +'<div class="form-label">解锁前提</div>'
+      +'<select class="form-control"><option>看完视频后解锁</option><option>无限制，随时可作答</option></select>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
+      +'<div class="form-group"><div class="form-label">可重做次数</div><input class="form-control" placeholder="不填则不限" type="number"></div>'
+      +'<div class="form-group"><div class="form-label">作答时限（分钟）</div><input class="form-control" placeholder="不填则不限" type="number"></div>'
+      +'</div>'
+      +'<div class="form-group" style="margin-bottom:12px;">'
+      +'<div class="form-label">派发对象 <span class="req">*</span></div>'
+      +'<div style="position:relative;" id="dispatchPickerWrap">'
+      +'<div class="form-control" style="min-height:30px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;cursor:pointer;padding:3px 8px;" onclick="toggleDispatchPicker()">'
+      +'<span id="dispatchPlaceholder" style="font-size:12px;color:#bbb;">点击选择派发对象...</span>'
+      +'<span id="dispatchSelectedArea" style="display:contents;"></span>'
+      +'<span style="margin-left:auto;color:#aaa;font-size:10px;">▾</span>'
+      +'</div>'
+      +'<div id="dispatchDropdown" style="display:none;position:absolute;left:0;top:100%;z-index:500;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);width:280px;max-height:260px;overflow:hidden;">'
+      +'<div style="padding:6px 8px;border-bottom:1px solid #f0f0f0;"><input class="form-control" style="width:100%;" placeholder="搜索部门/人员..." oninput="filterDispatchTree(this.value)"></div>'
+      +'<div id="dispatchTreeBody" style="overflow-y:auto;max-height:210px;padding:4px 0;"></div>'
+      +'</div></div></div>'
+      +'<div class="form-group" style="margin-bottom:12px;">'
+      +'<div class="form-label">开始时间</div>'
+      +'<input class="form-control" type="datetime-local" value="2026-07-06T09:00">'
+      +'</div>'
+      +'<div class="form-group" style="margin-bottom:14px;">'
+      +'<div class="form-label">截止时间</div>'
+      +'<input class="form-control" type="datetime-local" value="2026-07-07T23:59">'
+      +'</div>'
+      +'<button class="btn btn-primary" onclick="showToast(\'小测发布规则已确认\')">确认规则</button>'
+      +'</div>'
+      +'</div>';
+  }
+}
+
+function confirmQ(id) {
+  var badge = document.getElementById('cbadge_'+id);
+  var btn = document.getElementById('cBtn_'+id);
+  if (badge) { badge.className='badge badge-green'; badge.textContent='已确认'; }
+  if (btn) btn.remove();
+  showToast('题目已确认');
+}
+
+var qEditingId = null;
+
+function editQ(id, type, stem) {
+  qEditingId = id;
+  document.getElementById('qEditTitle').textContent = '编辑题目';
+  document.getElementById('qeStem').value = stem;
+  var radios = document.getElementsByName('qeType');
+  radios.forEach(function(r){ r.checked = r.value === type; });
+  // 清空选项（demo不回填）
+  ['A','B','C','D'].forEach(function(x){
+    var opt = document.getElementById('qeOpt'+x);
+    var ans = document.getElementById('qeAns'+x);
+    if(opt) opt.value=''; if(ans) ans.checked=false;
+  });
+  openModal('modalQuizEdit');
+}
+
+function addQ() {
+  qEditingId = null;
+  document.getElementById('qEditTitle').textContent = '新增题目';
+  document.getElementById('qeStem').value = '';
+  var radios = document.getElementsByName('qeType');
+  radios.forEach(function(r){ r.checked = r.value === '单选'; });
+  ['A','B','C','D'].forEach(function(x){
+    var opt = document.getElementById('qeOpt'+x);
+    var ans = document.getElementById('qeAns'+x);
+    if(opt) opt.value=''; if(ans) ans.checked=false;
+  });
+  openModal('modalQuizEdit');
+}
+
+function saveQuizEdit() {
+  var stem = document.getElementById('qeStem').value.trim();
+  if (!stem) { showToast('请填写题干'); return; }
+  closeModal('modalQuizEdit');
+  showToast(qEditingId ? '题目已保存' : '题目已新增');
+  // demo: 重新渲染quiz tab以展示效果
+  if (currentTab === 'quiz') switchTab('quiz');
+}
+
+function createBriefing() {
+  var title = document.getElementById('bnTitle').value.trim();
+  if (!title) { showToast('请填写标题'); return; }
+  briefingData.unshift({ id:Date.now(), date:document.getElementById('bnDate').value, title:title, duration:'—', creator:'覃国权', status:'ai_processing', watchRate:0, passRate:0, supplement:'', attachments:[], video:'' });
+  closeModal('modalNew');
+  document.getElementById('bnTitle').value='';
+  render();
+  showToast('Briefing创建成功，AI处理中...');
+}
+
+function addAttach() {
+  var list = document.getElementById('attachList');
+  var files = ['开户说明.pdf','话术参考.docx','规则变更.xlsx'];
+  var name = files[list.children.length % files.length];
+  var div = document.createElement('div');
+  div.style.cssText = 'display:inline-flex;align-items:center;gap:5px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:4px;padding:2px 8px;font-size:11px;';
+  div.innerHTML = '📎 '+name+' <span style="cursor:pointer;color:#aaa;" onclick="this.parentNode.remove()">✕</span>';
+  list.appendChild(div);
+}
+
+function handlePaste(e) {
+  var items = (e.clipboardData||e.originalEvent.clipboardData).items;
+  for (var i=0;i<items.length;i++) {
+    if (items[i].type.indexOf('image')!==-1) {
+      e.preventDefault();
+      var r = new FileReader();
+      r.onload = function(ev){ document.execCommand('insertHTML',false,'<img src="'+ev.target.result+'" style="max-width:100%;border-radius:4px;">'); };
+      r.readAsDataURL(items[i].getAsFile());
+      return;
+    }
+  }
+}
+
+function updatePassUnit() {
+  var map = {score:'分', rate:'%', count:'题'};
+  document.getElementById('passUnit').textContent = map[document.getElementById('passType').value]||'';
+}
+
+// ── 派发对象树形选择器 ──
+var dispatchTreeData = [
+  { name:'全体客服', children:[] },
+  { name:'银行客服CS事业部', children:['覃国权','Lucy','Ines','Amy'] },
+  { name:'运营部', children:['Tom','Sam','Jack'] },
+  { name:'合规部', children:['Mike','Sarah'] }
+];
+var selectedDispatch = new Set();
+var dispatchOpenGroups = {};
+
+function toggleDispatchPicker() {
+  var dd = document.getElementById('dispatchDropdown');
+  if (!dd) return;
+  var isOpen = dd.style.display !== 'none';
+  if (isOpen) { dd.style.display='none'; return; }
+  renderDispatchTree('');
+  dd.style.display='block';
+  setTimeout(function(){ document.addEventListener('click', closeDispatchOutside); }, 0);
+}
+
+function closeDispatchOutside(e) {
+  var wrap = document.getElementById('dispatchPickerWrap');
+  var dd = document.getElementById('dispatchDropdown');
+  if (dd && wrap && !wrap.contains(e.target)) {
+    dd.style.display='none';
+    document.removeEventListener('click', closeDispatchOutside);
+  }
+}
+
+function renderDispatchTree(keyword) {
+  var body = document.getElementById('dispatchTreeBody');
+  if (!body) return;
+  var kw = (keyword||'').toLowerCase();
+  body.innerHTML = dispatchTreeData.map(function(group, gi) {
+    var filteredChildren = group.children.filter(function(c){ return !kw || c.toLowerCase().indexOf(kw)>=0 || group.name.toLowerCase().indexOf(kw)>=0; });
+    var groupMatch = !kw || group.name.toLowerCase().indexOf(kw)>=0;
+    if (!groupMatch && filteredChildren.length===0) return '';
+    var isOpen = dispatchOpenGroups[gi] !== false;
+    var showAll = groupMatch && !kw;
+    var childrenHtml = '';
+    if (group.children.length > 0) {
+      var displayChildren = kw ? filteredChildren : group.children;
+      childrenHtml = displayChildren.map(function(c) {
+        var checked = selectedDispatch.has(c) ? 'checked' : '';
+        return '<label style="display:flex;align-items:center;gap:6px;padding:4px 14px 4px 28px;cursor:pointer;font-size:12px;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
+          +'<input type="checkbox" style="accent-color:#00b389;" '+checked+' onchange="toggleDispatchItem(this,\''+c+'\')">'+c+'</label>';
+      }).join('');
+    }
+    var allChecked = group.children.length>0 && group.children.every(function(c){ return selectedDispatch.has(c); });
+    var groupName = group.name;
+    var groupCheckbox = group.children.length===0
+      ? '<label style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#222;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
+        +'<input type="checkbox" style="accent-color:#00b389;" '+(selectedDispatch.has(groupName)?'checked':'')+' onchange="toggleDispatchItem(this,\''+groupName+'\')">'+groupName+'</label>'
+      : '<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:4px;" onclick="toggleDispatchGroup('+gi+')">'
+        +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(isOpen?'transform:rotate(90deg);':'')+'">▶</span> '+groupName
+        +(allChecked?' <span style="color:#52c41a;font-size:9px;margin-left:auto;">全选</span>':'')
+        +'</div>';
+    return '<div>'+groupCheckbox
+      +(group.children.length>0 ? '<div style="'+(isOpen?'':'display:none;')+'">'+childrenHtml+'</div>' : '')
+      +'</div>';
+  }).join('');
+}
+
+function toggleDispatchGroup(gi) {
+  dispatchOpenGroups[gi] = dispatchOpenGroups[gi]===false ? true : false;
+  var searchInput = document.querySelector('#dispatchDropdown input');
+  renderDispatchTree(searchInput ? searchInput.value : '');
+}
+
+function filterDispatchTree(val) {
+  renderDispatchTree(val);
+}
+
+function toggleDispatchItem(cb, name) {
+  if (cb.checked) selectedDispatch.add(name); else selectedDispatch.delete(name);
+  renderDispatchSelected();
+  var searchInput = document.querySelector('#dispatchDropdown input');
+  renderDispatchTree(searchInput ? searchInput.value : '');
+}
+
+function removeDispatchItem(name) {
+  selectedDispatch.delete(name);
+  renderDispatchSelected();
+  var searchInput = document.querySelector('#dispatchDropdown input');
+  renderDispatchTree(searchInput ? searchInput.value : '');
+}
+
+function renderDispatchSelected() {
+  var area = document.getElementById('dispatchSelectedArea');
+  var ph = document.getElementById('dispatchPlaceholder');
+  if (!area) return;
+  area.innerHTML = '';
+  selectedDispatch.forEach(function(n) {
+    var span = document.createElement('span');
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;padding:1px 8px;border-radius:10px;font-size:11px;';
+    span.innerHTML = n+' <span style="cursor:pointer;opacity:0.7;" onclick="event.stopPropagation();removeDispatchItem(\''+n+'\')">✕</span>';
+    area.appendChild(span);
+  });
+  if (ph) ph.style.display = selectedDispatch.size>0 ? 'none' : 'inline';
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', function(e){ if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('open'); });
+
+function showToast(msg) {
+  var w = document.getElementById('toastWrap');
+  var t = document.createElement('div');
+  t.className='toast'; t.textContent='✅ '+msg;
+  w.appendChild(t);
+  setTimeout(function(){ if(t.parentNode)t.parentNode.removeChild(t); }, 2000);
+}
+
+render();
+</script>
+</body>
+</html>
