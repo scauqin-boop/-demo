@@ -341,7 +341,15 @@ function renderDetailBody(p) {
     +'<div class="form-card-title">⚙️ 试卷规则</div>'
     +'<div class="form-grid" style="gap:12px;">'
     +'<div class="form-group"><div class="form-label">试卷名称</div><input class="form-control" value="'+p.name+'"></div>'
-    +'<div class="form-group"><div class="form-label">试卷类型</div><select class="form-control"><option>'+p.type+'</option></select></div>'
+    +'<div class="form-group"><div class="form-label">试卷类型</div>'
+    +'<select class="form-control" id="paperDetailType" onchange="onPaperDetailTypeChange()">'
+    +'<option value="月测"'+(p.type==='月测'?' selected':'')+'>月测</option>'
+    +'<option value="专项测验"'+(p.type==='专项测验'?' selected':'')+'>专项测验</option>'
+    +'<option value="Briefing小测"'+(p.type==='Briefing小测'?' selected':'')+'>Briefing小测</option>'
+    +'<option value="__custom__">自定义类型...</option>'
+    +'</select>'
+    +'<input class="form-control" id="paperDetailTypeCustom" style="display:none;margin-top:6px;" placeholder="请输入自定义试卷类型名称">'
+    +'</div>'
     +'</div></div>'
     +'<div class="form-card" style="margin-bottom:12px;">'
     +'<div class="form-card-title">📋 题目列表（可拖拽排序）<button class="btn btn-default btn-sm" onclick="openBankPicker()">+ 从题库添加</button></div>'
@@ -710,6 +718,14 @@ function showErrorToast(msg) {
   t.className='toast'; t.style.background='#fff1f0'; t.style.color='#cf1322'; t.style.border='1px solid #ffa39e';
   t.textContent='❌ '+msg; w.appendChild(t);
   setTimeout(function(){ if(t.parentNode)t.parentNode.removeChild(t); }, 2500);
+}
+
+function onPaperDetailTypeChange() {
+  var sel = document.getElementById('paperDetailType');
+  var inp = document.getElementById('paperDetailTypeCustom');
+  if (!sel || !inp) return;
+  inp.style.display = sel.value === '__custom__' ? 'block' : 'none';
+  if (sel.value === '__custom__') inp.focus();
 }
 
 render();

@@ -141,6 +141,9 @@ tr:hover td { background: #fafffe; }
 .cat-selected { background: #e6faf5 !important; border-left-color: #00b389 !important; }
 .cat-node { border-left: 3px solid transparent; }
 
+/* ── KNOWLEDGE HEADINGS ── */
+.k-heading { font-size: 13px; font-weight: 700; color: #222; margin: 12px 0 6px; padding: 4px 0; border-bottom: 1px dashed #e8e8e8; }
+
 /* ── INLINE EDIT ROW ── */
 .inline-edit-area { background: #f0faf7; border: 1px solid #b7e8d8; border-radius: 6px; padding: 12px 14px; margin: 4px 8px 8px; }
 .inline-edit-area .form-grid { gap: 8px 16px; }
@@ -326,23 +329,21 @@ tr:hover td { background: #fafffe; }
         </div>
         <div class="modal-body" style="max-height:80vh;overflow-y:auto;">
 
-          <!-- 排序号 + 标签 -->
+          <!-- 标签 -->
           <div class="form-grid" style="margin-bottom:12px;">
             <div class="form-group">
-              <div class="form-label">排序号</div>
-              <input class="form-control" type="number" placeholder="如：1、2、3...">
-              <div style="font-size:11px;color:#aaa;margin-top:3px;">按序号从小到大展示；不填或重复则按热度排序</div>
-            </div>
-            <div class="form-group">
               <div class="form-label">标签</div>
-              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;min-height:34px;cursor:pointer;background:#fff;" id="entryTagArea" onclick="toggleTagPicker()">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 8px;border:1px solid #d9d9d9;border-radius:4px;min-height:34px;cursor:pointer;background:#fff;position:relative;" id="entryTagArea" onclick="toggleTagPicker()">
                 <span id="entryTagPlaceholder" style="font-size:12px;color:#bbb;">点击选择标签...</span>
                 <span style="display:inline-flex;align-items:center;gap:3px;background:#e6fffb;border:1px solid #87e8de;color:#13c2c2;padding:2px 8px;border-radius:10px;font-size:11px;" id="entryTagDefault">开户介绍01 <span style="cursor:pointer;opacity:0.7" onclick="event.stopPropagation();removeEntryTag(this)">✕</span></span>
                 <span style="margin-left:auto;color:#aaa;font-size:11px;">▾</span>
-              </div>
-              <div id="tagPickerDrop" style="display:none;position:absolute;left:0;top:100%;z-index:500;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);width:320px;max-height:260px;overflow-y:auto;padding:8px 0;">
-                <div style="padding:6px 10px;border-bottom:1px solid #f0f0f0;font-size:11px;color:#999;">选择标签类型和标签，可多选</div>
-                <div id="tagPickerTree"></div>
+                <div id="tagPickerDrop" style="display:none;position:absolute;left:0;top:calc(100% + 4px);z-index:500;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);width:320px;max-height:300px;overflow:hidden;" onclick="event.stopPropagation()">
+                  <div style="padding:8px 10px;border-bottom:1px solid #f0f0f0;">
+                    <input class="form-control" style="width:100%;padding:4px 8px;font-size:12px;" placeholder="搜索标签..." oninput="filterTagPicker(this.value)" onclick="event.stopPropagation()">
+                  </div>
+                  <div style="padding:4px 10px;border-bottom:1px solid #f0f0f0;font-size:11px;color:#999;">选择标签类型和标签，可多选</div>
+                  <div id="tagPickerTree" style="max-height:220px;overflow-y:auto;"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -438,7 +439,30 @@ tr:hover td { background: #fafffe; }
                   <div id="rtEditor" contenteditable="true" style="min-height:180px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;overflow-y:auto;background:#fff;" onpaste="rtHandlePaste(event)" oninput="rtUpdateOutline()"></div>
                 </div>
               </div>
-              <div style="font-size:11px;color:#aaa;margin-top:3px;">支持 Ctrl+B 加粗、Ctrl+I 斜体、Ctrl+V 粘贴图片；点击「目录」可显示大纲导航</div>
+              <div style="font-size:11px;color:#aaa;margin-top:3px;">支持 Ctrl+B 加粗、Ctrl+I 斜体、Ctrl+V 粘贴图片；点击「目录」可显示大纲导航<br>支持上传视频，将以视频播放器形式展示在ARK系统的知识库</div>
+            </div>
+            <!-- 关联知识条目 -->
+            <div class="form-group" style="margin-bottom:10px;">
+              <div class="form-label">关联知识条目</div>
+              <div style="border:1px solid #d9d9d9;border-radius:4px;padding:8px 12px;background:#fff;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                  <input class="form-control" id="relatedEntryInput" style="flex:1;" placeholder="输入知识条目ID（如 K-20240101）">
+                  <button class="btn btn-default btn-sm" onclick="addRelatedEntry()">+ 关联</button>
+                </div>
+                <div id="relatedEntryList">
+                  <div class="related-entry-item" style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:6px;">
+                    <div style="flex-shrink:0;">
+                      <span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;cursor:pointer;" onclick="showToast('跳转到 K-20240104')">K-20240104</span>
+                    </div>
+                    <div style="flex:1;">
+                      <div style="font-size:12px;color:#444;margin-bottom:4px;">开户被系统拒绝怎么办？</div>
+                      <input class="form-control" style="width:100%;font-size:11px;padding:3px 6px;" placeholder="填写关联说明（如：开户被拒时可参考此条目的处理流程）" value="开户被拒时可参考此条目的处理流程">
+                    </div>
+                    <span style="color:#aaa;cursor:pointer;font-size:12px;flex-shrink:0;" onclick="this.closest('.related-entry-item').remove()">✕</span>
+                  </div>
+                </div>
+                <div style="font-size:11px;color:#aaa;margin-top:4px;">关联已有知识条目，可在ARK系统中点击跳转查看；支持关联多条</div>
+              </div>
             </div>
             <!-- 附件（繁体下方） -->
             <div class="form-group" style="margin-bottom:10px;">
@@ -499,21 +523,30 @@ tr:hover td { background: #fafffe; }
     </div>
 
     <!-- 标签管理面板 -->
-    <div class="panel" id="panel-label">
-      <div class="page-header">
-        <div class="page-title">标签管理</div>
-        <div style="position:relative;">
-          <input class="table-search" id="labelSearchInput" placeholder="全局搜索标签名称" oninput="labelSearch(this.value)" style="width:220px;padding-left:26px;">
-          <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#aaa;font-size:12px;">🔍</span>
+    <div class="panel row" id="panel-label">
+      <div style="width:320px;display:flex;flex-direction:column;flex-shrink:0;background:#fff;border-right:1px solid #e8e8e8;">
+        <div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;font-weight:700;color:#222;">标签管理</span>
+          <div style="position:relative;margin-left:auto;">
+            <input class="table-search" id="labelSearchInput" placeholder="搜索标签名称" oninput="labelSearch(this.value)" style="width:160px;padding-left:26px;">
+            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#aaa;font-size:12px;">🔍</span>
+          </div>
+        </div>
+        <!-- 全局搜索结果 -->
+        <div id="labelSearchResult" style="display:none;flex:1;overflow-y:auto;padding:14px 16px;">
+          <div style="font-size:12px;color:#888;margin-bottom:8px;">全局搜索结果：</div>
+          <div class="table-wrap"><table><thead><tr><th>标签名称</th><th>所属类型</th><th>状态</th><th>操作</th></tr></thead><tbody id="labelSearchBody"></tbody></table></div>
+        </div>
+        <!-- 树状列表 -->
+        <div id="labelTreeView" style="flex:1;overflow-y:auto;background:#fff;"></div>
+      </div>
+      <!-- 右侧：标签关联知识条目 -->
+      <div style="flex:1;overflow-y:auto;padding:14px 16px;background:#f0f2f5;" id="labelRightPanel">
+        <div class="placeholder-panel" style="height:100%;">
+          <div class="p-icon">🏷️</div>
+          <p>点击左侧二级标签查看关联的知识条目</p>
         </div>
       </div>
-      <!-- 全局搜索结果 -->
-      <div id="labelSearchResult" style="display:none;flex:1;overflow-y:auto;padding:14px 16px;">
-        <div style="font-size:12px;color:#888;margin-bottom:8px;">全局搜索结果：</div>
-        <div class="table-wrap"><table><thead><tr><th>标签名称</th><th>所属类型</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="labelSearchBody"></tbody></table></div>
-      </div>
-      <!-- 树状列表 -->
-      <div id="labelTreeView" style="flex:1;overflow-y:auto;background:#fff;"></div>
     </div>
 
     <!-- 新建/编辑标签类型弹窗（简化：只改名称） -->
@@ -1190,8 +1223,8 @@ function catRenderTree() {
   catRenderChildren(container, 0, 0);
 }
 
-var catAddLabels = { module:'新增目录类别', category:'新增目录项目', item:'新增目录配置', catalog:'' };
-var catChildType = { module:'category', category:'item', item:'catalog' };
+var catAddLabels = { root:'新增知识模块', module:'新增目录类别', category:'新增目录配置', item:'新增目录项目', catalog:'' };
+var catChildType = { root:'module', module:'category', category:'item', item:'catalog' };
 
 /* ── 行内编辑状态 ── */
 var catInlineEditing = null; // id of node being inline-edited
@@ -1274,19 +1307,17 @@ function catRenderChildren(container, pid, depth) {
 
     if (!isLeaf && catOpen[node.id]) {
       catRenderChildren(container, node.id, depth + 1);
-      // + 新增子级按钮（root 不加）
-      if (!isRoot) {
-        var childType = catChildType[node.type];
-        var addLabel = catAddLabels[node.type];
-        if (addLabel) {
-          var addRow = document.createElement('div');
-          addRow.style.cssText = 'padding:4px 8px 4px '+(12+(depth+1)*18)+'px;font-size:11px;color:#00b389;cursor:pointer;display:flex;align-items:center;gap:4px;position:relative;';
-          addRow.innerHTML = '+ ' + addLabel;
-          addRow.onmouseenter = function(){ this.style.background='#f5fffe'; };
-          addRow.onmouseleave = function(){ this.style.background=''; };
-          (function(pn, ct){ addRow.onclick = function(e){ e.stopPropagation(); catStartInlineAdd(pn, ct); }; })(node, childType);
-          container.appendChild(addRow);
-        }
+      // + 新增子级按钮
+      var childType = catChildType[node.type];
+      var addLabel = catAddLabels[node.type];
+      if (addLabel && childType) {
+        var addRow = document.createElement('div');
+        addRow.style.cssText = 'padding:4px 8px 4px '+(12+(depth+1)*18)+'px;font-size:11px;color:#00b389;cursor:pointer;display:flex;align-items:center;gap:4px;position:relative;';
+        addRow.innerHTML = '+ ' + addLabel;
+        addRow.onmouseenter = function(){ this.style.background='#f5fffe'; };
+        addRow.onmouseleave = function(){ this.style.background=''; };
+        (function(pn, ct){ addRow.onclick = function(e){ e.stopPropagation(); catStartInlineAdd(pn, ct); }; })(node, childType);
+        container.appendChild(addRow);
       }
     }
   });
@@ -1357,7 +1388,7 @@ function catStartInlineAdd(parentNode, childType) {
   while (tmp && tmp.pid !== 0) { d++; tmp = catData.find(function(n){ return n.id===tmp.pid; }); }
   var indent = (d+1)*18;
 
-  var typeNames = { module:'知识模块', category:'目录类别', item:'目录项目', catalog:'目录配置' };
+  var typeNames = { module:'知识模块', category:'目录类别', item:'目录配置', catalog:'目录项目' };
   var row = document.createElement('div');
   row.id = 'catAddRow';
   row.style.cssText = 'display:flex;align-items:center;padding:4px 4px 4px '+(12+indent)+'px;gap:4px;background:#f0faf7;border-bottom:1px solid #b7e8d8;';
@@ -1406,6 +1437,7 @@ function catAddSave(pid, childType) {
   var newId = Date.now();
   catData.push({ id:newId, pid:pid, level:(catData.find(function(n){return n.id===pid;})||{level:0}).level+1, name:val, status:'enabled', type:childType });
   catOpen[pid] = true;
+  catOpen[newId] = true;
   var row = document.getElementById('catAddRow');
   if (row) row.remove();
   catRenderTree();
@@ -1467,7 +1499,7 @@ function catKnowledgeTable(node) {
     // 三语种内容数据
     var langs = {
       tc: { label:'繁', name:'繁体中文', q:r.id==='K-20240101'?'在众安银行如何开立个人账户？':(r.id==='K-20240102'?'开户需要携带哪些证件材料？':(r.id==='K-20240104'?'开户被系统拒绝怎么办？':r.q)),
-                  a:r.id==='K-20240101'?'18歲或以上香港居民，持有效香港身份證，通過App全程網上辦理。一般5-10分鐘完成，成功後即可使用戶口。':(r.id==='K-20240102'?'需要提供：有效香港身份證（正反面清晰圖片）、手機號碼、電郵地址。部分情況下可能需要提供地址證明。':(r.id==='K-20240104'?'開戶被拒常見原因：1. 身份證件問題（過期/模糊）；2. 制裁名單匹配；3. 內部風控規則觸發。建議客戶確認證件有效後重新嘗試，或聯絡客服跟進。':'（暫無內容）')) },
+                  a:r.id==='K-20240101'?'<h3 class="k-heading" id="kh_'+r.id+'_0">一、開戶資格</h3><p>18歲或以上香港居民，持有效香港身份證，即可申請開戶。</p><h3 class="k-heading" id="kh_'+r.id+'_1">二、開戶流程</h3><p>通過ZA Bank App全程網上辦理：下載App → 填寫個人資料 → 上傳身份證 → 人脸識別 → 視頻驗證 → 提交審核。一般5-10分鐘完成。</p><h3 class="k-heading" id="kh_'+r.id+'_2">三、開戶後可用功能</h3><p>成功後即可使用戶口進行存款、轉賬、ZA Card申請等功能。</p><h3 class="k-heading" id="kh_'+r.id+'_3">四、注意事項</h3><p>如遇開戶失敗，請確認證件有效性並重新嘗試，或聯絡客服。</p>':(r.id==='K-20240102'?'需要提供：有效香港身份證（正反面清晰圖片）、手機號碼、電郵地址。部分情況下可能需要提供地址證明。':(r.id==='K-20240104'?'<h3 class="k-heading" id="kh_'+r.id+'_0">一、常見被拒原因</h3><p>1. 身份證件問題（過期/模糊）<br>2. 制裁名單匹配<br>3. 內部風控規則觸發</p><h3 class="k-heading" id="kh_'+r.id+'_1">二、處理建議</h3><p>建議客戶確認證件有效後重新嘗試，或聯絡客服跟進。</p>':'（暫無內容）')) },
       sc: { label:'简', name:'简体中文', q:r.id==='K-20240101'?'在众安银行如何开立个人账户？':(r.id==='K-20240102'?'开户需要携带哪些证件材料？':(r.id==='K-20240104'?'开户被系统拒绝怎么办？':r.q)),
                   a:r.id==='K-20240101'?'18岁以上香港居民，持有效香港身份证，通过App全程网上办理。一般5-10分钟完成，成功后即可使用账户。':(r.id==='K-20240102'?'需要提供：有效香港身份证（正反面清晰图片）、手机号码、电子邮箱。部分情况下可能需要提供地址证明。':(r.id==='K-20240104'?'开户被拒常见原因：1. 身份证件问题（过期/模糊）；2. 制裁名单匹配；3. 内部风控规则触发。建议客户确认证件有效后重新尝试，或联系客服跟进。':'（暂无内容）')) },
       en: { label:'EN', name:'English', q:r.id==='K-20240101'?'How to open a personal account at ZA Bank?':(r.id==='K-20240102'?'What documents are required to open an account?':(r.id==='K-20240104'?'What if my account opening is rejected?':r.q)),
@@ -1485,6 +1517,32 @@ function catKnowledgeTable(node) {
         +'<span style="color:#00b389;cursor:pointer;font-size:11px;" onclick="showToast(\'下载 '+a.name+'\')">下载</span>'
         +'</div>';
     }).join('');
+
+    // 关联知识条目数据
+    var relatedEntries = [];
+    if (r.id === 'K-20240101') {
+      relatedEntries = [
+        { id:'K-20240104', q:'开户被系统拒绝怎么办？', desc:'开户被拒时可参考此条目的处理流程' },
+        { id:'K-20240102', q:'开户需要携带哪些证件材料？', desc:'开户所需材料的详细清单' }
+      ];
+    } else if (r.id === 'K-20240104') {
+      relatedEntries = [
+        { id:'K-20240101', q:'如何在众安银行开立个人账户？', desc:'完整开户流程说明' }
+      ];
+    }
+    var relatedHtml = relatedEntries.length > 0
+      ? '<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:6px;">🔗 关联知识条目</div>'
+        + relatedEntries.map(function(re){
+          return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:4px;cursor:pointer;" onclick="showToast(\'跳转到 '+re.id+'\')">'
+            +'<span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;">'+re.id+'</span>'
+            +'<span style="font-size:12px;color:#444;flex:1;">'+re.q+'</span>'
+            +'<span style="font-size:11px;color:#888;">'+re.desc+'</span>'
+            +'<span style="color:#00b389;font-size:11px;">→</span>'
+            +'</div>';
+        }).join('')
+        +'</div>'
+      : '';
 
     return '<tr style="cursor:pointer;" onclick="catToggleKRow(\''+expandId+'\')">'
       +'<td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#00b389;" onchange="catKnowledgeCheck()"></td>'
@@ -1525,19 +1583,33 @@ function catKnowledgeTable(node) {
         +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.en.q+'</div>'
         +'</div>'
       // 第4行：答案
-      +'<div id="ka_'+r.id+'_tc" class="ka-active" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案（繁体中文）</div>'
-        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+langs.tc.a+'</div>'
+      +'<div id="ka_'+r.id+'_tc" class="ka-active" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
+          +'<span style="font-size:11px;color:#aaa;">💡 答案（繁体中文）</span>'
+          +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'tc\')">📑 目录导航</span>'
         +'</div>'
-      +'<div id="ka_'+r.id+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案（简体中文）</div>'
-        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+langs.sc.a+'</div>'
+        +'<div id="koutline_'+r.id+'_tc" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
+        +'<div id="kacontent_'+r.id+'_tc" style="font-size:12px;line-height:1.8;color:#444;">'+langs.tc.a+'</div>'
         +'</div>'
-      +'<div id="ka_'+r.id+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 Answer (English)</div>'
-        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+langs.en.a+'</div>'
+      +'<div id="ka_'+r.id+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
+          +'<span style="font-size:11px;color:#aaa;">💡 答案（简体中文）</span>'
+          +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'sc\')">📑 目录导航</span>'
         +'</div>'
-      // 第5行：附件
+        +'<div id="koutline_'+r.id+'_sc" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
+        +'<div id="kacontent_'+r.id+'_sc" style="font-size:12px;line-height:1.8;color:#444;">'+langs.sc.a+'</div>'
+        +'</div>'
+      +'<div id="ka_'+r.id+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
+          +'<span style="font-size:11px;color:#aaa;">💡 Answer (English)</span>'
+          +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'en\')">📑 目录导航</span>'
+        +'</div>'
+        +'<div id="koutline_'+r.id+'_en" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
+        +'<div id="kacontent_'+r.id+'_en" style="font-size:12px;line-height:1.8;color:#444;">'+langs.en.a+'</div>'
+        +'</div>'
+      // 第5行：关联知识条目
+      + relatedHtml
+      // 第6行：附件
       +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;">'
         +'<div style="font-size:11px;color:#aaa;margin-bottom:6px;">📎 附件</div>'
         +attachHtml+'</div>'
@@ -1569,6 +1641,38 @@ function catToggleKRow(expandId) {
   var isOpen = row.style.display !== 'none';
   row.style.display = isOpen ? 'none' : 'table-row';
   if (arr) arr.textContent = isOpen ? '▶' : '▼';
+}
+
+// 知识条目答案目录导航
+function toggleKOutline(rid, lang) {
+  var outline = document.getElementById('koutline_'+rid+'_'+lang);
+  if (!outline) return;
+  var isOpen = outline.style.display !== 'none';
+  if (isOpen) { outline.style.display = 'none'; return; }
+  var content = document.getElementById('kacontent_'+rid+'_'+lang);
+  if (!content) return;
+  var headings = content.querySelectorAll('h1,h2,h3,.k-heading');
+  if (headings.length === 0) {
+    outline.innerHTML = '<div style="font-size:11px;color:#ccc;text-align:center;padding:4px;">该条目暂无目录标题</div>';
+    outline.style.display = 'block';
+    return;
+  }
+  outline.innerHTML = '<div style="font-size:11px;font-weight:600;color:#666;margin-bottom:6px;">📑 目录导航</div>'
+    + Array.from(headings).map(function(h, i) {
+      var indent = h.tagName === 'H1' ? 0 : (h.tagName === 'H2' ? 8 : 0);
+      return '<div style="padding:4px 0 4px '+indent+'px;cursor:pointer;color:#00b389;font-size:12px;transition:color 0.1s;" onmouseenter="this.style.color=\'#008c6a\';this.style.textDecoration=\'underline\'" onmouseleave="this.style.color=\'#00b389\';this.style.textDecoration=\'none\'" onclick="event.stopPropagation();scrollToKHeading(\''+h.id+'\')">'
+        + '• ' + h.textContent + '</div>';
+    }).join('');
+  outline.style.display = 'block';
+}
+
+function scrollToKHeading(headingId) {
+  var el = document.getElementById(headingId);
+  if (!el) return;
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+  el.style.transition = 'background 0.3s';
+  el.style.background = '#ffe58f';
+  setTimeout(function() { el.style.background = ''; }, 1500);
 }
 
 function switchKLang(rid, lang) {
@@ -1729,6 +1833,41 @@ function saveEntryModal() {
   closeModal('modalEntry');
   showToast('知识条目保存成功');
 }
+
+// 关联知识条目
+var mockKnowledgeEntries = {
+  'K-20240101': '如何在众安银行开立个人账户？',
+  'K-20240102': '开户需要携带哪些证件材料？',
+  'K-20240103': '开户的手续费是多少？',
+  'K-20240104': '开户被系统拒绝怎么办？'
+};
+function addRelatedEntry() {
+  var input = document.getElementById('relatedEntryInput');
+  if (!input) return;
+  var val = input.value.trim().toUpperCase();
+  if (!val) { showToast('请输入知识条目ID', 'error'); return; }
+  var title = mockKnowledgeEntries[val];
+  if (!title) { showToast('未找到该知识条目ID，请检查后重试', 'error'); return; }
+  var list = document.getElementById('relatedEntryList');
+  var existing = list.querySelectorAll('.related-entry-item [style*="font-weight:600"]');
+  for (var i = 0; i < existing.length; i++) {
+    if (existing[i].textContent.trim() === val) { showToast('该条目已关联', 'warning'); return; }
+  }
+  var item = document.createElement('div');
+  item.className = 'related-entry-item';
+  item.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:6px;';
+  item.innerHTML = '<div style="flex-shrink:0;">'
+    + '<span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;cursor:pointer;" onclick="showToast(\'跳转到 '+val+'\')">'+val+'</span>'
+    + '</div>'
+    + '<div style="flex:1;">'
+    + '<div style="font-size:12px;color:#444;margin-bottom:4px;">'+title+'</div>'
+    + '<input class="form-control" style="width:100%;font-size:11px;padding:3px 6px;" placeholder="填写关联说明">'
+    + '</div>'
+    + '<span style="color:#aaa;cursor:pointer;font-size:12px;flex-shrink:0;" onclick="this.closest(\'.related-entry-item\').remove()">✕</span>';
+  list.appendChild(item);
+  input.value = '';
+  showToast('已关联 ' + val);
+}
 function catOpenEntry(nodeId, isEdit) {
   var title = isEdit ? '修改知识条目' : '新增知识条目';
   document.getElementById('modalEntryTitle').textContent = title;
@@ -1829,7 +1968,6 @@ function toggleTagPicker() {
   if (isOpen) { drop.style.display = 'none'; return; }
   renderTagPickerTree();
   drop.style.display = 'block';
-  // close on outside click
   setTimeout(function() {
     document.addEventListener('click', closeTagPickerOutside);
   }, 0);
@@ -1842,26 +1980,42 @@ function closeTagPickerOutside(e) {
     document.removeEventListener('click', closeTagPickerOutside);
   }
 }
+var tagPickerGroupOpen = {};
+var tagPickerFilter = '';
+function filterTagPicker(val) {
+  tagPickerFilter = val.trim().toLowerCase();
+  renderTagPickerTree();
+}
 function renderTagPickerTree() {
   var tree = document.getElementById('tagPickerTree');
   if (!tree) return;
-  tree.innerHTML = tagPickerData.map(function(group) {
-    var tagsHtml = group.tags.map(function(t) {
+  var filter = tagPickerFilter;
+  tree.innerHTML = tagPickerData.map(function(group, gi) {
+    var filteredTags = filter ? group.tags.filter(function(t){ return t.toLowerCase().indexOf(filter) >= 0; }) : group.tags;
+    var groupMatch = filter ? group.type.toLowerCase().indexOf(filter) >= 0 : false;
+    if (!groupMatch && filteredTags.length === 0) return '';
+    var showTags = groupMatch ? group.tags : filteredTags;
+    var isOpen = filter ? true : tagPickerGroupOpen[gi];
+    var tagsHtml = showTags.map(function(t) {
       var checked = selectedTagsSet.has(t) ? 'checked' : '';
-      return '<label style="display:flex;align-items:center;gap:6px;padding:5px 14px 5px 28px;cursor:pointer;font-size:12px;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'"><input type="checkbox" style="accent-color:#00b389;" ' + checked + ' onchange="togglePickerTag(this,\'' + t + '\')">' + t + '</label>';
+      return '<label style="display:flex;align-items:center;gap:6px;padding:5px 14px 5px 28px;cursor:pointer;font-size:12px;transition:background 0.1s;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
+        + '<input type="checkbox" style="accent-color:#00b389;" ' + checked + ' onchange="togglePickerTag(this,\'' + t.replace(/'/g,"\\'") + '\')">'
+        + '<span>' + (filter ? t.replace(new RegExp('('+filter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')+')','gi'),'<mark style="background:#ffe58f;padding:0 1px;border-radius:2px;">$1</mark>') : t) + '</span>'
+        + '</label>';
     }).join('');
+    var selectedCount = showTags.filter(function(t){ return selectedTagsSet.has(t); }).length;
+    var countBadge = selectedCount > 0 ? ' <span style="background:#00b389;color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:4px;">'+selectedCount+'</span>' : '';
     return '<div>'
-      + '<div style="padding:6px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="togglePickerGroup(this)">'
-      + '▶ ' + group.type + '</div>'
-      + '<div class="picker-group-body">' + tagsHtml + '</div>'
+      + '<div style="padding:6px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;" onclick="togglePickerGroup2('+gi+')">'
+      + '<span style="margin-right:4px;font-size:9px;transition:transform 0.2s;display:inline-block;'+(isOpen?'transform:rotate(90deg);':'')+'">▶</span> '
+      + group.type + countBadge + '</div>'
+      + '<div style="'+(isOpen?'':'display:none;')+'">' + tagsHtml + '</div>'
       + '</div>';
   }).join('');
 }
-function togglePickerGroup(header) {
-  var body = header.nextElementSibling;
-  var isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : 'block';
-  header.textContent = (isOpen ? '▶ ' : '▼ ') + header.textContent.substring(2);
+function togglePickerGroup2(gi) {
+  tagPickerGroupOpen[gi] = !tagPickerGroupOpen[gi];
+  renderTagPickerTree();
 }
 function togglePickerTag(cb, tag) {
   if (cb.checked) selectedTagsSet.add(tag);
@@ -2745,6 +2899,7 @@ function labelRenderTree() {
     if (isOpen && !isEditingType) {
       tags.forEach(function(tag) {
         var tagDisabled = tag.status === 'disabled';
+        var tagParentDisabled = isDisabled && !tagDisabled;
         var isEditingTag = labelInlineEditTagId === tag.id;
         if (isEditingTag) {
           html += '<div style="display:flex;align-items:center;padding:5px 12px 5px 36px;border-bottom:1px solid #fafafa;background:#f0faf7;gap:6px;">'
@@ -2753,13 +2908,16 @@ function labelRenderTree() {
             + '<button class="btn btn-default btn-sm" style="height:24px;padding:0 8px;flex-shrink:0;" onclick="labelCancelTagEdit()">✕</button>'
             + '</div>';
         } else {
-          html += '<div style="display:flex;align-items:center;padding:6px 12px 6px 36px;border-bottom:1px solid #fafafa;'+(tagDisabled?'background:#fefefe;':'')+'">'
-            + '<span style="font-size:12px;flex:1;'+(tagDisabled?'color:#bbb;text-decoration:line-through;':'color:#444;')+'">'+tag.name+'</span>'
-            + (tagDisabled ? '<span class="badge badge-red" style="font-size:9px;margin-right:6px;">停用</span>' : '')
+          var tagNameStyle = (tagDisabled || isDisabled) ? 'color:#bbb;' + (tagDisabled ? 'text-decoration:line-through;' : '') : 'color:#444;';
+          var tagBadgeHtml = tagDisabled ? '<span class="badge badge-red" style="font-size:9px;margin-right:6px;">停用</span>'
+            : (isDisabled ? '<span class="badge badge-orange" style="font-size:9px;margin-right:6px;">上级停用</span>' : '');
+          html += '<div style="display:flex;align-items:center;padding:6px 12px 6px 36px;border-bottom:1px solid #fafafa;'+(tagDisabled||isDisabled?'background:#fefefe;':'')+';cursor:pointer;" onclick="labelSelectTag('+tag.id+','+t.id+')">'
+            + '<span style="font-size:12px;flex:1;'+tagNameStyle+'">'+tag.name+'</span>'
+            + tagBadgeHtml
             + (tagDisabled
-                ? '<span style="font-size:11px;color:#52c41a;cursor:pointer;margin-right:8px;" onclick="labelToggleTagStatus('+tag.id+','+t.id+')">启用</span>'
-                : '<span style="font-size:11px;color:#ff4d4f;cursor:pointer;margin-right:8px;" onclick="labelToggleTagStatus('+tag.id+','+t.id+')">停用</span>')
-            + '<span style="font-size:11px;color:#00b389;cursor:pointer;" onclick="labelEditTagInline('+tag.id+','+t.id+')">编辑</span>'
+                ? '<span style="font-size:11px;color:#52c41a;cursor:pointer;margin-right:8px;" onclick="event.stopPropagation();labelToggleTagStatus('+tag.id+','+t.id+')">启用</span>'
+                : '<span style="font-size:11px;color:#ff4d4f;cursor:pointer;margin-right:8px;" onclick="event.stopPropagation();labelToggleTagStatus('+tag.id+','+t.id+')">停用</span>')
+            + '<span style="font-size:11px;color:#00b389;cursor:pointer;" onclick="event.stopPropagation();labelEditTagInline('+tag.id+','+t.id+')">编辑</span>'
             + '</div>';
         }
       });
@@ -2940,11 +3098,11 @@ function labelSearch(q) {
   var tbody = document.getElementById('labelSearchBody');
   if (!tbody) return;
   tbody.innerHTML = rows.length===0
-    ? '<tr><td colspan="5" style="text-align:center;color:#ccc;padding:20px;">未找到相关标签</td></tr>'
+    ? '<tr><td colspan="4" style="text-align:center;color:#ccc;padding:20px;">未找到相关标签</td></tr>'
     : rows.map(function(r){
         var tag=r.tag;
         var st = tag.status==='enabled'?'<span class="badge badge-green">启用</span>':'<span class="badge badge-red">停用</span>';
-        return '<tr><td>'+tag.name+'</td><td><span class="badge badge-blue">'+r.typeName+'</span></td><td>'+st+'</td><td style="color:#aaa;">'+tag.created+'</td>'
+        return '<tr><td>'+tag.name+'</td><td><span class="badge badge-blue">'+r.typeName+'</span></td><td>'+st+'</td>'
           +'<td><span class="td-op" onclick="showToast(\'编辑标签\')">编辑</span></td></tr>';
       }).join('');
 }
@@ -2954,6 +3112,137 @@ function labelRenderTypes() { labelRenderTree(); }
 function labelSelectType(id) { labelSelectedTypeId=id; labelOpenTypes[id]=true; labelRenderTree(); }
 function labelRenderTags() {}
 function labelEditMode() {}
+
+// ── 标签关联知识条目右侧面板 ──
+var labelSelectedTag = null;
+
+var labelKnowledgeData = {
+  102: { tagName: '开户介绍01', entries: [
+    { cat3:'开户业务', cat4s:[
+      { name:'开户介绍', items:[
+        { id:'K-20240101', q:'如何在众安银行开立个人账户？', status:'enabled', hot:45 },
+        { id:'K-20240102', q:'开户需要携带哪些证件材料？', status:'enabled', hot:23 }
+      ]},
+      { name:'开户被拒', items:[
+        { id:'K-20240104', q:'开户被系统拒绝怎么办？', status:'enabled', hot:67 }
+      ]}
+    ]},
+    { cat3:'转账业务', cat4s:[
+      { name:'转账相关', items:[
+        { id:'K-20240201', q:'转账到账时间说明', status:'enabled', hot:31 }
+      ]}
+    ]}
+  ]},
+  201: { tagName: '综合转账相关', entries: [
+    { cat3:'转账业务', cat4s:[
+      { name:'转账相关', items:[
+        { id:'K-20240201', q:'转账手续费如何计算？', status:'enabled', hot:38 },
+        { id:'K-20240202', q:'跨境转账限额是多少？', status:'enabled', hot:21 }
+      ]}
+    ]}
+  ]},
+  801: { tagName: '密码重置', entries: [
+    { cat3:'账户安全', cat4s:[
+      { name:'密码管理', items:[
+        { id:'K-20240301', q:'如何重置登录密码？', status:'enabled', hot:56 }
+      ]}
+    ]}
+  ]}
+};
+
+function labelSelectTag(tagId, typeId) {
+  labelSelectedTag = tagId;
+  renderLabelRightPanel(tagId);
+}
+
+function renderLabelRightPanel(tagId) {
+  var panel = document.getElementById('labelRightPanel');
+  if (!panel) return;
+  var data = labelKnowledgeData[tagId];
+  if (!data) {
+    var tag = null;
+    for (var tid in labelTags) {
+      var tags = labelTags[tid];
+      for (var i = 0; i < tags.length; i++) {
+        if (tags[i].id === tagId) { tag = tags[i]; break; }
+      }
+      if (tag) break;
+    }
+    panel.innerHTML = '<div class="placeholder-panel" style="height:100%;"><div class="p-icon">📋</div><p>标签「'+(tag?tag.name:'')+'」暂无关联知识条目</p></div>';
+    return;
+  }
+
+  var html = '<div class="table-wrap" style="margin-bottom:12px;">'
+    + '<div style="padding:10px 14px;font-size:13px;font-weight:700;color:#222;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;">'
+    + '🏷️ 标签「'+data.tagName+'」关联知识条目'
+    + '<span style="font-size:11px;color:#aaa;font-weight:400;">展示顺序即为百科顺序，同层级可拖拽排序</span>'
+    + '</div>'
+    + '<div id="labelKContainer">';
+
+  data.entries.forEach(function(group, gi) {
+    html += '<div class="lk-cat3-wrap" data-level="cat3" data-gi="'+gi+'" draggable="true" ondragstart="labelKDragStart(event,this)" ondragover="labelKDragOver(event,this)" ondrop="labelKDrop(event,this)" ondragleave="labelKDragLeave2(event,this)">';
+    html += '<div style="padding:8px 14px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:12px;font-weight:600;color:#555;cursor:grab;" onmouseenter="this.style.background=\'#f0f7f5\'" onmouseleave="this.style.background=\'#fafafa\'">'
+      + '<span style="color:#ccc;font-size:13px;margin-right:6px;">⠿</span>📂 '+group.cat3+'</div>';
+
+    html += '<div class="lk-cat4-container">';
+    group.cat4s.forEach(function(cat4, ci) {
+      html += '<div class="lk-cat4-wrap" data-level="cat4" data-ci="'+ci+'" draggable="true" ondragstart="labelKDragStart(event,this)" ondragover="labelKDragOver(event,this)" ondrop="labelKDrop(event,this)" ondragleave="labelKDragLeave2(event,this)">';
+      html += '<div style="padding:6px 14px 6px 28px;background:#f5f5f5;border-bottom:1px solid #f0f0f0;font-size:12px;color:#666;cursor:grab;" onmouseenter="this.style.background=\'#eef6f4\'" onmouseleave="this.style.background=\'#f5f5f5\'">'
+        + '<span style="color:#ccc;font-size:13px;margin-right:6px;">⠿</span>📁 '+cat4.name+'</div>';
+
+      html += '<div class="lk-items-container">';
+      cat4.items.forEach(function(item) {
+        var stBadge = item.status === 'enabled' ? '<span class="badge badge-green" style="font-size:9px;">启用</span>' : '<span class="badge badge-red" style="font-size:9px;">停用</span>';
+        html += '<div class="lk-item" data-level="item" draggable="true" ondragstart="labelKDragStart(event,this)" ondragover="labelKDragOver(event,this)" ondrop="labelKDrop(event,this)" ondragleave="labelKDragLeave2(event,this)" style="display:flex;align-items:center;gap:8px;padding:8px 14px 8px 42px;border-bottom:1px solid #f8f8f8;cursor:grab;transition:background 0.1s;" onmouseenter="this.style.background=\'#f9fffe\'" onmouseleave="this.style.background=\'\'">'
+          + '<span style="color:#ccc;font-size:14px;flex-shrink:0;">⠿</span>'
+          + '<span style="color:#aaa;font-size:11px;flex-shrink:0;">'+item.id+'</span>'
+          + '<span style="font-size:12px;color:#222;flex:1;font-weight:500;">'+item.q+'</span>'
+          + stBadge
+          + '<span style="font-size:11px;color:#fa8c16;">🔥 '+item.hot+'</span>'
+          + '<span class="td-op" style="font-size:11px;" onclick="event.stopPropagation();showToast(\'展开详情：'+item.id+'\')">详情 ▼</span>'
+          + '</div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+  });
+
+  html += '</div></div>';
+  panel.innerHTML = html;
+}
+
+var labelKDragEl = null;
+function labelKDragStart(e, el) {
+  e.stopPropagation();
+  labelKDragEl = el;
+  el.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+}
+function labelKDragOver(e, el) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (!labelKDragEl || labelKDragEl === el) return;
+  if (labelKDragEl.dataset.level === el.dataset.level) {
+    el.style.borderTop = '2px solid #00b389';
+  }
+}
+function labelKDragLeave2(e, el) {
+  el.style.borderTop = '';
+}
+function labelKDrop(e, el) {
+  e.preventDefault();
+  el.style.borderTop = '';
+  if (!labelKDragEl || labelKDragEl === el) return;
+  if (labelKDragEl.dataset.level !== el.dataset.level) { labelKDragEl.style.opacity = ''; labelKDragEl = null; return; }
+  var parent = el.parentNode;
+  if (labelKDragEl.parentNode === parent) {
+    parent.insertBefore(labelKDragEl, el);
+    labelKDragEl.style.opacity = '';
+    showToast('排序已更新');
+  }
+  labelKDragEl = null;
+}
 
 // init label panel when switching to it
 

@@ -168,7 +168,10 @@ textarea.form-control { resize:vertical; min-height:60px; }
       <div id="selectedInfo" style="background:#f0faf7;border:1px solid #b7e8d8;border-radius:4px;padding:8px 12px;margin-bottom:14px;font-size:12px;color:#00956d;"></div>
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="form-group"><div class="form-label">试卷名称 <span class="req">*</span></div><input class="form-control" id="paperName" placeholder="如：2026年7月月测"></div>
-        <div class="form-group"><div class="form-label">试卷类型</div><select class="form-control"><option>月测</option><option>专项测验</option><option>Briefing小测</option></select></div>
+        <div class="form-group"><div class="form-label">试卷类型</div>
+          <select class="form-control" id="bankPaperType" onchange="onBankPaperTypeChange()"><option value="月测">月测</option><option value="专项测验">专项测验</option><option value="Briefing小测">Briefing小测</option><option value="__custom__">自定义类型...</option></select>
+          <input class="form-control" id="bankPaperTypeCustom" style="display:none;margin-top:6px;" placeholder="请输入自定义试卷类型名称">
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -370,7 +373,17 @@ function renderTagSelected() {
 
 function createPaperFromSelected() {
   document.getElementById('selectedInfo').textContent = '已选 '+selectedIds.size+' 道题目';
+  document.getElementById('bankPaperType').value = '月测';
+  document.getElementById('bankPaperTypeCustom').style.display = 'none';
+  document.getElementById('bankPaperTypeCustom').value = '';
   openModal('modalPaper');
+}
+
+function onBankPaperTypeChange() {
+  var sel = document.getElementById('bankPaperType');
+  var inp = document.getElementById('bankPaperTypeCustom');
+  inp.style.display = sel.value === '__custom__' ? 'block' : 'none';
+  if (sel.value === '__custom__') inp.focus();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }

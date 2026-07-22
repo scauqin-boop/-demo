@@ -310,19 +310,16 @@
             <span style="width:14px"></span>
             <span class="dot"></span>
             <span class="label">开户介绍</span>
-            <span class="wiki-btn">百科</span>
           </div>
           <div class="tree-item" onclick="selectLeaf(this,'开户被拒')">
             <span style="width:14px"></span>
             <span class="dot"></span>
             <span class="label">开户被拒</span>
-            <span class="wiki-btn">百科</span>
           </div>
           <div class="tree-item" onclick="selectLeaf(this,'开户话术助手')">
             <span style="width:14px"></span>
             <span class="dot"></span>
             <span class="label">开户话术助手</span>
-            <span class="wiki-btn">百科</span>
           </div>
         </div>
         <div class="tree-item" onclick="toggleTree(this)">
@@ -368,11 +365,11 @@
           <span class="g-arrow open">▶</span>
         </div>
         <div class="tag-cloud">
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">开户介绍00</span><button class="tag-wiki-btn" onclick="openTagWiki('开户介绍00',event)">百科</button></div>
-          <div class="tag-chip-wrap selected"><span class="tag-chip" onclick="selectTag(this)">开户介绍01</span><button class="tag-wiki-btn" onclick="openTagWiki('开户介绍01',event)">百科</button></div>
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">开户介绍02</span><button class="tag-wiki-btn" onclick="openTagWiki('开户介绍02',event)">百科</button></div>
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">0911-1</span><button class="tag-wiki-btn" onclick="openTagWiki('0911-1',event)">百科</button></div>
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">0911-2</span><button class="tag-wiki-btn" onclick="openTagWiki('0911-2',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'开户介绍00')">开户介绍00</span></div>
+          <div class="tag-chip-wrap selected"><span class="tag-chip" onclick="selectTagWiki(this,'开户介绍01')">开户介绍01</span></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'开户介绍02')">开户介绍02</span></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'0911-1')">0911-1</span></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'0911-2')">0911-2</span></div>
         </div>
       </div>
       <div class="tag-group">
@@ -381,7 +378,7 @@
           <span class="g-arrow open">▶</span>
         </div>
         <div class="tag-cloud">
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">综合转账相关</span><button class="tag-wiki-btn" onclick="openTagWiki('综合转账相关',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'综合转账相关')">综合转账相关</span></div>
         </div>
       </div>
       <div class="tag-group">
@@ -390,11 +387,11 @@
           <span class="g-arrow open">▶</span>
         </div>
         <div class="tag-cloud">
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">贷款业务</span><button class="tag-wiki-btn" onclick="openTagWiki('贷款业务',event)">百科</button></div>
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">存款业务</span><button class="tag-wiki-btn" onclick="openTagWiki('存款业务',event)">百科</button></div>
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">转账业务</span><button class="tag-wiki-btn" onclick="openTagWiki('转账业务',event)">百科</button></div>
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">手机银行</span><button class="tag-wiki-btn" onclick="openTagWiki('手机银行',event)">百科</button></div>
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">ZA Card</span><button class="tag-wiki-btn" onclick="openTagWiki('ZA Card',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'贷款业务')">贷款业务</span></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'存款业务')">存款业务</span></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'转账业务')">转账业务</span></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'手机银行')">手机银行</span></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'ZA Card')">ZA Card</span></div>
         </div>
       </div>
       <div class="tag-group">
@@ -403,8 +400,8 @@
           <span class="g-arrow">▶</span>
         </div>
         <div class="tag-cloud" style="display:none">
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">App操作</span><button class="tag-wiki-btn" onclick="openTagWiki('App操作',event)">百科</button></div>
-          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTag(this)">交易纠纷</span><button class="tag-wiki-btn" onclick="openTagWiki('交易纠纷',event)">百科</button></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'App操作')">App操作</span></div>
+          <div class="tag-chip-wrap"><span class="tag-chip" onclick="selectTagWiki(this,'交易纠纷')">交易纠纷</span></div>
         </div>
       </div>
     </div>
@@ -763,14 +760,7 @@ function selectLeaf(el, name) {
   document.getElementById('defaultList').style.display = 'block';
   document.getElementById('resultStats').style.display = 'none';
   document.getElementById('aiSummary').classList.remove('visible');
-  // Update breadcrumb
   document.getElementById('breadcrumb').innerHTML = `银行事业部 › <span>个人银行</span> › <span>开户业务</span> › <span style="color:#333;font-weight:600;">${name}</span>`;
-
-  // Wiki button
-  el.querySelector('.wiki-btn').onclick = function(e) {
-    e.stopPropagation();
-    openWiki(name);
-  };
 }
 
 // ─── WIKI ───
@@ -1058,35 +1048,107 @@ function resetQuiz() {
 }
 
 // ─── TAG WIKI ───
-function openTagWiki(tagName, e) {
-  e.stopPropagation();
+var tagWikiData = {
+  '开户介绍01': {
+    tagName: '开户介绍01',
+    sections: [
+      { cat3: '开户业务', cat4s: [
+        { name: '开户介绍', items: [
+          { q: '如何在众安银行开立个人账户？', a: '眾安銀行（ZA Bank）開戶介紹，18歲以上香港居民持有效身份證，通過App全程網上辦理，一般5-10分鐘完成。',
+            subHeadings: [
+              { title: '申请条件', content: '年滿18歲的香港居民，持有有效的香港身份證（永久或非永久均可）。' },
+              { title: '所需材料', content: '有效的香港身份證正反面照片，以及一張自拍照用於人臉識別驗證。' }
+            ]
+          },
+          { q: '开户流程详解', a: '下載App → 輸入身份證 → 人臉識別 → 填寫資料 → 視頻驗證 → 同意條款 → 開戶成功。' }
+        ]},
+        { name: '开户被拒', items: [
+          { q: '开户被系统拒绝怎么办？', a: '開戶被拒的常見原因包括：身份證件不符合要求、制裁名單匹配、內部風控規則觸發等。建議客戶確認證件有效期後重新嘗試。' }
+        ]}
+      ]},
+      { cat3: '转账业务', cat4s: [
+        { name: '转账相关', items: [
+          { q: '转账到账时间说明', a: '本地港元轉賬：即時到賬；跨境轉賬：一般1-3個工作日。' }
+        ]}
+      ]}
+    ]
+  },
+  '__default__': {
+    sections: [
+      { cat3: '业务查询', cat4s: [
+        { name: '基本介绍', items: [
+          { q: '基本介绍', a: '此知识点包括业务背景与常见问题解答，供客服参考使用。' }
+        ]},
+        { name: '常见问题', items: [
+          { q: '常见问题处理', a: '包含内部处理规则和注意事项，仅供内部参考。' },
+          { q: '特殊场景说明', a: '说明特殊情况下的处理方式及升级路径。' }
+        ]}
+      ]}
+    ]
+  }
+};
+
+function selectTagWiki(chip, tagName) {
+  var wrap = chip ? chip.closest('.tag-chip-wrap') : null;
+  document.querySelectorAll('.tag-chip-wrap.selected').forEach(w => w.classList.remove('selected'));
+  if (wrap) wrap.classList.add('selected');
+
+  selectedTag = tagName;
   document.getElementById('defaultList').style.display = 'none';
   document.getElementById('searchResults').style.display = 'none';
   document.getElementById('resultStats').style.display = 'none';
   document.getElementById('aiSummary').classList.remove('visible');
   document.getElementById('wikiView').classList.add('open');
-  document.getElementById('wikiTitle').textContent = tagName + '（百科）';
-  document.getElementById('breadcrumb').innerHTML = `标签百科：<span style="color:#333;font-weight:600;">${tagName}</span>`;
-  document.getElementById('wikiContent').innerHTML = `
-    <div style="font-size:12px;color:#aaa;margin-bottom:12px;padding:0 0 8px;border-bottom:1px solid #f0f0f0;">
-      标签：<strong style="color:#00b389;">${tagName}</strong> 下共 3 条关联知识点
-    </div>
-    <div class="wiki-item">
-      <div class="wiki-item-num">1.</div>
-      <div class="wiki-item-q">${tagName} — 基本介绍</div>
-      <div class="wiki-item-a">与标签「${tagName}」关联的第1条知识点，包括业务背景与常见问题解答，供客服参考使用，不可直接作为话术告知客户。</div>
-    </div>
-    <div class="wiki-item">
-      <div class="wiki-item-num">2.</div>
-      <div class="wiki-item-q">${tagName} — 常见问题处理</div>
-      <div class="wiki-item-a">与标签「${tagName}」关联的第2条知识点，包含内部处理规则和注意事项，仅供内部参考。</div>
-    </div>
-    <div class="wiki-item">
-      <div class="wiki-item-num">3.</div>
-      <div class="wiki-item-q">${tagName} — 特殊场景说明</div>
-      <div class="wiki-item-a">与标签「${tagName}」关联的第3条知识点，说明特殊情况下的处理方式及升级路径。</div>
-    </div>
-  `;
+  document.getElementById('wikiTitle').textContent = tagName;
+  document.getElementById('breadcrumb').innerHTML = '标签模式 › <span style="color:#333;font-weight:600;">'+tagName+'</span>';
+
+  var data = tagWikiData[tagName] || tagWikiData['__default__'];
+  var sections = data.sections;
+  var html = '<div style="font-size:12px;color:#aaa;margin-bottom:12px;padding:0 0 8px;border-bottom:1px solid #f0f0f0;">'
+    + '标签：<strong style="color:#00b389;">'+tagName+'</strong>'
+    + '</div>';
+
+  var cat3Idx = 0;
+  sections.forEach(function(sec) {
+    cat3Idx++;
+    html += '<div style="margin-bottom:16px;">';
+    html += '<div style="font-size:14px;font-weight:700;color:#222;margin-bottom:8px;padding:6px 0;border-bottom:2px solid #00b389;">'+cat3Idx+' '+sec.cat3+'</div>';
+    var cat4Idx = 0;
+    sec.cat4s.forEach(function(cat4) {
+      cat4Idx++;
+      html += '<div style="margin-left:12px;margin-bottom:12px;">';
+      html += '<div style="font-size:13px;font-weight:600;color:#333;margin-bottom:6px;padding:4px 0;border-bottom:1px solid #f0f0f0;">'+cat3Idx+'.'+cat4Idx+' '+cat4.name+'</div>';
+      var itemIdx = 0;
+      cat4.items.forEach(function(item) {
+        itemIdx++;
+        var numPrefix = cat3Idx+'.'+cat4Idx+'.'+itemIdx;
+        html += '<div class="wiki-item" style="margin-left:8px;">';
+        html += '<div class="wiki-item-num" style="font-weight:600;color:#00b389;">'+numPrefix+'</div>';
+        html += '<div class="wiki-item-q">'+item.q+'</div>';
+        html += '<div class="wiki-item-a">'+item.a+'</div>';
+        if (item.subHeadings) {
+          var subIdx = 0;
+          item.subHeadings.forEach(function(sh) {
+            subIdx++;
+            html += '<div style="margin:6px 0 4px 16px;">';
+            html += '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:3px;">'+numPrefix+'.'+subIdx+' '+sh.title+'</div>';
+            html += '<div style="font-size:12px;line-height:1.8;color:#555;">'+sh.content+'</div>';
+            html += '</div>';
+          });
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('wikiContent').innerHTML = html;
+}
+
+function openTagWiki(tagName, e) {
+  if (e) e.stopPropagation();
+  selectTagWiki(null, tagName);
 }
 
 // ─── TAG MODE ───
@@ -1099,31 +1161,6 @@ function toggleTagGroup(header) {
 }
 
 let selectedTag = null;
-function selectTag(chip) {
-  const tag = chip.textContent;
-  const wrap = chip.closest('.tag-chip-wrap');
-
-  // 取消之前选中的标签高亮
-  document.querySelectorAll('.tag-chip-wrap.selected').forEach(w => w.classList.remove('selected'));
-
-  if (selectedTag === tag) {
-    // 再次点击同一标签 = 取消筛选
-    selectedTag = null;
-    document.getElementById('resultStats').style.display = 'none';
-    document.getElementById('breadcrumb').innerHTML = `银行事业部 › <span>个人银行</span> › <span>开户业务</span> › <span style="color:#333;font-weight:600;">开户介绍</span>`;
-    return;
-  }
-
-  selectedTag = tag;
-  if (wrap) wrap.classList.add('selected');
-
-  document.getElementById('wikiView').classList.remove('open');
-  document.getElementById('defaultList').style.display = 'block';
-  document.getElementById('searchResults').style.display = 'none';
-  document.getElementById('breadcrumb').innerHTML = `标签筛选：<span>${tag}</span>`;
-  document.getElementById('resultStats').style.display = 'flex';
-  document.getElementById('statsText').textContent = `标签"${tag}"下共 3 条知识`;
-}
 
 // ─── 报错 & 更新日志 ───
 function openErrorModal(path) {
