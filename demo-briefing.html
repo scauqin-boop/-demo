@@ -453,23 +453,26 @@ function switchTab(tab) {
       // ── 右侧发布设置 ──
       +'<div style="flex:2;overflow-y:auto;padding:14px 16px;background:#fafafa;">'
       +'<div style="font-size:13px;font-weight:700;color:#222;margin-bottom:14px;">⚙️ 小测发布设置</div>'
-      +'<div class="form-group" style="margin-bottom:12px;">'
-      +'<div class="form-label">及格标准</div>'
-      +'<div style="display:flex;gap:8px;align-items:center;">'
-      +'<select class="form-control" style="width:120px;" onchange="updatePassUnit()"><option value="score">分数</option><option value="rate">正确率（%）</option><option value="count">答对题数</option></select>'
-      +'<input type="number" class="form-control" style="width:70px;" value="60">'
-      +'<span style="font-size:12px;color:#666;">分</span>'
-      +'</div></div>'
+      // 解锁前提
       +'<div class="form-group" style="margin-bottom:12px;">'
       +'<div class="form-label">解锁前提</div>'
-      +'<select class="form-control"><option>看完视频后解锁</option><option>无限制，随时可作答</option></select>'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<span style="font-size:12px;color:#555;">观看</span>'
+      +'<input type="number" class="form-control" id="bfUnlockPct" min="0" max="100" value="0" style="width:64px;text-align:center;">'
+      +'<span style="font-size:12px;color:#555;">% 进度后可解锁小测</span>'
       +'</div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
-      +'<div class="form-group"><div class="form-label">可重做次数</div><input class="form-control" placeholder="不填则不限" type="number"></div>'
-      +'<div class="form-group"><div class="form-label">作答时限（分钟）</div><input class="form-control" placeholder="不填则不限" type="number"></div>'
+      +'<div style="font-size:11px;color:#aaa;margin-top:4px;">填 0 表示无限制，随时可作答；按时参加会议的人员无需回看视频，默认设为 0%</div>'
       +'</div>'
+      // 试卷有效期模式
       +'<div class="form-group" style="margin-bottom:12px;">'
-      +'<div class="form-label">派发对象 <span class="req">*</span></div>'
+      +'<div class="form-label">试卷有效期模式</div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<span class="btn btn-sm btn-primary" id="bfValidityTimed" onclick="setBfValidityMode(\'timed\')">限时考试模式</span>'
+      +'<span class="btn btn-sm btn-default" id="bfValidityUnlimited" onclick="setBfValidityMode(\'unlimited\')">长期有效练习模式</span>'
+      +'</div></div>'
+      // 派发对象
+      +'<div class="form-group" style="margin-bottom:12px;">'
+      +'<div class="form-label">派发对象 <span style="color:#ff4d4f;">*</span></div>'
       +'<div style="position:relative;" id="dispatchPickerWrap">'
       +'<div class="form-control" style="min-height:30px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;cursor:pointer;padding:3px 8px;" onclick="toggleDispatchPicker()">'
       +'<span id="dispatchPlaceholder" style="font-size:12px;color:#bbb;">点击选择派发对象...</span>'
@@ -480,15 +483,42 @@ function switchTab(tab) {
       +'<div style="padding:6px 8px;border-bottom:1px solid #f0f0f0;"><input class="form-control" style="width:100%;" placeholder="搜索部门/人员..." oninput="filterDispatchTree(this.value)"></div>'
       +'<div id="dispatchTreeBody" style="overflow-y:auto;max-height:210px;padding:4px 0;"></div>'
       +'</div></div></div>'
-      +'<div class="form-group" style="margin-bottom:12px;">'
-      +'<div class="form-label">开始时间</div>'
-      +'<input class="form-control" type="datetime-local" value="2026-07-06T09:00">'
+      // 开始/截止时间
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
+      +'<div class="form-group"><div class="form-label" id="bfStartTimeLabel">开始时间 *</div><input class="form-control" type="datetime-local" id="bfStartTime" value="2026-07-06T09:00"></div>'
+      +'<div class="form-group" id="bfEndTimeGroup"><div class="form-label">截止时间 *</div><input class="form-control" type="datetime-local" id="bfEndTime" value="2026-07-07T23:59"></div>'
       +'</div>'
-      +'<div class="form-group" style="margin-bottom:14px;">'
-      +'<div class="form-label">截止时间</div>'
-      +'<input class="form-control" type="datetime-local" value="2026-07-07T23:59">'
+      // 及格标准 + 可重做次数
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
+      +'<div class="form-group"><div class="form-label">及格标准</div>'
+      +'<div style="display:flex;gap:6px;align-items:center;">'
+      +'<select class="form-control" style="width:80px;" onchange="updateBfPassUnit(this)"><option value="score">分数</option><option value="rate">正确率</option><option value="count">答对题数</option></select>'
+      +'<input type="number" class="form-control" style="width:56px;" value="60" id="bfPassVal">'
+      +'<span style="font-size:11px;color:#666;" id="bfPassUnit">分</span>'
+      +'</div></div>'
+      +'<div class="form-group"><div class="form-label">可重做次数</div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<span class="btn btn-sm btn-primary" id="bfRetryOff" onclick="setBfRetry(false)">无限重做</span>'
+      +'<span class="btn btn-sm btn-default" id="bfRetryOn" onclick="setBfRetry(true)">限制次数</span>'
+      +'</div></div>'
       +'</div>'
-      +'<button class="btn btn-primary" onclick="showToast(\'小测发布规则已确认\')">确认规则</button>'
+      +'<div class="form-group" id="bfRetryInputGroup" style="display:none;margin-bottom:12px;"><div class="form-label">重做次数上限</div><input class="form-control" type="number" min="1" id="bfRetryVal" placeholder="请输入正整数"></div>'
+      // 作答时限
+      +'<div class="form-group" style="margin-bottom:12px;"><div class="form-label">作答时限</div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<span class="btn btn-sm btn-primary" id="bfTimeLimitOff" onclick="setBfTimeLimit(false)">不限制答题时长</span>'
+      +'<span class="btn btn-sm btn-default" id="bfTimeLimitOn" onclick="setBfTimeLimit(true)">限制答题时长</span>'
+      +'</div></div>'
+      +'<div class="form-group" id="bfTimeLimitInputGroup" style="display:none;margin-bottom:12px;"><div class="form-label">答题时限（分钟）</div><input class="form-control" type="number" min="1" id="bfTimeLimitVal" placeholder="请输入正整数"></div>'
+      // 解析展示时机
+      +'<div class="form-group" style="margin-bottom:12px;"><div class="form-label">解析展示时机</div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<span class="btn btn-sm btn-primary" id="bfAnalysisImmediate" onclick="setBfAnalysis(\'immediate\')">交卷后立即展示解析</span>'
+      +'<span class="btn btn-sm btn-default" id="bfAnalysisDeadline" onclick="setBfAnalysis(\'deadline\')">截止后统一展示解析</span>'
+      +'</div></div>'
+      // 自动提醒
+      +'<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;margin-bottom:14px;"><input type="checkbox" checked style="accent-color:#00b389;"> 截止前24小时对未完成人员自动提醒</label>'
+      +'<button class="btn btn-primary" onclick="showToast(\'小测规则已保存\')">保存规则</button>'
       +'</div>'
       +'</div>';
   }
@@ -651,6 +681,33 @@ function toggleDispatchGroup(gi) {
 
 function filterDispatchTree(val) {
   renderDispatchTree(val);
+}
+
+// ── 发布设置交互 ──
+function setBfValidityMode(mode) {
+  document.getElementById('bfValidityTimed').className = 'btn btn-sm ' + (mode==='timed' ? 'btn-primary' : 'btn-default');
+  document.getElementById('bfValidityUnlimited').className = 'btn btn-sm ' + (mode==='unlimited' ? 'btn-primary' : 'btn-default');
+  var endGroup = document.getElementById('bfEndTimeGroup');
+  if (endGroup) endGroup.style.display = mode==='unlimited' ? 'none' : '';
+}
+function setBfRetry(on) {
+  document.getElementById('bfRetryOff').className = 'btn btn-sm ' + (!on ? 'btn-primary' : 'btn-default');
+  document.getElementById('bfRetryOn').className = 'btn btn-sm ' + (on ? 'btn-primary' : 'btn-default');
+  document.getElementById('bfRetryInputGroup').style.display = on ? '' : 'none';
+}
+function setBfTimeLimit(on) {
+  document.getElementById('bfTimeLimitOff').className = 'btn btn-sm ' + (!on ? 'btn-primary' : 'btn-default');
+  document.getElementById('bfTimeLimitOn').className = 'btn btn-sm ' + (on ? 'btn-primary' : 'btn-default');
+  document.getElementById('bfTimeLimitInputGroup').style.display = on ? '' : 'none';
+}
+function setBfAnalysis(mode) {
+  document.getElementById('bfAnalysisImmediate').className = 'btn btn-sm ' + (mode==='immediate' ? 'btn-primary' : 'btn-default');
+  document.getElementById('bfAnalysisDeadline').className = 'btn btn-sm ' + (mode==='deadline' ? 'btn-primary' : 'btn-default');
+}
+function updateBfPassUnit(sel) {
+  var map = {score:'分', rate:'%', count:'题'};
+  var unit = document.getElementById('bfPassUnit');
+  if (unit) unit.textContent = map[sel.value] || '分';
 }
 
 function toggleDispatchItem(cb, name) {

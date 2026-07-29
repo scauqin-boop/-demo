@@ -117,6 +117,26 @@
   .ai-summary-body li { margin-bottom: 4px; }
   .ai-summary-body li .src-link { color: #7c3aed; text-decoration: underline; cursor: pointer; font-size: 11px; margin-left: 4px; }
   .ai-disclaimer { margin-top: 10px; padding: 6px 10px; background: #fff8e1; border-left: 3px solid #ffc107; font-size: 11px; color: #795548; border-radius: 0 4px 4px 0; }
+  /* 话术卡片 — 知识库原文 */
+  .script-card-kb { margin-top:12px; padding:12px 14px; background:#f6fffd; border:1.5px solid #00b389; border-radius:6px; }
+  .script-card-kb .script-label { display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#00875a;margin-bottom:8px; }
+  .script-card-kb .script-label .script-badge { background:#00b389;color:#fff;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600; }
+  .script-card-kb .script-id-link { color:#00875a;text-decoration:underline;cursor:pointer;font-size:11px;background:#e6fffb;padding:1px 5px;border-radius:3px; }
+  /* 话术卡片 — AI生成 */
+  .script-card-ai { margin-top:12px; padding:12px 14px; background:#faf5ff; border:1px dashed #b57bee; border-radius:6px; }
+  .script-card-ai .script-label { display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#6d28d9;margin-bottom:8px; }
+  /* 话术正文 */
+  .script-body { font-size:12px;color:#444;line-height:1.9; }
+  /* 来源提醒 */
+  .script-notice-kb { margin-top:8px;padding:5px 10px;background:#f0faf7;border-left:3px solid #00b389;font-size:11px;color:#00745a;border-radius:0 4px 4px 0; }
+  .script-notice-ai { margin-top:8px;padding:5px 10px;background:#fff8e1;border-left:3px solid #faad14;font-size:11px;color:#7c5100;border-radius:0 4px 4px 0; }
+  /* 反馈按钮 */
+  .script-feedback { display:flex;align-items:center;gap:6px;margin-top:10px; }
+  .script-feedback span { font-size:11px;color:#aaa; }
+  .fb-btn { padding:3px 10px;border:1px solid #d9d9d9;border-radius:12px;font-size:11px;color:#666;background:#fff;cursor:pointer;transition:all 0.15s; }
+  .fb-btn:hover { border-color:#00b389;color:#00b389; }
+  .fb-btn.active-good { border-color:#00b389;background:#e6fffb;color:#00875a; }
+  .fb-btn.active-bad { border-color:#ff4d4f;background:#fff1f0;color:#cf1322; }
 
   /* result stats */
   .result-stats { font-size: 12px; color: #999; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
@@ -161,6 +181,23 @@
   .k-footer-actions { display: flex; gap: 6px; margin-top: 10px; }
   .k-action-btn { padding: 4px 10px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 11px; cursor: pointer; color: #666; background: #fff; transition: all 0.15s; }
   .k-action-btn:hover { border-color: #00b389; color: #00b389; }
+  .ark-heading { font-size: 13px; font-weight: 700; color: #222; margin: 10px 0 5px; padding: 3px 0; border-bottom: 1px dashed #e8e8e8; }
+  .k-tag-cell { position: relative; display: inline-flex; align-items: center; flex-wrap: nowrap; gap: 3px; }
+  .k-tag-tooltip {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 999;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    padding: 8px 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    min-width: 120px;
+    max-width: 280px;
+  }
+  .k-tag-cell:hover .k-tag-tooltip { display: flex; flex-wrap: wrap; gap: 4px; }
 
   /* today drawer */
   .today-drawer { position: fixed; right: -320px; top: 48px; width: 320px; height: calc(100vh - 48px); background: #fff; box-shadow: -4px 0 16px rgba(0,0,0,0.12); transition: right 0.3s ease; z-index: 100; display: flex; flex-direction: column; }
@@ -449,7 +486,11 @@
           <span class="loading" id="aiLoading">生成中...</span>
         </div>
         <div class="ai-summary-body" id="aiBody"></div>
-        <div class="ai-disclaimer">⚠️ 以上内容由AI综合知识库生成，仅供参考，请以知识库原文为准，切勿直接作为话术告知客户。</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:8px;border-top:1px dashed #e0d5f5;">
+          <span style="font-size:11px;color:#9b6fd0;">这个回答对你有帮助吗？</span>
+          <button class="fb-btn" onclick="arkFeedback(this,'good')">👍 有用</button>
+          <button class="fb-btn" onclick="arkFeedback(this,'bad')">👎 无用</button>
+        </div>
       </div>
 
       <!-- Result stats -->
@@ -680,23 +721,100 @@
 
 <script>
 // ─── KNOWLEDGE LIST TABLE ───
+var _arkInlineLink = function(id, q) {
+  return '<a href="javascript:void(0)" onclick="event.stopPropagation();showToast(\'跳转到 '+id+'\')" '
+    + 'style="color:#00b389;text-decoration:underline;background:#e6fffb;padding:1px 4px;border-radius:3px;font-size:inherit;" '
+    + 'title="点击跳转到关联知识条目">【'+id+' '+q+'】</a>';
+};
+var _arkInlineVideo = '<div style="display:inline-flex;vertical-align:middle;background:#1a1a2e;border-radius:5px;padding:5px 8px;margin:0 4px;gap:6px;align-items:center;cursor:pointer;" onclick="event.stopPropagation();showToast(\'正在播放视频...\')" title="开户流程视频说明.mp4">'
+  + '<div style="width:28px;height:28px;background:#16213e;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;flex-shrink:0;">▶</div>'
+  + '<div style="display:flex;flex-direction:column;gap:2px;">'
+    + '<span style="font-size:10px;color:#ccc;white-space:nowrap;">开户流程视频说明.mp4</span>'
+    + '<div style="width:80px;height:2px;background:#444;border-radius:1px;"><div style="width:35%;height:100%;background:#00b389;border-radius:1px;"></div></div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+      + '<span style="font-size:9px;color:#888;">00:52 / 02:35</span>'
+      + '<div style="display:flex;gap:2px;">'
+        + '<span style="font-size:9px;color:#aaa;border:1px solid #555;border-radius:2px;padding:0 3px;cursor:pointer;">1x</span>'
+        + '<span style="font-size:9px;color:#aaa;border:1px solid #555;border-radius:2px;padding:0 3px;cursor:pointer;">1.5x</span>'
+      + '</div>'
+    + '</div>'
+  + '</div>'
++ '</div>';
+
 var arkKnowledgeData = [
-  { id:'#514', q:'测试赵受林（開戶介紹）', tags:['开户介绍01','测试标签'], tc:true, sc:true, en:false, hot:19, updated:'2024-08-23',
-    tcAns:'眾安銀行開戶，18歲以上香港居民，持有效身份證，通過App全程網上辦理，一般5-10分鐘。', path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' },
-  { id:'#519', q:'开户流程详解', tags:['开户介绍02'], tc:true, sc:false, en:false, hot:45, updated:'2024-11-01',
-    tcAns:'開戶步驟：下載App → 輸入身份證 → 人臉識別 → 填寫資料 → 同意條款 → 開戶成功。', path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' },
-  { id:'#521', q:'开户常见问题FAQ', tags:[], tc:true, sc:true, en:false, hot:88, updated:'2025-01-15',
-    tcAns:'Q: 開戶需要多長時間？A: 一般5-10分鐘。Q: 可以代辦開戶嗎？A: 不可以，必須本人親自辦理。', path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' }
+  { id:'#514', q:'测试赵受林（開戶介紹）',
+    tags:['开户介绍01','测试标签','账户安全','转账业务','身份核验'],
+    tc:true, sc:true, en:false, hot:19, updated:'2024-08-23',
+    tcAns:'<h3 class="ark-heading">一、開戶資格</h3><p>18歲或以上香港居民，持有效香港身份證，即可申請開戶。'+_arkInlineLink('#519','开户流程详解')+'</p><h3 class="ark-heading">二、開戶流程</h3><p>通過ZA Bank App全程網上辦理：下載App → 填寫個人資料 → 上傳身份證 → 人脸識別 → 視頻驗證 → 提交審核。一般5-10分鐘完成。'+_arkInlineVideo+'</p><h3 class="ark-heading">三、開戶後可用功能</h3><p>成功後即可使用戶口進行存款、轉賬、ZA Card申請等功能。'+_arkInlineLink('#521','开户常见问题FAQ')+'</p>',
+    scAns:'<p>18岁以上香港居民，持有效香港身份证，通过App全程网上办理，一般5-10分钟完成。'+_arkInlineLink('#519','开户流程详解')+_arkInlineVideo+_arkInlineLink('#521','开户常见问题FAQ')+'</p>',
+    enAns:'',
+    attachments:[{name:'开户流程图.pdf',size:'1.2MB'},{name:'FAQ汇总.docx',size:'256KB'}],
+    path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' },
+  { id:'#519', q:'开户流程详解',
+    tags:['开户介绍02','开户流程'],
+    tc:true, sc:false, en:false, hot:45, updated:'2024-11-01',
+    tcAns:'<h3 class="ark-heading">開戶步驟</h3><p>下載App → 輸入身份證 → 人臉識別 → 填寫資料 → 同意條款 → 開戶成功。'+_arkInlineVideo+_arkInlineLink('#514','测试赵受林（開戶介紹）')+'</p>',
+    scAns:'', enAns:'', attachments:[],
+    path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' },
+  { id:'#521', q:'开户常见问题FAQ',
+    tags:['开户FAQ','常见问题','客服','开户介绍01'],
+    tc:true, sc:true, en:false, hot:88, updated:'2025-01-15',
+    tcAns:'<p><strong>Q: 開戶需要多長時間？</strong><br>A: 一般5-10分鐘。'+_arkInlineLink('#519','开户流程详解')+'</p><p><strong>Q: 可以代辦開戶嗎？</strong><br>A: 不可以，必須本人親自辦理。'+_arkInlineLink('#514','测试赵受林（開戶介紹）')+'</p>',
+    scAns:'<p><strong>Q: 开户需要多长时间？</strong><br>A: 一般5-10分钟。'+_arkInlineLink('#519','开户流程详解')+'</p><p><strong>Q: 可以代办开户吗？</strong><br>A: 不可以，必须本人亲自办理。'+_arkInlineLink('#514','测试赵受林（開戶介紹）')+'</p>',
+    enAns:'', attachments:[{name:'FAQ_v2.pdf',size:'320KB'}],
+    path:'银行事业部 / 个人银行 / 开户业务 / 开户介绍' }
 ];
 var arkSortHotAsc = false, arkSortTimeAsc = false;
+
+function arkSwitchLang(rid, lang) {
+  ['tc','sc','en'].forEach(function(l) {
+    var qEl = document.getElementById('akq_'+rid+'_'+l);
+    var aEl = document.getElementById('aka_'+rid+'_'+l);
+    var btn = document.getElementById('aklt_'+rid+'_'+l);
+    if (qEl) qEl.style.display = l===lang ? '' : 'none';
+    if (aEl) aEl.style.display = l===lang ? '' : 'none';
+    if (btn) {
+      btn.style.background = l===lang ? '#00b389' : '#fff';
+      btn.style.color = l===lang ? '#fff' : '#555';
+      btn.style.borderColor = l===lang ? '#00b389' : '#d9d9d9';
+      btn.style.fontWeight = l===lang ? '600' : '400';
+    }
+  });
+}
 
 function renderArkKnowledge(data) {
   var tbody = document.getElementById('arkKnowledgeBody');
   if (!tbody) return;
   tbody.innerHTML = (data||arkKnowledgeData).map(function(r) {
-    var tagsHtml = r.tags.map(function(t){ return '<span style="font-size:10px;background:#e6fffb;border:1px solid #87e8de;color:#13c2c2;padding:1px 5px;border-radius:8px;margin-right:2px;">'+t+'</span>'; }).join('') || '<span style="color:#ddd;font-size:11px;">—</span>';
+    // 标签（最多2个+N tooltip）
+    var tagsHtml = (function() {
+      if (!r.tags || r.tags.length === 0) return '<span style="color:#ddd;font-size:11px;">—</span>';
+      var MAX = 2;
+      var visible = r.tags.slice(0, MAX);
+      var hidden = r.tags.slice(MAX);
+      var visHtml = visible.map(function(t){ return '<span style="font-size:10px;background:#e6fffb;border:1px solid #87e8de;color:#13c2c2;padding:1px 5px;border-radius:8px;margin-right:2px;">'+t+'</span>'; }).join('');
+      var moreHtml = hidden.length > 0 ? '<span style="font-size:10px;color:#00b389;background:#e6fffb;border:1px solid #b7e8d8;border-radius:10px;padding:0 5px;cursor:default;">+'+hidden.length+'</span>' : '';
+      var allTagsHtml = r.tags.map(function(t){ return '<span style="font-size:11px;background:#e6fffb;border:1px solid #87e8de;color:#13c2c2;padding:2px 7px;border-radius:8px;margin:2px;">'+t+'</span>'; }).join('');
+      var tooltip = hidden.length > 0 ? '<div class="k-tag-tooltip">'+allTagsHtml+'</div>' : '';
+      return '<div class="k-tag-cell">'+visHtml+moreHtml+tooltip+'</div>';
+    })();
     var eid = 'arkexp_'+r.id.replace('#','');
-    return '<tr style="border-bottom:1px solid #f5f5f5;cursor:pointer;" onclick="arkToggleRow(\''+eid+'\')">'
+    var rid = r.id.replace('#','');
+
+    // 附件 HTML
+    var attachHtml = (r.attachments && r.attachments.length > 0)
+      ? r.attachments.map(function(a){
+          return '<div style="display:inline-flex;align-items:center;gap:8px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:4px;padding:5px 10px;font-size:12px;color:#555;margin-right:8px;margin-bottom:4px;">'
+            +'<span style="color:#00b389;">📎</span>'
+            +'<span style="font-weight:500;">'+a.name+'</span>'
+            +'<span style="color:#aaa;font-size:11px;">('+a.size+')</span>'
+            +'<span style="color:#00b389;cursor:pointer;font-size:11px;" onclick="event.stopPropagation();showToast(\'下载 '+a.name+'\')">下载</span>'
+            +'</div>';
+        }).join('')
+      : '<span style="color:#ccc;font-size:12px;">暂无附件</span>';
+
+    // 主行
+    var mainRow = '<tr style="border-bottom:1px solid #f5f5f5;cursor:pointer;" onclick="arkToggleRow(\''+eid+'\')">'
       +'<td style="padding:8px 12px;font-size:11px;color:#aaa;">'+r.id+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;font-weight:600;color:#222;">'+r.q+' <span style="font-size:10px;color:#aaa;" id="aarr_'+eid+'">▶</span></td>'
       +'<td style="padding:8px 12px;">'+tagsHtml+'</td>'
@@ -705,18 +823,70 @@ function renderArkKnowledge(data) {
       +'<td style="padding:8px 12px;text-align:center;">'+(r.en?'<span style="color:#52c41a;font-size:14px;">✓</span>':'<span style="color:#eee;">—</span>')+'</td>'
       +'<td style="padding:8px 12px;color:#fa8c16;font-size:12px;">🔥 '+r.hot+'</td>'
       +'<td style="padding:8px 12px;font-size:11px;color:#aaa;white-space:nowrap;">'+r.updated+'</td>'
-      +'</tr>'
-      +'<tr id="'+eid+'" style="display:none;background:#f9fffe;"><td colspan="8" style="padding:12px 16px;">'
-      +'<div style="display:flex;gap:8px;margin-bottom:8px;">'
-      +(r.tc?'<button style="padding:3px 10px;border:1px solid #00b389;border-radius:4px;background:#00b389;color:#fff;font-size:11px;" onclick="event.stopPropagation()">繁体中文</button>':'')
-      +(r.sc?'<button style="padding:3px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#666;font-size:11px;" onclick="event.stopPropagation()">简体中文</button>':'')
+      +'</tr>';
+
+    // 展开行
+    var expandRow = '<tr id="'+eid+'" style="display:none;"><td colspan="8" style="padding:0;">'
+      +'<div style="background:#f9fffe;padding:14px 18px;">'
+
+      // 路径 + 时间
+      +'<div style="display:flex;align-items:center;gap:16px;font-size:12px;color:#666;padding-bottom:10px;border-bottom:1px dashed #d9d9d9;flex-wrap:wrap;">'
+        +'<span>📂 知识路径：<strong style="color:#222;">'+r.path+'</strong></span>'
+        +'<span>🔄 更新：'+r.updated+'</span>'
       +'</div>'
-      +'<div style="font-size:12px;line-height:1.9;color:#444;background:#fff;padding:10px 12px;border-radius:4px;border:1px solid #f0f0f0;margin-bottom:10px;">'+r.tcAns+'</div>'
+
+      // 语种切换
+      +'<div style="display:flex;gap:6px;padding:10px 0;">'
+        +(r.tc ? '<button id="aklt_'+rid+'_tc" onclick="event.stopPropagation();arkSwitchLang(\''+rid+'\',\'tc\')" style="padding:5px 14px;border:1px solid #00b389;border-radius:14px;background:#00b389;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">繁 繁体中文</button>' : '')
+        +(r.sc ? '<button id="aklt_'+rid+'_sc" onclick="event.stopPropagation();arkSwitchLang(\''+rid+'\',\'sc\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">简 简体中文</button>' : '')
+        +(r.en ? '<button id="aklt_'+rid+'_en" onclick="event.stopPropagation();arkSwitchLang(\''+rid+'\',\'en\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">EN English</button>' : '')
+      +'</div>'
+
+      // 问题块（各语种）
+      +(r.tc ? '<div id="akq_'+rid+'_tc" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 問題（繁体中文）</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+r.q+'</div>'
+        +'</div>' : '')
+      +(r.sc ? '<div id="akq_'+rid+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题（简体中文）</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+r.q+'</div>'
+        +'</div>' : '')
+      +(r.en ? '<div id="akq_'+rid+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 Question (English)</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+r.q+'</div>'
+        +'</div>' : '')
+
+      // 答案块（各语种）
+      +(r.tc ? '<div id="aka_'+rid+'_tc" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案（繁体中文）</div>'
+        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+(r.tcAns||'（暂无内容）')+'</div>'
+        +'</div>' : '')
+      +(r.sc ? '<div id="aka_'+rid+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案（简体中文）</div>'
+        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+(r.scAns||'（暂无内容）')+'</div>'
+        +'</div>' : '')
+      +(r.en ? '<div id="aka_'+rid+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 Answer (English)</div>'
+        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+(r.enAns||'(No content)')+'</div>'
+        +'</div>' : '')
+
+      // 附件
+      +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:12px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:6px;">📎 附件</div>'
+        +attachHtml
+      +'</div>'
+
+      // 底部按钮（仅保留更新日志、收藏、报错）
       +'<div style="display:flex;gap:6px;">'
-      +'<button class="k-action-btn" onclick="event.stopPropagation();openLogBubble(this,\''+r.id+'\')">📋 更新日志</button>'
-      +'<button class="k-action-btn" onclick="event.stopPropagation()">⭐ 收藏</button>'
-      +'<button class="k-action-btn" onclick="event.stopPropagation();openErrorModal(\''+r.path+'\')" style="color:#ff4d4f;border-color:#ffa39e;">⚠️ 报错</button>'
-      +'</div></td></tr>';
+        +'<button class="k-action-btn" onclick="event.stopPropagation();openLogBubble(this,\''+r.id+'\')">📋 更新日志</button>'
+        +'<button class="k-action-btn" onclick="event.stopPropagation()">⭐ 收藏</button>'
+        +'<button class="k-action-btn" onclick="event.stopPropagation();openErrorModal(\''+r.path+'\')" style="color:#ff4d4f;border-color:#ffa39e;">⚠️ 报错</button>'
+      +'</div>'
+
+      +'</div>'
+      +'</td></tr>';
+
+    return mainRow + expandRow;
   }).join('');
 }
 function arkToggleRow(eid) {
@@ -855,28 +1025,125 @@ function showNormalSearch(q) {
 
 function showAISearch(q) {
   const summary = document.getElementById('aiSummary');
+  const aiBody = document.getElementById('aiBody');
+  const statsText = document.getElementById('statsText');
+
+  // ── 触发规则 ──
+  // 输入"空结果"  → 情况1：无任何条目
+  // 输入"弱关联"  → 情况2：相关性过低
+  // 输入"超时"    → 情况3：LLM生成失败
+  // 输入"混合"    → 情况4：多业务混合提问
+  // 其他          → 正常（奇=知识库原文，偶=AI生成）
+
+  var scenario = q.indexOf('空结果') >= 0 ? 'empty'
+    : q.indexOf('弱关联') >= 0 ? 'lowrel'
+    : q.indexOf('超时') >= 0   ? 'timeout'
+    : q.indexOf('混合') >= 0   ? 'mixed'
+    : 'normal';
+
+  // 情况3：超时——不显示摘要区，直接顶部提示
+  if (scenario === 'timeout') {
+    summary.classList.remove('visible');
+    statsText.innerHTML = '<span style="color:#ff4d4f;font-weight:600;">⏱ AI 摘要生成超时，直接查看下方知识点</span>';
+    document.getElementById('warnText').style.display = 'none';
+    document.getElementById('searchResults').innerHTML = buildSearchResults(q, false);
+    return;
+  }
+
+  // 情况1：无结果——不显示摘要区，顶部提示
+  if (scenario === 'empty') {
+    summary.classList.remove('visible');
+    statsText.innerHTML = '<span style="color:#aaa;">未找到相关知识，可切换普通搜索重试</span>';
+    document.getElementById('warnText').style.display = 'none';
+    document.getElementById('searchResults').innerHTML = '';
+    return;
+  }
+
+  // 情况2：弱关联——不显示摘要区，顶部提示 + 展示弱关联结果
+  if (scenario === 'lowrel') {
+    summary.classList.remove('visible');
+    statsText.innerHTML = '<span style="color:#fa8c16;font-weight:600;">⚠️ 未检索到高度相关内容，下方为弱关联知识点</span>';
+    document.getElementById('warnText').style.display = 'none';
+    document.getElementById('searchResults').innerHTML = buildSearchResults(q, false);
+    return;
+  }
+
+  // 情况4 & 正常：显示摘要区
   summary.classList.add('visible');
   document.getElementById('aiLoading').style.display = 'inline';
-  document.getElementById('aiBody').innerHTML = '<span style="color:#aaa;">正在检索知识库并生成摘要...</span>';
-  document.getElementById('statsText').textContent = `AI 已召回 8 条相关知识点`;
+  aiBody.innerHTML = '<span style="color:#aaa;">正在检索知识库并生成摘要...</span>';
+  statsText.textContent = 'AI 已召回 8 条相关知识点';
 
   setTimeout(() => {
     document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('aiBody').innerHTML = `
+
+    // ── 情况4：多业务混合提问 ──
+    if (scenario === 'mixed') {
+      aiBody.innerHTML = `
+        <p style="margin-bottom:10px;font-weight:600;">检测到您的问题涉及多个业务方向，已按业务分组整合：</p>
+
+        <div style="border:1px solid #e6f4ff;border-radius:6px;padding:10px 12px;margin-bottom:10px;background:#f0f8ff;">
+          <div style="font-size:12px;font-weight:700;color:#1677ff;margin-bottom:6px;">🏦 关于开户：</div>
+          <ol style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:4px;">開戶需持有效香港身份證，年齡18歲以上，通過App全程網上辦理 <a class="src-link" onclick="highlightCard(1)">[#514]</a></li>
+            <li style="margin-bottom:4px;">一般5-10分鐘完成，開戶後即可存款、轉賬、申請ZA Card <a class="src-link" onclick="highlightCard(2)">[#519]</a></li>
+          </ol>
+        </div>
+
+        <div style="border:1px solid #f6ffed;border-radius:6px;padding:10px 12px;margin-bottom:10px;background:#f6ffed;">
+          <div style="font-size:12px;font-weight:700;color:#389e0d;margin-bottom:6px;">💸 关于转账：</div>
+          <ol style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:4px;">支持FPS轉數快、本地銀行轉賬及跨境匯款 <a class="src-link" onclick="highlightCard(3)">[#531]</a></li>
+            <li style="margin-bottom:4px;">單日轉賬上限視賬戶等級而定，詳見賬戶設置 <a class="src-link" onclick="highlightCard(4)">[#532]</a> <span style="font-size:10px;background:#f9f0ff;border:1px solid #d3adf7;color:#531dab;border-radius:3px;padding:1px 5px;white-space:nowrap;">🔒 部分内容为内部知识，不可转达客户</span></li>
+          </ol>
+        </div>
+
+        <div class="script-card-ai">
+          <div class="script-label">🤖 AI参考话术（仅供参考，请根据实际情况调整）</div>
+          <div class="script-body">您的问题涉及开户和转账两个方向，建议分开查询以获取更精准的答案。如需了解开户流程，可搜索「開戶流程」；如需了解转账规则，可搜索「轉賬限額」。</div>
+          <div class="script-notice-ai">💡 检测到多业务混合提问，建议拆分为单一问题分别查询，以获得更准确的知识库匹配结果。</div>
+        </div>`;
+      document.getElementById('searchResults').innerHTML = buildSearchResults(q, true);
+      return;
+    }
+
+    // ── 正常：两种话术（奇=知识库原文，偶=AI生成）──
+    var useKB = (q.length % 2 === 1);
+    var scriptCardHtml = useKB
+      ? `<div class="script-card-kb">
+          <div class="script-label">
+            <span class="script-badge">📚 知识库标准话术</span>
+            <span class="script-id-link" onclick="highlightCard(1)">【#512 開戶被拒 — 身份證件問題】</span>
+          </div>
+          <div class="script-body">感謝您聯絡眾安銀行。根據您描述的情況，開戶申請被拒最常見的原因是<strong>身份證件資料不符合要求</strong>，例如證件已過期或上傳圖片模糊。建議您重新拍攝清晰的身份證正反面圖片，確認證件在有效期內後，再次提交申請。如問題持續，請聯絡我們的客戶服務團隊，我們將為您跟進處理。</div>
+          <div class="script-notice-kb">✅ 以上話術引用自知識庫原文，摘要部分由AI綜合知識庫生成，請核對原文後使用。</div>
+        </div>`
+      : `<div class="script-card-ai">
+          <div class="script-label">🤖 AI参考话术（仅供参考，请根据实际情况调整）</div>
+          <div class="script-body">感謝您的耐心等候。關於您的開戶申請被拒的情況，可能原因包括：證件資料不符合要求、系統風控規則觸發，或填寫資料與現有記錄不一致等。建議您確認提交的身份證件是否清晰有效，並重新嘗試開戶流程。如問題持續，請聯絡我們的客戶服務團隊，我們將為您跟進處理。</div>
+          <div class="script-notice-ai">⚠️ 以上内容由AI综合知识库生成，可能包含内部专用信息，仅供客服内部参考，请以知识库原文为准，<strong>严禁直接转述或转发给客户。</strong></div>
+        </div>`;
+
+    aiBody.innerHTML = `
       <p style="margin-bottom:8px;font-weight:600;">关于"${q}"，知识库中的相关信息整合如下：</p>
       <ol>
         <li>開戶被拒的常見原因包括：<strong>身份證件不符合要求</strong>（如證件過期、模糊）<a class="src-link" onclick="highlightCard(1)">[#512]</a></li>
-        <li>存在<strong>制裁名單匹配</strong>的情況會觸發自動拒絕，需由合規部門處理，客服無法操作<a class="src-link" onclick="highlightCard(2)">[#513]</a></li>
-        <li><strong>內部風控規則觸發</strong>（具體條件屬內部規則，可告知客戶聯絡客服跟進）<a class="src-link" onclick="highlightCard(3)">[#516]</a></li>
+        <li>存在<strong>制裁名單匹配</strong>的情況會觸發自動拒絕，需由合規部門處理，客服無法操作<a class="src-link" onclick="highlightCard(2)">[#513]</a> <span style="font-size:10px;background:#fff7e6;border:1px solid #ffd591;color:#d46b08;border-radius:3px;padding:1px 5px;white-space:nowrap;">⚠️ 部分内容已过期，仅供参考</span></li>
+        <li><strong>內部風控規則觸發</strong>（具體條件屬內部規則，可告知客戶聯絡客服跟進）<a class="src-link" onclick="highlightCard(3)">[#516]</a> <span style="font-size:10px;background:#f9f0ff;border:1px solid #d3adf7;color:#531dab;border-radius:3px;padding:1px 5px;white-space:nowrap;">🔒 部分内容为内部知识，不可转达客户</span></li>
         <li>客戶信息填寫錯誤或與現有記錄<strong>不一致</strong>也會導致被拒<a class="src-link" onclick="highlightCard(4)">[#518]</a></li>
       </ol>
-      <div style="margin-top:12px;padding:10px 12px;background:#f0faf7;border:1px solid #b7e8d8;border-radius:6px;">
-        <div style="font-size:11px;font-weight:600;color:#00956d;margin-bottom:6px;">💬 建议回答话术（仅供参考，请根据实际情况调整）</div>
-        <div style="font-size:12px;color:#444;line-height:1.8;">感謝您的耐心等候。關於您的開戶申請被拒的情況，可能原因包括：證件資料不符合要求、系統風控規則觸發等。建議您確認提交的身份證件是否清晰有效，並重新嘗試開戶流程。如問題持續，請聯絡我們的客戶服務團隊，我們將為您跟進處理。</div>
-        <div style="font-size:10px;color:#aaa;margin-top:6px;">⚠️ 以上话术由AI综合知识库生成，仅供参考，请以知识库原文为准，切勿直接作为话术告知客户。</div>
-      </div>`;
+      ${scriptCardHtml}`;
+
     document.getElementById('searchResults').innerHTML = buildSearchResults(q, true);
   }, 1800);
+}
+
+function arkFeedback(btn, type) {
+  var wrap = document.getElementById('aiSummary').querySelector('[data-fb-wrap]');
+  if (!wrap) wrap = btn.parentNode;
+  wrap.querySelectorAll('.fb-btn').forEach(function(b){ b.classList.remove('active-good','active-bad'); });
+  btn.classList.add(type === 'good' ? 'active-good' : 'active-bad');
+  showToast(type === 'good' ? '感谢反馈，已记录👍' : '感谢反馈，我们将持续优化👎');
 }
 
 function buildSearchResults(q, isAI) {

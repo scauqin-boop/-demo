@@ -428,40 +428,40 @@ var examData = {
       count: 3, full: 100, pass: 60, deadline: '2026-07-03 23:59',
       unlock: '看完视频后解锁', retries: '不限', timeLimit: null,
       questions: [
-        { type:'单选', stem:'MCV开户新增的视频验证步骤在哪个环节之后进行？', opts:['填写个人资料之后','人脸识别之后','同意条款之后','输入身份证之后'], ans:1 },
-        { type:'多选', stem:'以下哪些情况会导致开户被拒？（多选）', opts:['身份证件过期','存在制裁名单匹配','客户年龄18岁','内部风控规则触发'], ans:[0,1,3] },
-        { type:'单选', stem:'本次转账规则调整主要影响哪类转账？', opts:['本地港元转账','港元转人民币跨境转账','美元转账','以上均有调整'], ans:1 }
+        { type:'单选', stem:'MCV开户新增的视频验证步骤在哪个环节之后进行？', opts:['填写个人资料之后','人脸识别之后','同意条款之后','输入身份证之后'], ans:1, analysis:'根据本次Briefing，视频验证步骤安排在人脸识别完成之后进行，是开户流程的第五步。' },
+        { type:'多选', stem:'以下哪些情况会导致开户被拒？（多选）', opts:['身份证件过期','存在制裁名单匹配','客户年龄18岁','内部风控规则触发'], ans:[0,1,3], analysis:'年龄满18岁是开户条件之一，不会导致被拒。证件过期、制裁名单匹配和内部风控规则触发均为被拒常见原因。' },
+        { type:'单选', stem:'本次转账规则调整主要影响哪类转账？', opts:['本地港元转账','港元转人民币跨境转账','美元转账','以上均有调整'], ans:1, analysis:'本次调整主要针对港元转人民币的跨境转账业务，新增了每日限额和实名认证要求。' }
       ]
     },
     {
-      id: 2, name: '2026年7月月测', type: '月测',
+      id: 2, name: '开户业务专项考核', type: '专项测验',
       count: 5, full: 100, pass: 60, deadline: '2026-07-31 23:59',
       unlock: '无限制', retries: '1次', timeLimit: 30,
       questions: [
-        { type:'单选', stem:'以下哪项属于ZA Bank的开户条件？', opts:['年龄满16岁','有效香港身份证','需亲临分行','需担保人'], ans:1 },
-        { type:'多选', stem:'客户申请开户被拒时，客服应如何处理？（多选）', opts:['安抚客户情绪','告知具体被拒原因代码','建议重试或联系专属客服','记录工单跟进'], ans:[0,2,3] },
-        { type:'单选', stem:'本地转账一般多久到账？', opts:['即时','1个工作日','3个工作日','7个工作日'], ans:0 },
-        { type:'单选', stem:'VA账户主要服务对象是？', opts:['个人储蓄客户','企业客户','跨境业务客户','基金投资客户'], ans:2 },
-        { type:'多选', stem:'以下哪些渠道可以联系ZA Bank客服？（多选）', opts:['App内在线客服','电话热线','邮件','线下分行'], ans:[0,1,2] }
+        { type:'单选', stem:'以下哪项属于ZA Bank的开户条件？', opts:['年龄满16岁','有效香港身份证','需亲临分行','需担保人'], ans:1, analysis:'ZA Bank开户要求持有效香港身份证，年龄18岁以上，全程App线上办理，无需亲临分行或担保人。' },
+        { type:'多选', stem:'客户申请开户被拒时，客服应如何处理？（多选）', opts:['安抚客户情绪','告知具体被拒原因代码','建议重试或联系专属客服','记录工单跟进'], ans:[0,2,3], analysis:'具体被拒原因代码属于内部信息，不应直接告知客户。应安抚情绪、引导重试或升级，并记录工单。' },
+        { type:'单选', stem:'本地转账一般多久到账？', opts:['即时','1个工作日','3个工作日','7个工作日'], ans:0, analysis:'ZA Bank本地转账通过FPS转数快即时到账，7×24小时均可使用。' },
+        { type:'单选', stem:'VA账户主要服务对象是？', opts:['个人储蓄客户','企业客户','跨境业务客户','基金投资客户'], ans:2, analysis:'VA（Virtual Account）账户主要面向有跨境收付需求的客户，支持多币种结算。' },
+        { type:'多选', stem:'以下哪些渠道可以联系ZA Bank客服？（多选）', opts:['App内在线客服','电话热线','邮件','线下分行'], ans:[0,1,2], analysis:'ZA Bank暂无线下分行，客服渠道为App内在线客服、电话热线及邮件。' }
       ]
     }
   ],
   done: [
     { id:3, name:'2026-07-01 Briefing小测', type:'Briefing小测', score:92, full:100, pass:60, submitTime:'2026-07-01 11:23', duration:'7分钟', result:'pass', attemptLabel:'首考',
       questions:[
-        { type:'单选', stem:'VA账户本次更新新增了哪个功能？', opts:['支持更多货币','提升转账限额','新增账单导出','以上都是'], ans:3, myAns:3 },
-        { type:'多选', stem:'以下哪些操作需要重新验证身份？（多选）', opts:['修改手机号','大额转账','查看余额','更换登录密码'], ans:[0,1,3], myAns:[0,1,3] },
-        { type:'单选', stem:'VA账户转账限额提升后，每日限额是多少港元？', opts:['5万','10万','20万','50万'], ans:2, myAns:3 }
+        { type:'单选', stem:'VA账户本次更新新增了哪个功能？', opts:['支持更多货币','提升转账限额','新增账单导出','以上都是'], ans:3, myAns:3, analysis:'本次Briefing重点介绍VA账户新增了账单导出功能，其余选项均为已有功能。' },
+        { type:'多选', stem:'以下哪些操作需要重新验证身份？（多选）', opts:['修改手机号','大额转账','查看余额','更换登录密码'], ans:[0,1,3], myAns:[0,1,3], analysis:'查看余额属于低风险操作，无需重新验证身份。修改手机号、大额转账、更换登录密码均需二次验证。' },
+        { type:'单选', stem:'VA账户转账限额提升后，每日限额是多少港元？', opts:['5万','10万','20万','50万'], ans:2, myAns:3, analysis:'本次更新将VA账户每日转账限额提升至20万港元，注意不是50万。' }
       ]
     },
     { id:8, name:'2026-07-01 Briefing小测', type:'Briefing小测', score:85, full:100, pass:60, submitTime:'2026-07-02 09:30', duration:'9分钟', result:'pass', attemptLabel:'重做第1次', questions:[] },
     { id:9, name:'2026-07-01 Briefing小测', type:'Briefing小测', score:96, full:100, pass:60, submitTime:'2026-07-04 14:20', duration:'6分钟', result:'pass', attemptLabel:'重做第2次', questions:[] },
     { id:4, name:'开户业务专项考核', type:'专项测验', score:60, full:100, pass:70, submitTime:'2026-06-25 14:30', duration:'22分钟', result:'fail', attemptLabel:'首考',
       questions:[
-        { type:'单选', stem:'ZA Bank开户最低年龄要求是？', opts:['16岁','18岁','21岁','无限制'], ans:1, myAns:0 },
-        { type:'单选', stem:'视频验证步骤大概需要多少分钟？', opts:['1-2分钟','5-10分钟','15分钟','30分钟'], ans:0, myAns:0 },
-        { type:'单选', stem:'开户成功后多久可以使用账户？', opts:['即时','24小时','3个工作日','7个工作日'], ans:0, myAns:0 },
-        { type:'多选', stem:'以下哪些情况会导致开户被拒？（多选）', opts:['证件过期','年龄不足','制裁名单','信息不一致'], ans:[0,1,2,3], myAns:[0,2] }
+        { type:'单选', stem:'ZA Bank开户最低年龄要求是？', opts:['16岁','18岁','21岁','无限制'], ans:1, myAns:0, analysis:'ZA Bank要求申请人年满18岁，16岁不符合开户条件。' },
+        { type:'单选', stem:'视频验证步骤大概需要多少分钟？', opts:['1-2分钟','5-10分钟','15分钟','30分钟'], ans:0, myAns:0, analysis:'视频验证一般仅需1-2分钟，整个开户流程通常5-10分钟完成。' },
+        { type:'单选', stem:'开户成功后多久可以使用账户？', opts:['即时','24小时','3个工作日','7个工作日'], ans:0, myAns:0, analysis:'开户审核通过后账户即时生效，可立即进行存款、转账等操作。' },
+        { type:'多选', stem:'以下哪些情况会导致开户被拒？（多选）', opts:['证件过期','年龄不足','制裁名单','信息不一致'], ans:[0,1,2,3], myAns:[0,2], analysis:'四项均为开户被拒的常见原因：证件过期、年龄不足18岁、命中制裁名单、填写信息与现有记录不一致，全选才正确。' }
       ]
     },
     { id:7, name:'开户业务专项考核', type:'专项测验', score:82, full:100, pass:70, submitTime:'2026-06-28 10:30', duration:'18分钟', result:'pass', attemptLabel:'重做第1次', questions:[] },
@@ -704,26 +704,8 @@ function submitExam() {
     + '<div style="font-size:13px;color:#666;margin-top:6px;">' + (passed ? '✅ 恭喜通过！' : '❌ 未通过，请继续努力') + '（及格线 ' + exam.pass + ' 分）</div>'
     + '<div style="font-size:12px;color:#aaa;margin-top:4px;">答对 ' + correct + ' / ' + exam.questions.length + ' 题</div>'
     + '</div>'
-    + '<div style="font-size:13px;font-weight:600;color:#222;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;">📝 错题解析</div>'
-    + exam.questions.map(function(q, qi) {
-      var myAns = userAnswers[qi];
-      var isRight = Array.isArray(q.ans)
-        ? (myAns && myAns.length === q.ans.length && q.ans.every(function(a){ return myAns.indexOf(a) >= 0; }))
-        : myAns === q.ans;
-      if (isRight) return '';
-      var rightStr = Array.isArray(q.ans)
-        ? q.ans.map(function(a){ return String.fromCharCode(65 + a); }).join('、')
-        : String.fromCharCode(65 + q.ans);
-      var myStr = Array.isArray(myAns)
-        ? (myAns.length > 0 ? myAns.map(function(a){ return String.fromCharCode(65 + a); }).join('、') : '未作答')
-        : (myAns !== undefined && myAns !== null ? String.fromCharCode(65 + myAns) : '未作答');
-      return '<div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:10px 12px;margin-bottom:8px;">'
-        + '<div style="font-size:11px;font-weight:600;color:#ff4d4f;margin-bottom:4px;">❌ 第' + (qi + 1) + '题答错</div>'
-        + '<div style="font-size:12px;color:#444;margin-bottom:4px;">' + q.stem + '</div>'
-        + '<div style="font-size:12px;color:#666;">我的答案：<span style="color:#ff4d4f;">' + myStr + '</span></div>'
-        + '<div style="font-size:12px;color:#666;">正确答案：<span style="color:#52c41a;font-weight:600;">' + rightStr + '</span></div>'
-        + '</div>';
-    }).join('') || '<div style="text-align:center;color:#52c41a;padding:12px;font-size:13px;">🎉 全部答对！</div>';
+    + '<div style="font-size:13px;font-weight:600;color:#222;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;">📝 全部题目作答情况</div>'
+    + renderAllQuestions(exam.questions, function(q, qi){ return userAnswers[qi]; });
 
   document.getElementById('erBody').innerHTML = erBody;
 
@@ -753,37 +735,76 @@ function submitExam() {
   currentExam = null;
 }
 
+// ═══ 公共：渲染所有题目作答详情 ═══
+function renderAllQuestions(questions, getMyAns) {
+  return questions.map(function(q, qi) {
+    var myAns = getMyAns(q, qi);
+    var isRight = Array.isArray(q.ans)
+      ? (myAns && myAns.length === q.ans.length && q.ans.every(function(a){ return myAns.indexOf(a) >= 0; }))
+      : myAns === q.ans;
+    var rightArr = Array.isArray(q.ans) ? q.ans : [q.ans];
+    var rightStr = rightArr.map(function(a){ return String.fromCharCode(65 + a); }).join('、');
+    var myStr = Array.isArray(myAns)
+      ? (myAns.length > 0 ? myAns.map(function(a){ return String.fromCharCode(65 + a); }).join('、') : '未作答')
+      : (myAns !== undefined && myAns !== null ? String.fromCharCode(65 + myAns) : '未作答');
+    var borderColor = isRight ? '#b7eb8f' : '#ffa39e';
+    var bgColor     = isRight ? '#f6ffed' : '#fff1f0';
+    var statusColor = isRight ? '#52c41a' : '#ff4d4f';
+    var statusText  = isRight ? '✅ 答对' : '❌ 答错';
+
+    // 选项列表
+    var optsHtml = (q.opts || q.options || []).map(function(opt, oi) {
+      var letter = String.fromCharCode(65 + oi);
+      var isMyChoice   = Array.isArray(myAns) ? myAns.indexOf(oi) >= 0 : myAns === oi;
+      var isRightChoice = rightArr.indexOf(oi) >= 0;
+      var optBg = isRightChoice ? '#f6ffed' : (isMyChoice && !isRight ? '#fff1f0' : 'transparent');
+      var optColor = isRightChoice ? '#389e0d' : (isMyChoice && !isRight ? '#cf1322' : '#444');
+      var marker = isRightChoice ? ' ✓' : (isMyChoice && !isRight ? ' ✗' : '');
+      return '<div style="padding:4px 8px;border-radius:4px;background:' + optBg + ';color:' + optColor + ';font-size:12px;margin-bottom:2px;">'
+        + '<span style="font-weight:600;margin-right:4px;">' + letter + '.</span>' + opt + '<span style="font-weight:600;">' + marker + '</span>'
+        + '</div>';
+    }).join('');
+
+    // 解析
+    var analysisHtml = q.analysis
+      ? '<div style="margin-top:8px;padding:6px 10px;background:#fffbe6;border-left:3px solid #ffe58f;border-radius:0 4px 4px 0;font-size:11px;color:#614700;">💡 解析：' + q.analysis + '</div>'
+      : '';
+
+    return '<div style="border:1px solid ' + borderColor + ';border-radius:6px;padding:12px 14px;margin-bottom:10px;background:' + bgColor + ';">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
+        + '<div style="font-size:12px;font-weight:600;color:#222;">第 ' + (qi + 1) + ' 题'
+          + (q.type ? '<span style="font-size:10px;color:#888;margin-left:6px;">(' + q.type + ')</span>' : '')
+          + '</div>'
+        + '<span style="font-size:11px;font-weight:600;color:' + statusColor + ';">' + statusText + '</span>'
+      + '</div>'
+      + '<div style="font-size:13px;color:#222;font-weight:500;margin-bottom:8px;line-height:1.6;">' + q.stem + '</div>'
+      + optsHtml
+      + '<div style="margin-top:8px;font-size:12px;color:#666;display:flex;gap:16px;flex-wrap:wrap;">'
+        + '<span>我的答案：<strong style="color:' + statusColor + ';">' + myStr + '</strong></span>'
+        + '<span>正确答案：<strong style="color:#389e0d;">' + rightStr + '</strong></span>'
+      + '</div>'
+      + analysisHtml
+      + '</div>';
+  }).join('');
+}
+
 // ═══ 成绩详情 ═══
 function showResult(id) {
   var exam = examData.done.find(function(e){ return e.id === id; });
   if (!exam) return;
   document.getElementById('resultTitle').textContent = exam.name + ' — 成绩详情';
   var isPassed = exam.result === 'pass';
+
   var bodyHtml = '<div style="display:flex;align-items:center;gap:20px;padding:12px 0;border-bottom:1px solid #f0f0f0;margin-bottom:16px;">'
     + '<div style="text-align:center;"><div style="font-size:40px;font-weight:700;color:' + (isPassed ? '#52c41a' : '#ff4d4f') + ';">' + exam.score + '</div><div style="font-size:11px;color:#aaa;">得分 / ' + exam.full + '</div></div>'
     + '<div style="flex:1;"><div style="font-size:13px;font-weight:600;margin-bottom:6px;">' + (isPassed ? '✅ 通过' : '❌ 未通过') + '</div>'
     + '<div style="font-size:12px;color:#666;display:flex;gap:16px;flex-wrap:wrap;"><span>及格线：' + exam.pass + ' 分</span><span>提交：' + exam.submitTime + '</span><span>用时：' + exam.duration + '</span></div>'
     + '</div></div>';
 
+  bodyHtml += '<div style="font-size:13px;font-weight:600;color:#222;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f0f0f0;">📝 全部题目作答情况</div>';
+
   if (exam.questions && exam.questions.length > 0 && 'myAns' in exam.questions[0]) {
-    bodyHtml += exam.questions.map(function(q, qi) {
-      var myAns = q.myAns;
-      var isRight = Array.isArray(q.ans)
-        ? (myAns && myAns.length === q.ans.length && q.ans.every(function(a){ return myAns.indexOf(a) >= 0; }))
-        : myAns === q.ans;
-      var rightStr = Array.isArray(q.ans)
-        ? q.ans.map(function(a){ return String.fromCharCode(65 + a); }).join('、')
-        : String.fromCharCode(65 + q.ans);
-      var myStr = Array.isArray(myAns)
-        ? (myAns.length > 0 ? myAns.map(function(a){ return String.fromCharCode(65 + a); }).join('、') : '未作答')
-        : (myAns !== undefined && myAns !== null ? String.fromCharCode(65 + myAns) : '未作答');
-      return '<div style="border:1px solid ' + (isRight ? '#b7eb8f' : '#ffa39e') + ';border-radius:6px;padding:10px 12px;margin-bottom:8px;background:' + (isRight ? '#f6ffed' : '#fff1f0') + ';">'
-        + '<div style="font-size:11px;font-weight:600;color:' + (isRight ? '#52c41a' : '#ff4d4f') + ';margin-bottom:4px;">' + (isRight ? '✅ 答对' : '❌ 答错') + '</div>'
-        + '<div style="font-size:12px;font-weight:600;color:#222;margin-bottom:4px;">' + (qi + 1) + '. ' + q.stem + '</div>'
-        + '<div style="font-size:12px;color:#666;">我的答案：<span style="color:' + (isRight ? '#52c41a' : '#ff4d4f') + ';">' + myStr + '</span></div>'
-        + (!isRight ? '<div style="font-size:12px;color:#666;margin-top:2px;">正确答案：<span style="color:#52c41a;font-weight:600;">' + rightStr + '</span></div>' : '')
-        + '</div>';
-    }).join('');
+    bodyHtml += renderAllQuestions(exam.questions, function(q){ return q.myAns; });
   } else {
     bodyHtml += '<div style="text-align:center;color:#aaa;padding:20px;font-size:12px;">暂无详细答题记录</div>';
   }

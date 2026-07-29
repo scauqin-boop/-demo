@@ -144,6 +144,27 @@ tr:hover td { background: #fafffe; }
 /* ── KNOWLEDGE HEADINGS ── */
 .k-heading { font-size: 13px; font-weight: 700; color: #222; margin: 12px 0 6px; padding: 4px 0; border-bottom: 1px dashed #e8e8e8; }
 
+/* ── TAG CELL TOOLTIP ── */
+.k-tag-cell { position: relative; display: inline-flex; align-items: center; flex-wrap: nowrap; gap: 3px; }
+.k-tag-tooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 999;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  white-space: nowrap;
+  min-width: 120px;
+  max-width: 280px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.k-tag-cell:hover .k-tag-tooltip { display: flex; flex-wrap: wrap; gap: 4px; }
+
 /* ── INLINE EDIT ROW ── */
 .inline-edit-area { background: #f0faf7; border: 1px solid #b7e8d8; border-radius: 6px; padding: 12px 14px; margin: 4px 8px 8px; }
 .inline-edit-area .form-grid { gap: 8px 16px; }
@@ -184,11 +205,11 @@ tr:hover td { background: #fafffe; }
       <div class="menu-sub open">
         <div class="menu-item active" id="menu-catalog" onclick="showPanel('catalog')">目录及知识条目管理</div>
         <div class="menu-item" id="menu-label" onclick="showPanel('label')">标签管理</div>
-        <div class="menu-item" id="menu-briefing" onclick="window.open('demo-briefing.html','_blank')">每日Briefing管理 ↗</div>
         <div class="menu-item" id="menu-exam-toggle" onclick="toggleExamMenu(this)" style="display:flex;justify-content:space-between;align-items:center;">
-          <span>考试管理</span><span class="arrow" id="examArrow">▶</span>
+          <span>考试及每日Briefing管理</span><span class="arrow" id="examArrow">▶</span>
         </div>
         <div id="exam-submenu" style="display:none;">
+          <div class="menu-item" id="menu-briefing" onclick="window.open('demo-briefing.html','_blank')" style="padding-left:44px;">每日Briefing管理 ↗</div>
           <div class="menu-item" id="menu-quiz-bank" onclick="window.open('demo-quiz-bank.html','_blank')" style="padding-left:44px;">题库管理 ↗</div>
           <div class="menu-item" id="menu-quiz-paper" onclick="window.open('demo-quiz-paper.html','_blank')" style="padding-left:44px;">试卷管理 ↗</div>
           <div class="menu-item" id="menu-quiz-score" onclick="window.open('demo-quiz-score.html','_blank')" style="padding-left:44px;">成绩看板 ↗</div>
@@ -435,34 +456,12 @@ tr:hover td { background: #fafffe; }
                     <input type="color" id="rtColorPicker" style="display:none;" onchange="rtCmd('foreColor',this.value)">
                     <button type="button" class="rt-btn" onclick="document.getElementById('rtColorPicker').click()">A</button>
                     <button type="button" class="rt-btn" onclick="toggleRtOutline()" style="margin-left:4px;">目录</button>
+                    <button type="button" class="rt-btn" onclick="openRelatedEntryModal()" style="margin-left:2px;color:#00b389;border-color:#b7e8d8;">🔗 关联</button>
                   </div>
                   <div id="rtEditor" contenteditable="true" style="min-height:180px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;overflow-y:auto;background:#fff;" onpaste="rtHandlePaste(event)" oninput="rtUpdateOutline()"></div>
                 </div>
               </div>
               <div style="font-size:11px;color:#aaa;margin-top:3px;">支持 Ctrl+B 加粗、Ctrl+I 斜体、Ctrl+V 粘贴图片；点击「目录」可显示大纲导航<br>支持上传视频，将以视频播放器形式展示在ARK系统的知识库</div>
-            </div>
-            <!-- 关联知识条目 -->
-            <div class="form-group" style="margin-bottom:10px;">
-              <div class="form-label">关联知识条目</div>
-              <div style="border:1px solid #d9d9d9;border-radius:4px;padding:8px 12px;background:#fff;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                  <input class="form-control" id="relatedEntryInput" style="flex:1;" placeholder="输入知识条目ID（如 K-20240101）">
-                  <button class="btn btn-default btn-sm" onclick="addRelatedEntry()">+ 关联</button>
-                </div>
-                <div id="relatedEntryList">
-                  <div class="related-entry-item" style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:6px;">
-                    <div style="flex-shrink:0;">
-                      <span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;cursor:pointer;" onclick="showToast('跳转到 K-20240104')">K-20240104</span>
-                    </div>
-                    <div style="flex:1;">
-                      <div style="font-size:12px;color:#444;margin-bottom:4px;">开户被系统拒绝怎么办？</div>
-                      <input class="form-control" style="width:100%;font-size:11px;padding:3px 6px;" placeholder="填写关联说明（如：开户被拒时可参考此条目的处理流程）" value="开户被拒时可参考此条目的处理流程">
-                    </div>
-                    <span style="color:#aaa;cursor:pointer;font-size:12px;flex-shrink:0;" onclick="this.closest('.related-entry-item').remove()">✕</span>
-                  </div>
-                </div>
-                <div style="font-size:11px;color:#aaa;margin-top:4px;">关联已有知识条目，可在ARK系统中点击跳转查看；支持关联多条</div>
-              </div>
             </div>
             <!-- 附件（繁体下方） -->
             <div class="form-group" style="margin-bottom:10px;">
@@ -515,9 +514,32 @@ tr:hover td { background: #fafffe; }
 
         </div>
         <div class="modal-footer">
+          <button class="btn btn-default" onclick="showToast('预览功能开发中')">预览</button>
           <button class="btn btn-default" onclick="closeModal('modalEntry')">取消</button>
           <button class="btn btn-default" id="entryContinueBtn" onclick="showToast('已保存，可继续录入下一条')">继续新增</button>
           <button class="btn btn-primary" onclick="saveEntryModal()">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关联知识条目子弹窗 -->
+    <div class="modal-overlay" id="modalRelatedEntry" style="z-index:1100;">
+      <div class="modal" style="width:480px;">
+        <div class="modal-header">
+          <h3>关联知识条目</h3>
+          <span class="modal-close" onclick="closeModal('modalRelatedEntry')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <input class="form-control" id="relatedEntryInput" style="flex:1;" placeholder="输入知识条目ID（如 K-20240101）">
+            <button class="btn btn-default btn-sm" onclick="addRelatedEntryToList()">+ 查找</button>
+          </div>
+          <div id="relatedEntryList" style="margin-bottom:8px;"></div>
+          <div style="font-size:11px;color:#aaa;">确认后将在光标位置插入超链接，点击可跳转查看该知识条目</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalRelatedEntry')">取消</button>
+          <button class="btn btn-primary" onclick="confirmInsertRelatedLinks()">确认插入</button>
         </div>
       </div>
     </div>
@@ -1486,24 +1508,55 @@ function catFormCatalog(node){ return ''; }
 
 function catKnowledgeTable(node) {
   var rows = [
-    { id:'K-20240101', q:'如何在众安银行开立个人账户？', tags:['开户介绍01','开户介绍02'], hot:45, status:'enabled', updater:'覃国权', time:'2026-06-30', sort:1 },
+    { id:'K-20240101', q:'如何在众安银行开立个人账户？', tags:['开户介绍01','开户介绍02','账户安全','转账业务','身份核验'], hot:45, status:'enabled', updater:'覃国权', time:'2026-06-30', sort:1 },
     { id:'K-20240102', q:'开户需要携带哪些证件材料？', tags:['0911-1'], hot:23, status:'enabled', updater:'Lucy', time:'2026-06-28', sort:2 },
     { id:'K-20240103', q:'开户的手续费是多少？', tags:[], hot:8, status:'disabled', updater:'Tom', time:'2026-06-15', sort:3 },
     { id:'K-20240104', q:'开户被系统拒绝怎么办？', tags:['开户被拒','风控'], hot:67, status:'enabled', updater:'覃国权', time:'2026-07-01', sort:4 }
   ];
   var rowsHtml = rows.map(function(r) {
-    var tagsHtml = r.tags.map(function(t){ return '<span class="badge badge-teal" style="font-size:10px;">'+t+'</span>'; }).join(' ') || '<span style="color:#ccc;">—</span>';
+    var tagsHtml = (function() {
+      if (!r.tags || r.tags.length === 0) return '<span style="color:#ccc;">—</span>';
+      var MAX = 2;
+      var visible = r.tags.slice(0, MAX);
+      var hidden = r.tags.slice(MAX);
+      var visHtml = visible.map(function(t){ return '<span class="badge badge-teal" style="font-size:10px;">'+t+'</span>'; }).join(' ');
+      var moreHtml = hidden.length > 0 ? ' <span style="font-size:10px;color:#00b389;background:#e6fffb;border:1px solid #b7e8d8;border-radius:10px;padding:0 5px;cursor:default;">+'+hidden.length+'</span>' : '';
+      var allTagsHtml = r.tags.map(function(t){ return '<span class="badge badge-teal" style="font-size:11px;margin:2px 2px;">'+t+'</span>'; }).join('');
+      var tooltip = hidden.length > 0
+        ? '<div class="k-tag-tooltip">'+allTagsHtml+'</div>'
+        : '';
+      return '<div class="k-tag-cell">'+visHtml+moreHtml+tooltip+'</div>';
+    })();
     var stBadge = r.status==='enabled' ? '<span class="badge badge-green">启用</span>' : '<span class="badge badge-red">停用</span>';
     var expandId = 'kexpand_'+r.id;
 
     // 三语种内容数据
+    var _inlineLink = function(id, q) {
+      return '<a href="javascript:void(0)" onclick="window.open(\'#ark-knowledge?id='+id+'\',\'_blank\');event.stopPropagation();" '
+        + 'style="color:#00b389;text-decoration:underline;background:#e6fffb;padding:1px 4px;border-radius:3px;font-size:inherit;" '
+        + 'title="点击跳转到关联知识条目">【'+id+' '+q+'】</a>';
+    };
+    var _inlineVideo = '<div style="display:inline-flex;vertical-align:middle;background:#1a1a2e;border-radius:5px;padding:5px 8px;margin:0 4px;gap:6px;align-items:center;cursor:pointer;" onclick="showToast(\'正在播放视频...\')" title="开户流程视频说明.mp4">'
+      + '<div style="width:28px;height:28px;background:#16213e;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;flex-shrink:0;">▶</div>'
+      + '<div style="display:flex;flex-direction:column;gap:2px;">'
+        + '<span style="font-size:10px;color:#ccc;white-space:nowrap;">开户流程视频说明.mp4</span>'
+        + '<div style="width:80px;height:2px;background:#444;border-radius:1px;"><div style="width:35%;height:100%;background:#00b389;border-radius:1px;"></div></div>'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+          + '<span style="font-size:9px;color:#888;">00:52 / 02:35</span>'
+          + '<div style="display:flex;gap:2px;">'
+            + '<span style="font-size:9px;color:#aaa;border:1px solid #555;border-radius:2px;padding:0 3px;cursor:pointer;">1x</span>'
+            + '<span style="font-size:9px;color:#aaa;border:1px solid #555;border-radius:2px;padding:0 3px;cursor:pointer;">1.5x</span>'
+          + '</div>'
+        + '</div>'
+      + '</div>'
+    + '</div>';
     var langs = {
       tc: { label:'繁', name:'繁体中文', q:r.id==='K-20240101'?'在众安银行如何开立个人账户？':(r.id==='K-20240102'?'开户需要携带哪些证件材料？':(r.id==='K-20240104'?'开户被系统拒绝怎么办？':r.q)),
-                  a:r.id==='K-20240101'?'<h3 class="k-heading" id="kh_'+r.id+'_0">一、開戶資格</h3><p>18歲或以上香港居民，持有效香港身份證，即可申請開戶。</p><h3 class="k-heading" id="kh_'+r.id+'_1">二、開戶流程</h3><p>通過ZA Bank App全程網上辦理：下載App → 填寫個人資料 → 上傳身份證 → 人脸識別 → 視頻驗證 → 提交審核。一般5-10分鐘完成。</p><h3 class="k-heading" id="kh_'+r.id+'_2">三、開戶後可用功能</h3><p>成功後即可使用戶口進行存款、轉賬、ZA Card申請等功能。</p><h3 class="k-heading" id="kh_'+r.id+'_3">四、注意事項</h3><p>如遇開戶失敗，請確認證件有效性並重新嘗試，或聯絡客服。</p>':(r.id==='K-20240102'?'需要提供：有效香港身份證（正反面清晰圖片）、手機號碼、電郵地址。部分情況下可能需要提供地址證明。':(r.id==='K-20240104'?'<h3 class="k-heading" id="kh_'+r.id+'_0">一、常見被拒原因</h3><p>1. 身份證件問題（過期/模糊）<br>2. 制裁名單匹配<br>3. 內部風控規則觸發</p><h3 class="k-heading" id="kh_'+r.id+'_1">二、處理建議</h3><p>建議客戶確認證件有效後重新嘗試，或聯絡客服跟進。</p>':'（暫無內容）')) },
+                  a:r.id==='K-20240101'?'<h3 class="k-heading" id="kh_'+r.id+'_0">一、開戶資格</h3><p>18歲或以上香港居民，持有效香港身份證，即可申請開戶。'+_inlineLink('K-20240104','开户被系统拒绝怎么办？')+'</p><h3 class="k-heading" id="kh_'+r.id+'_1">二、開戶流程</h3><p>通過ZA Bank App全程網上辦理：下載App → 填寫個人資料 → 上傳身份證 → 人脸識別 → 視頻驗證 → 提交審核。一般5-10分鐘完成。'+_inlineVideo+'</p><h3 class="k-heading" id="kh_'+r.id+'_2">三、開戶後可用功能</h3><p>成功後即可使用戶口進行存款、轉賬、ZA Card申請等功能。'+_inlineLink('K-20240102','开户需要携带哪些证件材料？')+'</p><h3 class="k-heading" id="kh_'+r.id+'_3">四、注意事項</h3><p>如遇開戶失敗，請確認證件有效性並重新嘗試，或聯絡客服。</p>':(r.id==='K-20240102'?'需要提供：有效香港身份證（正反面清晰圖片）、手機號碼、電郵地址。部分情況下可能需要提供地址證明。':(r.id==='K-20240104'?'<h3 class="k-heading" id="kh_'+r.id+'_0">一、常見被拒原因</h3><p>1. 身份證件問題（過期/模糊）<br>2. 制裁名單匹配<br>3. 內部風控規則觸發</p><h3 class="k-heading" id="kh_'+r.id+'_1">二、處理建議</h3><p>建議客戶確認證件有效後重新嘗試，或聯絡客服跟進。'+_inlineLink('K-20240101','如何在众安银行开立个人账户？')+'</p>':'（暫無內容）')) },
       sc: { label:'简', name:'简体中文', q:r.id==='K-20240101'?'在众安银行如何开立个人账户？':(r.id==='K-20240102'?'开户需要携带哪些证件材料？':(r.id==='K-20240104'?'开户被系统拒绝怎么办？':r.q)),
-                  a:r.id==='K-20240101'?'18岁以上香港居民，持有效香港身份证，通过App全程网上办理。一般5-10分钟完成，成功后即可使用账户。':(r.id==='K-20240102'?'需要提供：有效香港身份证（正反面清晰图片）、手机号码、电子邮箱。部分情况下可能需要提供地址证明。':(r.id==='K-20240104'?'开户被拒常见原因：1. 身份证件问题（过期/模糊）；2. 制裁名单匹配；3. 内部风控规则触发。建议客户确认证件有效后重新尝试，或联系客服跟进。':'（暂无内容）')) },
+                  a:r.id==='K-20240101'?'<p>18岁以上香港居民，持有效香港身份证，通过App全程网上办理。一般5-10分钟完成，成功后即可使用账户。'+_inlineLink('K-20240104','开户被系统拒绝怎么办？')+_inlineVideo+_inlineLink('K-20240102','开户需要携带哪些证件材料？')+'</p>':(r.id==='K-20240102'?'需要提供：有效香港身份证（正反面清晰图片）、手机号码、电子邮箱。部分情况下可能需要提供地址证明。':(r.id==='K-20240104'?'开户被拒常见原因：1. 身份证件问题（过期/模糊）；2. 制裁名单匹配；3. 内部风控规则触发。建议客户确认证件有效后重新尝试，或联系客服跟进。'+_inlineLink('K-20240101','如何在众安银行开立个人账户？'):'（暂无内容）')) },
       en: { label:'EN', name:'English', q:r.id==='K-20240101'?'How to open a personal account at ZA Bank?':(r.id==='K-20240102'?'What documents are required to open an account?':(r.id==='K-20240104'?'What if my account opening is rejected?':r.q)),
-                  a:r.id==='K-20240101'?'Hong Kong residents aged 18+ with valid HK ID can open an account via the App. Usually takes 5-10 minutes.':(r.id==='K-20240102'?'Valid HK ID (clear front/back photos), mobile number, email. Address proof may be required in some cases.':(r.id==='K-20240104'?'Common reasons: 1. ID document issues (expired/blurry); 2. Sanctions list match; 3. Internal risk rules triggered. Please verify your documents and retry, or contact CS.':'(No content)'))}
+                  a:r.id==='K-20240101'?'<p>Hong Kong residents aged 18+ with valid HK ID can open an account via the App. Usually takes 5-10 minutes.'+_inlineLink('K-20240104','开户被系统拒绝怎么办？')+_inlineVideo+_inlineLink('K-20240102','开户需要携带哪些证件材料？')+'</p>':(r.id==='K-20240102'?'Valid HK ID (clear front/back photos), mobile number, email. Address proof may be required in some cases.':(r.id==='K-20240104'?'Common reasons: 1. ID document issues (expired/blurry); 2. Sanctions list match; 3. Internal risk rules triggered. Please verify your documents and retry, or contact CS.'+_inlineLink('K-20240101','如何在众安银行开立个人账户？'):'(No content)'))}
     };
     var attachments = [
       { name:'开户流程图.pdf', size:'1.2MB' },
@@ -1517,32 +1570,6 @@ function catKnowledgeTable(node) {
         +'<span style="color:#00b389;cursor:pointer;font-size:11px;" onclick="showToast(\'下载 '+a.name+'\')">下载</span>'
         +'</div>';
     }).join('');
-
-    // 关联知识条目数据
-    var relatedEntries = [];
-    if (r.id === 'K-20240101') {
-      relatedEntries = [
-        { id:'K-20240104', q:'开户被系统拒绝怎么办？', desc:'开户被拒时可参考此条目的处理流程' },
-        { id:'K-20240102', q:'开户需要携带哪些证件材料？', desc:'开户所需材料的详细清单' }
-      ];
-    } else if (r.id === 'K-20240104') {
-      relatedEntries = [
-        { id:'K-20240101', q:'如何在众安银行开立个人账户？', desc:'完整开户流程说明' }
-      ];
-    }
-    var relatedHtml = relatedEntries.length > 0
-      ? '<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:6px;">🔗 关联知识条目</div>'
-        + relatedEntries.map(function(re){
-          return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:4px;cursor:pointer;" onclick="showToast(\'跳转到 '+re.id+'\')">'
-            +'<span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;">'+re.id+'</span>'
-            +'<span style="font-size:12px;color:#444;flex:1;">'+re.q+'</span>'
-            +'<span style="font-size:11px;color:#888;">'+re.desc+'</span>'
-            +'<span style="color:#00b389;font-size:11px;">→</span>'
-            +'</div>';
-        }).join('')
-        +'</div>'
-      : '';
 
     return '<tr style="cursor:pointer;" onclick="catToggleKRow(\''+expandId+'\')">'
       +'<td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:#00b389;" onchange="catKnowledgeCheck()"></td>'
@@ -1582,7 +1609,7 @@ function catKnowledgeTable(node) {
         +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 Question (English)</div>'
         +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.en.q+'</div>'
         +'</div>'
-      // 第4行：答案
+      // 第4行：答案（关联链接和视频均内嵌在答案文本中）
       +'<div id="ka_'+r.id+'_tc" class="ka-active" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
           +'<span style="font-size:11px;color:#aaa;">💡 答案（繁体中文）</span>'
@@ -1607,9 +1634,7 @@ function catKnowledgeTable(node) {
         +'<div id="koutline_'+r.id+'_en" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
         +'<div id="kacontent_'+r.id+'_en" style="font-size:12px;line-height:1.8;color:#444;">'+langs.en.a+'</div>'
         +'</div>'
-      // 第5行：关联知识条目
-      + relatedHtml
-      // 第6行：附件
+      // 第5行：附件
       +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;">'
         +'<div style="font-size:11px;color:#aaa;margin-bottom:6px;">📎 附件</div>'
         +attachHtml+'</div>'
@@ -1623,6 +1648,8 @@ function catKnowledgeTable(node) {
     +'<button class="btn btn-default btn-sm" id="btnBatchDisable2" disabled onclick="showToast(\'已批量停用\',\'warning\')">停用</button>'
     + '<button class="btn btn-default btn-sm" id="btnBatchAddTag" disabled onclick="openBatchTagModal(\'add\')">批量加标签</button>'
     + '<button class="btn btn-default btn-sm" id="btnBatchDelTag" disabled onclick="openBatchTagModal(\'del\')">批量删标签</button>'
+    + '<button class="btn btn-default btn-sm" onclick="showToast(\'正在下载模板...\')">下载模板</button>'
+    + '<button class="btn btn-default btn-sm" onclick="showToast(\'请选择文件上传\')">上传知识</button>'
     +'<input class="table-search" style="margin-left:auto;" placeholder="搜索问题关键词">'
     +'</div>'
     +'<table id="knowledgeTable"><thead><tr>'
@@ -1841,32 +1868,72 @@ var mockKnowledgeEntries = {
   'K-20240103': '开户的手续费是多少？',
   'K-20240104': '开户被系统拒绝怎么办？'
 };
-function addRelatedEntry() {
+
+// 保存光标位置
+var _savedRange = null;
+function openRelatedEntryModal() {
+  // 保存富文本编辑器光标
+  var sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    _savedRange = sel.getRangeAt(0).cloneRange();
+  } else {
+    _savedRange = null;
+  }
+  // 清空列表和输入框
+  document.getElementById('relatedEntryInput').value = '';
+  document.getElementById('relatedEntryList').innerHTML = '';
+  openModal('modalRelatedEntry');
+}
+
+function addRelatedEntryToList() {
   var input = document.getElementById('relatedEntryInput');
   if (!input) return;
   var val = input.value.trim().toUpperCase();
-  if (!val) { showToast('请输入知识条目ID', 'error'); return; }
+  if (!val) { showToast('请输入知识条目ID'); return; }
   var title = mockKnowledgeEntries[val];
-  if (!title) { showToast('未找到该知识条目ID，请检查后重试', 'error'); return; }
+  if (!title) { showToast('未找到该知识条目ID，请检查后重试'); return; }
   var list = document.getElementById('relatedEntryList');
-  var existing = list.querySelectorAll('.related-entry-item [style*="font-weight:600"]');
+  // 检查重复
+  var existing = list.querySelectorAll('[data-entry-id]');
   for (var i = 0; i < existing.length; i++) {
-    if (existing[i].textContent.trim() === val) { showToast('该条目已关联', 'warning'); return; }
+    if (existing[i].dataset.entryId === val) { showToast('该条目已在列表中'); return; }
   }
   var item = document.createElement('div');
-  item.className = 'related-entry-item';
-  item.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:6px;';
-  item.innerHTML = '<div style="flex-shrink:0;">'
-    + '<span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;cursor:pointer;" onclick="showToast(\'跳转到 '+val+'\')">'+val+'</span>'
-    + '</div>'
-    + '<div style="flex:1;">'
-    + '<div style="font-size:12px;color:#444;margin-bottom:4px;">'+title+'</div>'
-    + '<input class="form-control" style="width:100%;font-size:11px;padding:3px 6px;" placeholder="填写关联说明">'
-    + '</div>'
-    + '<span style="color:#aaa;cursor:pointer;font-size:12px;flex-shrink:0;" onclick="this.closest(\'.related-entry-item\').remove()">✕</span>';
+  item.dataset.entryId = val;
+  item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:6px;';
+  item.innerHTML = '<span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;white-space:nowrap;">'+val+'</span>'
+    + '<span style="font-size:12px;color:#444;flex:1;">'+title+'</span>'
+    + '<span style="color:#aaa;cursor:pointer;font-size:12px;flex-shrink:0;" onclick="this.parentNode.remove()">✕</span>';
   list.appendChild(item);
   input.value = '';
-  showToast('已关联 ' + val);
+}
+
+function confirmInsertRelatedLinks() {
+  var list = document.getElementById('relatedEntryList');
+  var items = list.querySelectorAll('[data-entry-id]');
+  if (items.length === 0) { showToast('请先添加至少一条关联条目'); return; }
+  var editor = document.getElementById('rtEditor');
+  if (!editor) { closeModal('modalRelatedEntry'); return; }
+  editor.focus();
+  // 恢复光标位置
+  if (_savedRange) {
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(_savedRange);
+  }
+  // 逐条插入超链接
+  items.forEach(function(item) {
+    var id = item.dataset.entryId;
+    var title = mockKnowledgeEntries[id] || '';
+    var linkText = '【' + id + ' ' + title + '】';
+    // 用一个占位URL，实际产品中会是真实跳转链接
+    var html = '<a href="javascript:void(0)" onclick="window.open(\'#ark-knowledge?id='+id+'\',\'_blank\');event.stopPropagation();" '
+      + 'style="color:#00b389;text-decoration:underline;font-size:12px;background:#e6fffb;padding:1px 4px;border-radius:3px;" '
+      + 'title="点击跳转到关联知识条目">'+linkText+'</a>&nbsp;';
+    document.execCommand('insertHTML', false, html);
+  });
+  closeModal('modalRelatedEntry');
+  showToast('已插入 ' + items.length + ' 条关联知识条目链接');
 }
 function catOpenEntry(nodeId, isEdit) {
   var title = isEdit ? '修改知识条目' : '新增知识条目';

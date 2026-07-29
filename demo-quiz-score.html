@@ -109,37 +109,56 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
+// 题目公共数据（所有人作答同一套题）
+var paperQuestions = [
+  { type:'单选', stem:'MCV开户新增的视频验证步骤在哪个环节之后进行？',
+    opts:['填写个人资料之后','人脸识别之后','同意条款之后','输入身份证之后'], ans:1,
+    analysis:'根据本次Briefing，视频验证步骤安排在人脸识别完成之后进行，是开户流程的第五步。' },
+  { type:'多选', stem:'以下哪些情况会导致视频验证失败？（多选）',
+    opts:['光线不足','遮挡面部','身份证件过期','网络超时'], ans:[0,1,3],
+    analysis:'光线不足、遮挡面部、网络超时均会导致视频验证失败；证件过期属于开户被拒原因而非视频验证失败。' },
+  { type:'单选', stem:'本次转账规则调整主要影响哪类转账？',
+    opts:['本地港元转账','港元转人民币跨境转账','美元转账','以上均有调整'], ans:1,
+    analysis:'本次调整主要针对港元转人民币的跨境转账业务，新增了每日限额和实名认证要求。' }
+];
+
 var scorePersons = [
   { name:'覃国权', dept:'客服事业部', status:'done', attempts:[
       {score:92, time:'2026-07-02 10:15', duration:'8分钟', type:'首考',
         answers:[
-          {q:'MCV开户新增的视频验证步骤…',myAns:'B. 人脸识别之后',correct:true,rightAns:'B'},
-          {q:'以下哪些情况会导致视频验证失败…',myAns:'A、B',correct:false,rightAns:'A、B、D'},
-          {q:'本次转账规则调整主要影响哪类转账…',myAns:'B. 港元转人民币跨境转账',correct:true,rightAns:'B'}
+          { qi:0, myAns:1 },
+          { qi:1, myAns:[0,1] },
+          { qi:2, myAns:1 }
         ]},
       {score:85, time:'2026-07-04 09:30', duration:'12分钟', type:'第1次重做',
         answers:[
-          {q:'MCV开户新增的视频验证步骤…',myAns:'A. 填写个人资料之后',correct:false,rightAns:'B'},
-          {q:'以下哪些情况会导致视频验证失败…',myAns:'A、B、D',correct:true,rightAns:'A、B、D'},
-          {q:'本次转账规则调整主要影响哪类转账…',myAns:'B. 港元转人民币跨境转账',correct:true,rightAns:'B'}
+          { qi:0, myAns:0 },
+          { qi:1, myAns:[0,1,3] },
+          { qi:2, myAns:1 }
         ]},
       {score:96, time:'2026-07-06 14:20', duration:'6分钟', type:'第2次重做',
         answers:[
-          {q:'MCV开户新增的视频验证步骤…',myAns:'B. 人脸识别之后',correct:true,rightAns:'B'},
-          {q:'以下哪些情况会导致视频验证失败…',myAns:'A、B、D',correct:true,rightAns:'A、B、D'},
-          {q:'本次转账规则调整主要影响哪类转账…',myAns:'B. 港元转人民币跨境转账',correct:true,rightAns:'B'}
+          { qi:0, myAns:1 },
+          { qi:1, myAns:[0,1,3] },
+          { qi:2, myAns:1 }
         ]}
     ]
   },
-  { name:'Lucy', dept:'客服事业部', status:'done', attempts:[{score:85, time:'2026-07-02 10:32', duration:'11分钟', type:'首考', answers:[]}] },
-  { name:'Tom', dept:'运营部', status:'done', attempts:[{score:78, time:'2026-07-02 11:05', duration:'14分钟', type:'首考', answers:[]}] },
-  { name:'Ines', dept:'客服事业部', status:'done', attempts:[{score:100, time:'2026-07-02 09:58', duration:'7分钟', type:'首考', answers:[]}] },
-  { name:'Amy', dept:'运营部', status:'done', attempts:[{score:55, time:'2026-07-02 14:22', duration:'18分钟', type:'首考', answers:[]}] },
-  { name:'Kevin', dept:'客服事业部', status:'done', attempts:[{score:72, time:'2026-07-02 15:10', duration:'12分钟', type:'首考', answers:[]}] },
+  { name:'Lucy', dept:'客服事业部', status:'done', attempts:[{score:85, time:'2026-07-02 10:32', duration:'11分钟', type:'首考',
+      answers:[{qi:0,myAns:1},{qi:1,myAns:[0,3]},{qi:2,myAns:1}]}] },
+  { name:'Tom', dept:'运营部', status:'done', attempts:[{score:78, time:'2026-07-02 11:05', duration:'14分钟', type:'首考',
+      answers:[{qi:0,myAns:2},{qi:1,myAns:[0,1,3]},{qi:2,myAns:1}]}] },
+  { name:'Ines', dept:'客服事业部', status:'done', attempts:[{score:100, time:'2026-07-02 09:58', duration:'7分钟', type:'首考',
+      answers:[{qi:0,myAns:1},{qi:1,myAns:[0,1,3]},{qi:2,myAns:1}]}] },
+  { name:'Amy', dept:'运营部', status:'done', attempts:[{score:55, time:'2026-07-02 14:22', duration:'18分钟', type:'首考',
+      answers:[{qi:0,myAns:0},{qi:1,myAns:[0,1]},{qi:2,myAns:3}]}] },
+  { name:'Kevin', dept:'客服事业部', status:'done', attempts:[{score:72, time:'2026-07-02 15:10', duration:'12分钟', type:'首考',
+      answers:[{qi:0,myAns:1},{qi:1,myAns:[0,2]},{qi:2,myAns:1}]}] },
   { name:'Sam', dept:'运营部', status:'pending', attempts:[] },
   { name:'Chloe', dept:'客服事业部', status:'pending', attempts:[] },
   { name:'Brian', dept:'运营部', status:'pending', attempts:[] },
-  { name:'May', dept:'客服事业部', status:'done', attempts:[{score:88, time:'2026-07-02 16:40', duration:'9分钟', type:'首考', answers:[]}] }
+  { name:'May', dept:'客服事业部', status:'done', attempts:[{score:88, time:'2026-07-02 16:40', duration:'9分钟', type:'首考',
+      answers:[{qi:0,myAns:1},{qi:1,myAns:[0,1,3]},{qi:2,myAns:3}]}] }
 ];
 
 function renderScore() {
@@ -391,20 +410,59 @@ function renderPersonDetail() {
     +'<span>用时：'+att.duration+'</span>'
     +'</div>';
 
-  var ansHtml = (att.answers && att.answers.length>0)
-    ? att.answers.map(function(a, i) {
-        return '<div style="border:1px solid '+(a.correct?'#b7eb8f':'#ffa39e')+';border-radius:6px;padding:12px;margin-bottom:8px;background:'+(a.correct?'#f6ffed':'#fff1f0')+'">'
-          +'<div style="font-size:11px;font-weight:600;color:'+(a.correct?'#52c41a':'#ff4d4f')+';margin-bottom:4px;">'+(a.correct?'✅ 答对':'❌ 答错')+'</div>'
-          +'<div style="font-size:12px;font-weight:600;color:#222;margin-bottom:4px;">'+(i+1)+'. '+a.q+'</div>'
-          +'<div style="font-size:12px;color:#666;">我的答案：<span style="color:'+(a.correct?'#52c41a':'#ff4d4f')+';">'+a.myAns+'</span></div>'
-          +(!a.correct?'<div style="font-size:12px;color:#666;margin-top:2px;">正确答案：<span style="color:#52c41a;font-weight:600;">'+a.rightAns+'</span></div>':'')
+  var ansHtml = (att.answers && att.answers.length > 0)
+    ? att.answers.map(function(a) {
+        var q = paperQuestions[a.qi];
+        if (!q) return '';
+        var myAns = a.myAns;
+        var rightArr = Array.isArray(q.ans) ? q.ans : [q.ans];
+        var isRight = Array.isArray(q.ans)
+          ? (Array.isArray(myAns) && myAns.length === q.ans.length && q.ans.every(function(x){ return myAns.indexOf(x) >= 0; }))
+          : myAns === q.ans;
+        var borderColor = isRight ? '#b7eb8f' : '#ffa39e';
+        var bgColor = isRight ? '#f6ffed' : '#fff1f0';
+        var statusColor = isRight ? '#52c41a' : '#ff4d4f';
+        var myStr = Array.isArray(myAns)
+          ? (myAns.length > 0 ? myAns.map(function(x){ return String.fromCharCode(65+x); }).join('、') : '未作答')
+          : (myAns !== undefined && myAns !== null ? String.fromCharCode(65+myAns) : '未作答');
+        var rightStr = rightArr.map(function(x){ return String.fromCharCode(65+x); }).join('、');
+
+        var optsHtml = q.opts.map(function(opt, oi) {
+          var isMyChoice = Array.isArray(myAns) ? myAns.indexOf(oi) >= 0 : myAns === oi;
+          var isRightChoice = rightArr.indexOf(oi) >= 0;
+          var optBg = isRightChoice ? '#f6ffed' : (isMyChoice && !isRight ? '#fff1f0' : 'transparent');
+          var optColor = isRightChoice ? '#389e0d' : (isMyChoice && !isRight ? '#cf1322' : '#444');
+          var marker = isRightChoice ? ' ✓' : (isMyChoice && !isRight ? ' ✗' : '');
+          return '<div style="padding:4px 8px;border-radius:4px;background:'+optBg+';color:'+optColor+';font-size:12px;margin-bottom:2px;">'
+            +'<span style="font-weight:600;margin-right:4px;">'+String.fromCharCode(65+oi)+'.</span>'+opt+'<span style="font-weight:600;">'+marker+'</span>'
+            +'</div>';
+        }).join('');
+
+        var analysisHtml = q.analysis
+          ? '<div style="margin-top:8px;padding:6px 10px;background:#fffbe6;border-left:3px solid #ffe58f;border-radius:0 4px 4px 0;font-size:11px;color:#614700;">💡 解析：'+q.analysis+'</div>'
+          : '';
+
+        return '<div style="border:1px solid '+borderColor+';border-radius:6px;padding:12px 14px;margin-bottom:10px;background:'+bgColor+';">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
+            +'<div style="font-size:12px;font-weight:600;color:#222;">第 '+(a.qi+1)+' 题'
+              +(q.type ? '<span style="font-size:10px;color:#888;margin-left:6px;">('+q.type+')</span>' : '')
+            +'</div>'
+            +'<span style="font-size:11px;font-weight:600;color:'+statusColor+';">'+(isRight?'✅ 答对':'❌ 答错')+'</span>'
+          +'</div>'
+          +'<div style="font-size:13px;color:#222;font-weight:500;margin-bottom:8px;line-height:1.6;">'+q.stem+'</div>'
+          +optsHtml
+          +'<div style="margin-top:8px;font-size:12px;color:#666;display:flex;gap:16px;flex-wrap:wrap;">'
+            +'<span>学员答案：<strong style="color:'+statusColor+';">'+myStr+'</strong></span>'
+            +'<span>正确答案：<strong style="color:#389e0d;">'+rightStr+'</strong></span>'
+          +'</div>'
+          +analysisHtml
           +'</div>';
       }).join('')
     : '<div style="text-align:center;color:#aaa;padding:20px;font-size:12px;">暂无详细答题记录</div>';
 
   document.getElementById('detailBody').innerHTML = '<div style="background:#fff;border-radius:6px;padding:16px 20px;">'
     +infoHtml
-    +'<div style="font-size:13px;font-weight:600;color:#222;margin-bottom:10px;">📝 逐题答题情况</div>'
+    +'<div style="font-size:13px;font-weight:600;color:#222;margin-bottom:10px;">📝 全部题目作答情况</div>'
     +ansHtml+'</div>';
 }
 
