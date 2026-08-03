@@ -178,6 +178,9 @@ function renderScore() {
   var tableRows = scorePersons.map(function(p) {
     var latest = p.attempts.length>0 ? p.attempts[p.attempts.length-1] : null;
     var stBadge = p.status==='done'?'<span class="badge badge-green">已完成</span>':'<span class="badge badge-red">未完成</span>';
+    var passBadge = p.status!=='done' ? '<span style="color:#ccc;">—</span>'
+      : latest.score >= 60 ? '<span class="badge badge-green">通过</span>'
+      : '<span class="badge badge-red">未通过</span>';
     var scoreDisplay = latest?'<span style="font-weight:700;color:'+(latest.score>=60?'#52c41a':'#ff4d4f')+';">'+latest.score+'</span>':'<span style="color:#ccc;">—</span>';
     var examCount = p.attempts.length > 0 ? p.attempts.length : '—';
     var timeDisplay = latest?latest.time:'—';
@@ -189,6 +192,7 @@ function renderScore() {
       +'<td>'+p.name+'</td>'
       +'<td>'+p.dept+'</td>'
       +'<td>'+stBadge+'</td>'
+      +'<td>'+passBadge+'</td>'
       +'<td>'+scoreDisplay+'</td>'
       +'<td style="text-align:center;">'+examCount+'</td>'
       +'<td style="color:#aaa;">'+timeDisplay+'</td>'
@@ -205,7 +209,7 @@ function renderScore() {
     +'<button class="btn btn-default btn-sm" style="margin-left:auto;" onclick="showToast(\'正在导出...\')">📥 导出Excel</button>'
     +'<button class="btn btn-default btn-sm" style="color:#fa8c16;border-color:#ffd591;" onclick="remindAll()">🔔 提醒未完成人员</button>'
     +'</div>'
-    +'<table><thead><tr><th>姓名</th><th>部门</th><th>状态</th><th>得分</th><th>考试次数</th><th>提交时间</th><th>用时</th><th>操作</th></tr></thead>'
+    +'<table><thead><tr><th>姓名</th><th>部门</th><th>状态</th><th>通过情况</th><th>得分</th><th>考试次数</th><th>提交时间</th><th>用时</th><th>操作</th></tr></thead>'
     +'<tbody>'+tableRows+'</tbody></table>'
     +'<div style="padding:10px 14px;font-size:11px;color:#aaa;text-align:right;">共 '+total+' 人</div>'
     +'</div>';

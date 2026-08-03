@@ -185,6 +185,17 @@ tr:hover td { background: #fafffe; }
 <!-- SIDEBAR -->
 <div class="sidebar">
 
+<div class="menu-group">
+      <div class="menu-group-title" onclick="toggleMenu(this)">
+        <span>人员管理</span><span class="arrow open">▶</span>
+      </div>
+      <div class="menu-sub open">
+        <div class="menu-item" onclick="showPanel('placeholder')">用户管理</div>
+        <div class="menu-item" onclick="showPanel('placeholder')">部门管理</div>
+        <div class="menu-item" id="menu-group-mgmt" onclick="showPanel('group-mgmt')">分组管理</div>
+      </div>
+    </div>
+
     <div class="menu-group">
       <div class="menu-group-title no-children" onclick="showPanel('placeholder')">客服作业</div>
     </div>
@@ -206,10 +217,10 @@ tr:hover td { background: #fafffe; }
         <div class="menu-item active" id="menu-catalog" onclick="showPanel('catalog')">目录及知识条目管理</div>
         <div class="menu-item" id="menu-label" onclick="showPanel('label')">标签管理</div>
         <div class="menu-item" id="menu-exam-toggle" onclick="toggleExamMenu(this)" style="display:flex;justify-content:space-between;align-items:center;">
-          <span>考试及每日Briefing管理</span><span class="arrow" id="examArrow">▶</span>
+          <span>考试管理</span><span class="arrow" id="examArrow">▶</span>
         </div>
         <div id="exam-submenu" style="display:none;">
-          <div class="menu-item" id="menu-briefing" onclick="window.open('demo-briefing.html','_blank')" style="padding-left:44px;">每日Briefing管理 ↗</div>
+          <div class="menu-item" id="menu-briefing" onclick="window.open('demo-briefing.html','_blank')" style="padding-left:44px;">学考板块 ↗</div>
           <div class="menu-item" id="menu-quiz-bank" onclick="window.open('demo-quiz-bank.html','_blank')" style="padding-left:44px;">题库管理 ↗</div>
           <div class="menu-item" id="menu-quiz-paper" onclick="window.open('demo-quiz-paper.html','_blank')" style="padding-left:44px;">试卷管理 ↗</div>
           <div class="menu-item" id="menu-quiz-score" onclick="window.open('demo-quiz-score.html','_blank')" style="padding-left:44px;">成绩看板 ↗</div>
@@ -281,6 +292,74 @@ tr:hover td { background: #fafffe; }
 
   <!-- MAIN -->
   <div class="main">
+
+    <!-- 分组管理面板 -->
+    <div class="panel" id="panel-group-mgmt" style="flex-direction:column;">
+      <div class="page-header">
+        <div class="page-title">分组管理</div>
+        <div class="page-actions">
+          <button class="btn btn-primary btn-sm" onclick="openGroupModal(false)">+ 新增分组</button>
+        </div>
+      </div>
+      <div style="padding:16px 20px;overflow-y:auto;flex:1;">
+        <!-- 搜索栏 -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <input class="table-search" id="groupSearchInput" placeholder="搜索分组名称或成员" oninput="renderGroupList()" style="width:240px;">
+          <span style="font-size:12px;color:#aaa;">共 <span id="groupCount">0</span> 个分组</span>
+        </div>
+        <!-- 分组列表 -->
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>分组名称</th><th>描述</th><th>成员数</th><th>成员预览</th><th>创建时间</th><th>操作</th>
+            </tr></thead>
+            <tbody id="groupTableBody"></tbody>
+          </table>
+          <div id="groupEmpty" style="display:none;text-align:center;padding:40px;color:#bbb;font-size:13px;">暂无分组，点击「新增分组」创建</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增/编辑分组弹窗 -->
+    <div class="modal-overlay" id="modalGroupEdit">
+      <div class="modal modal-md">
+        <div class="modal-header">
+          <h3 id="groupModalTitle">新增分组</h3>
+          <span class="modal-close" onclick="closeModal('modalGroupEdit')">✕</span>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="form-group">
+              <div class="form-label">分组名称 <span class="req">*</span></div>
+              <input class="form-control" id="groupName" placeholder="如：客服事业部全员、新人培训组">
+            </div>
+            <div class="form-group">
+              <div class="form-label">描述</div>
+              <input class="form-control" id="groupDesc" placeholder="选填，说明该分组的用途">
+            </div>
+            <div class="form-group">
+              <div class="form-label">成员</div>
+              <div style="position:relative;" id="grpPickerWrap">
+                <div class="form-control" style="min-height:34px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;cursor:pointer;padding:3px 8px;" onclick="toggleGrpPicker()">
+                  <span id="grpPlaceholder" style="font-size:12px;color:#bbb;">点击选择成员...</span>
+                  <span id="grpSelectedArea" style="display:contents;"></span>
+                  <span style="margin-left:auto;color:#aaa;font-size:10px;flex-shrink:0;">▾</span>
+                </div>
+                <div id="grpDropdown" style="display:none;position:absolute;left:0;top:100%;z-index:1200;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.12);width:100%;max-height:260px;overflow:hidden;">
+                  <div style="padding:6px 8px;border-bottom:1px solid #f0f0f0;"><input class="form-control" style="width:100%;" placeholder="搜索部门/人员..." oninput="filterGrpTree(this.value)"></div>
+                  <div id="grpTreeBody" style="overflow-y:auto;max-height:210px;padding:4px 0;"></div>
+                </div>
+              </div>
+              <div style="font-size:11px;color:#aaa;margin-top:3px;">可按部门整体勾选，也可单独勾选人员；已选成员点击 ✕ 移除</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onclick="closeModal('modalGroupEdit')">取消</button>
+          <button class="btn btn-primary" onclick="saveGroup()">保存</button>
+        </div>
+      </div>
+    </div>
 
     <!-- 占位面板 -->
     <div class="panel active" id="panel-placeholder" style="flex-direction:column;">
@@ -406,25 +485,15 @@ tr:hover td { background: #fafffe; }
             </div>
           </div>
 
-          <!-- 三语说明 + 语言tab -->
-          <div style="background:#e6f7ff;border:1px solid #91d5ff;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#1890ff;">
-            📌 <strong>语种规则：</strong>繁体中文为必填。简体中文和英文若有填写，客服在ARK勾选对应语种时会自动显示；附件在所有已填写语种下均可查看。
-          </div>
-          <div style="border-bottom:1px solid #f0f0f0;display:flex;margin-bottom:12px;">
-            <div id="etab-tc" onclick="switchEntryLang('tc')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid #00b389;color:#00b389;font-weight:600;">繁体中文 <span style="color:#ff4d4f;">*</span></div>
-            <div id="etab-sc" onclick="switchEntryLang('sc')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#888;">简体中文（选填）</div>
-            <div id="etab-en" onclick="switchEntryLang('en')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#888;">English（选填）</div>
-          </div>
-
-          <!-- 繁体 -->
+          <!-- 问题 + 解释事项 -->
           <div id="entry-lang-tc">
             <div class="form-group" style="margin-bottom:10px;">
-              <div class="form-label">相关问题（繁体）<span class="req">*</span></div>
-              <input class="form-control" id="entryQTc" placeholder="请输入问题标题（繁体中文）">
+              <div class="form-label">相关问题<span class="req">*</span></div>
+              <input class="form-control" id="entryQTc" placeholder="请输入问题标题">
             </div>
             <div class="form-group" style="margin-bottom:4px;">
               <div class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
-                <span>解释事项（繁体）<span class="req">*</span></span>
+                <span>解释事项<span class="req">*</span></span>
                 <button type="button" class="btn btn-default btn-sm" onclick="toggleRtFullscreen()" style="font-size:10px;padding:1px 7px;">⛶ 全屏</button>
               </div>
               <div id="rtWrap" style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
@@ -473,36 +542,6 @@ tr:hover td { background: #fafffe; }
             </div>
           </div>
 
-          <!-- 简体 -->
-          <div id="entry-lang-sc" style="display:none;">
-            <div class="form-group" style="margin-bottom:10px;">
-              <div class="form-label">相关问题（简体）</div>
-              <input class="form-control" placeholder="请输入问题标题（简体中文）">
-            </div>
-            <div class="form-group">
-              <div class="form-label">解释事项（简体）</div>
-              <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
-                <div style="padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:11px;color:#aaa;">富文本工具栏（同繁体）</div>
-                <div contenteditable="true" style="min-height:160px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 英文 -->
-          <div id="entry-lang-en" style="display:none;">
-            <div class="form-group" style="margin-bottom:10px;">
-              <div class="form-label">Question (English)</div>
-              <input class="form-control" placeholder="Enter question title in English">
-            </div>
-            <div class="form-group">
-              <div class="form-label">Answer (English)</div>
-              <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
-                <div style="padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:11px;color:#aaa;">Rich text editor (same as Chinese)</div>
-                <div contenteditable="true" style="min-height:160px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;"></div>
-              </div>
-            </div>
-          </div>
-
           <!-- 更新描述（修改时显示） -->
           <div id="updateDescWrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f0;">
             <div class="form-group">
@@ -530,9 +569,12 @@ tr:hover td { background: #fafffe; }
           <span class="modal-close" onclick="closeModal('modalRelatedEntry')">✕</span>
         </div>
         <div class="modal-body">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-            <input class="form-control" id="relatedEntryInput" style="flex:1;" placeholder="输入知识条目ID（如 K-20240101）">
-            <button class="btn btn-default btn-sm" onclick="addRelatedEntryToList()">+ 查找</button>
+          <div style="margin-bottom:10px;">
+            <textarea class="form-control" id="relatedEntryInput" rows="3" style="width:100%;resize:vertical;" placeholder="输入知识条目ID，多条用中文逗号「，」隔开&#10;例：K-20240101，K-20240102，K-20240104"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+              <span style="font-size:11px;color:#aaa;">支持一次性输入多条 ID，用「，」分隔后批量查找</span>
+              <button class="btn btn-primary btn-sm" onclick="addRelatedEntryToList()">查找</button>
+            </div>
           </div>
           <div id="relatedEntryList" style="margin-bottom:8px;"></div>
           <div style="font-size:11px;color:#aaa;">确认后将在光标位置插入超链接，点击可跳转查看该知识条目</div>
@@ -1590,49 +1632,19 @@ function catKnowledgeTable(node) {
         +'<span>📅 创建：'+r.time+'</span>'
         +'<span>🔄 更新：'+r.time+'</span>'
         +'</div>'
-      // 第2行：三语种切换
-      +'<div style="display:flex;gap:6px;padding:10px 0;">'
-        +'<button class="lang-tab" id="lt_'+r.id+'_tc" onclick="switchKLang(\''+r.id+'\',\'tc\')" style="padding:5px 14px;border:1px solid #00b389;border-radius:14px;background:#00b389;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">繁 繁体中文</button>'
-        +'<button class="lang-tab" id="lt_'+r.id+'_sc" onclick="switchKLang(\''+r.id+'\',\'sc\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">简 简体中文</button>'
-        +'<button class="lang-tab" id="lt_'+r.id+'_en" onclick="switchKLang(\''+r.id+'\',\'en\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">EN English</button>'
-        +'</div>'
-      // 第3行：问题
-      +'<div id="kq_'+r.id+'_tc" class="kq-active" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题（繁体中文）</div>'
+      // 第2行：问题
+      +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;margin-top:10px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题</div>'
         +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.tc.q+'</div>'
         +'</div>'
-      +'<div id="kq_'+r.id+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题（简体中文）</div>'
-        +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.sc.q+'</div>'
-        +'</div>'
-      +'<div id="kq_'+r.id+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 Question (English)</div>'
-        +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.en.q+'</div>'
-        +'</div>'
-      // 第4行：答案（关联链接和视频均内嵌在答案文本中）
-      +'<div id="ka_'+r.id+'_tc" class="ka-active" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
+      // 第3行：答案
+      +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
-          +'<span style="font-size:11px;color:#aaa;">💡 答案（繁体中文）</span>'
+          +'<span style="font-size:11px;color:#aaa;">💡 答案</span>'
           +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'tc\')">📑 目录导航</span>'
         +'</div>'
         +'<div id="koutline_'+r.id+'_tc" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
         +'<div id="kacontent_'+r.id+'_tc" style="font-size:12px;line-height:1.8;color:#444;">'+langs.tc.a+'</div>'
-        +'</div>'
-      +'<div id="ka_'+r.id+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
-          +'<span style="font-size:11px;color:#aaa;">💡 答案（简体中文）</span>'
-          +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'sc\')">📑 目录导航</span>'
-        +'</div>'
-        +'<div id="koutline_'+r.id+'_sc" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
-        +'<div id="kacontent_'+r.id+'_sc" style="font-size:12px;line-height:1.8;color:#444;">'+langs.sc.a+'</div>'
-        +'</div>'
-      +'<div id="ka_'+r.id+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
-          +'<span style="font-size:11px;color:#aaa;">💡 Answer (English)</span>'
-          +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'en\')">📑 目录导航</span>'
-        +'</div>'
-        +'<div id="koutline_'+r.id+'_en" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
-        +'<div id="kacontent_'+r.id+'_en" style="font-size:12px;line-height:1.8;color:#444;">'+langs.en.a+'</div>'
         +'</div>'
       // 第5行：附件
       +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;">'
@@ -1888,24 +1900,35 @@ function openRelatedEntryModal() {
 function addRelatedEntryToList() {
   var input = document.getElementById('relatedEntryInput');
   if (!input) return;
-  var val = input.value.trim().toUpperCase();
-  if (!val) { showToast('请输入知识条目ID'); return; }
-  var title = mockKnowledgeEntries[val];
-  if (!title) { showToast('未找到该知识条目ID，请检查后重试'); return; }
+  var raw = input.value.trim();
+  if (!raw) { showToast('请输入知识条目ID'); return; }
+  // 支持中文逗号「，」或英文逗号分隔
+  var ids = raw.split(/[，,]/).map(function(s){ return s.trim().toUpperCase(); }).filter(function(s){ return s; });
   var list = document.getElementById('relatedEntryList');
-  // 检查重复
   var existing = list.querySelectorAll('[data-entry-id]');
-  for (var i = 0; i < existing.length; i++) {
-    if (existing[i].dataset.entryId === val) { showToast('该条目已在列表中'); return; }
-  }
-  var item = document.createElement('div');
-  item.dataset.entryId = val;
-  item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:6px;';
-  item.innerHTML = '<span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;white-space:nowrap;">'+val+'</span>'
-    + '<span style="font-size:12px;color:#444;flex:1;">'+title+'</span>'
-    + '<span style="color:#aaa;cursor:pointer;font-size:12px;flex-shrink:0;" onclick="this.parentNode.remove()">✕</span>';
-  list.appendChild(item);
+  var existingIds = {};
+  existing.forEach(function(el){ existingIds[el.dataset.entryId] = true; });
+  var found = 0, dup = 0, notFound = [];
+  ids.forEach(function(val) {
+    if (existingIds[val]) { dup++; return; }
+    var title = mockKnowledgeEntries[val];
+    if (!title) { notFound.push(val); return; }
+    existingIds[val] = true;
+    found++;
+    var item = document.createElement('div');
+    item.dataset.entryId = val;
+    item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;margin-bottom:6px;';
+    item.innerHTML = '<span style="font-size:11px;color:#00b389;font-weight:600;background:#e6fffb;padding:2px 6px;border-radius:3px;white-space:nowrap;">'+val+'</span>'
+      + '<span style="font-size:12px;color:#444;flex:1;">'+title+'</span>'
+      + '<span style="color:#aaa;cursor:pointer;font-size:12px;flex-shrink:0;" onclick="this.parentNode.remove()">✕</span>';
+    list.appendChild(item);
+  });
   input.value = '';
+  var msgs = [];
+  if (found > 0) msgs.push('已添加 ' + found + ' 条');
+  if (dup > 0) msgs.push(dup + ' 条已存在跳过');
+  if (notFound.length > 0) msgs.push('未找到：' + notFound.join('、'));
+  if (msgs.length) showToast(msgs.join('，'));
 }
 
 function confirmInsertRelatedLinks() {
@@ -3322,6 +3345,209 @@ function toggleExamMenu(el) {
   if (arrow) { arrow.style.transform = isOpen ? '' : 'rotate(90deg)'; }
 }
 
+// ─── 分组管理 ───
+var groupData = [
+  { id: 1, name: '客服事业部全员', desc: '客服事业部所有在职人员', members: ['覃国权','Lucy','Ines','Kevin','Chloe','May'], created: '2026-06-01' },
+  { id: 2, name: '运营部全员', desc: '运营部所有在职人员', members: ['Tom','Amy','Sam','Brian'], created: '2026-06-01' },
+  { id: 3, name: '新人培训组', desc: '2026年入职新员工', members: ['Chloe','Brian'], created: '2026-07-01' }
+];
+var groupNextId = 4;
+var groupEditingId = null;
+var groupCurrentMembers = [];
+
+// 树形数据（部门→人员）
+var grpTreeData = [
+  { name:'客服事业部', children:['覃国权','Lucy','Ines','Kevin','Chloe','May'] },
+  { name:'运营部', children:['Tom','Amy','Sam','Brian'] },
+  { name:'合规部', children:['Mike','Sarah'] }
+];
+var grpOpenGroups = {};
+
+function toggleGrpPicker() {
+  var dd = document.getElementById('grpDropdown');
+  if (!dd) return;
+  var isOpen = dd.style.display !== 'none';
+  if (isOpen) { dd.style.display = 'none'; return; }
+  renderGrpTree('');
+  dd.style.display = 'block';
+  setTimeout(function(){ document.addEventListener('click', closeGrpOutside); }, 0);
+}
+function closeGrpOutside(e) {
+  var wrap = document.getElementById('grpPickerWrap');
+  var dd = document.getElementById('grpDropdown');
+  if (dd && wrap && !wrap.contains(e.target)) {
+    dd.style.display = 'none';
+    document.removeEventListener('click', closeGrpOutside);
+  }
+}
+function filterGrpTree(val) { renderGrpTree(val); }
+function renderGrpTree(keyword) {
+  var body = document.getElementById('grpTreeBody');
+  if (!body) return;
+  var kw = (keyword || '').toLowerCase();
+  body.innerHTML = grpTreeData.map(function(dept, gi) {
+    var filtered = dept.children.filter(function(c){ return !kw || c.toLowerCase().indexOf(kw) >= 0 || dept.name.toLowerCase().indexOf(kw) >= 0; });
+    if (kw && filtered.length === 0 && dept.name.toLowerCase().indexOf(kw) < 0) return '';
+    var isOpen = grpOpenGroups[gi] !== false;
+    var display = kw ? filtered : dept.children;
+    // 部门整体是否全选
+    var deptAllChecked = dept.children.length > 0 && dept.children.every(function(c){ return groupCurrentMembers.indexOf(c) >= 0; });
+    var deptSomeChecked = dept.children.some(function(c){ return groupCurrentMembers.indexOf(c) >= 0; });
+    var childrenHtml = display.map(function(c) {
+      var checked = groupCurrentMembers.indexOf(c) >= 0 ? 'checked' : '';
+      return '<label style="display:flex;align-items:center;gap:6px;padding:4px 12px 4px 28px;cursor:pointer;font-size:12px;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
+        +'<input type="checkbox" style="accent-color:#00b389;" '+checked+' onchange="toggleGrpMember(this,\''+c+'\')">' + c + '</label>';
+    }).join('');
+    var deptHtml = '<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:6px;">'
+      +'<input type="checkbox" style="accent-color:#00b389;flex-shrink:0;" '+(deptAllChecked?'checked':'')+(deptSomeChecked&&!deptAllChecked?' indeterminate ':'')+' onchange="toggleGrpDept(this,'+gi+')" onclick="event.stopPropagation()">'
+      +'<span style="flex:1;" onclick="toggleGrpGroup('+gi+')">'
+        +'<span style="font-size:9px;display:inline-block;transition:transform 0.2s;'+(isOpen?'transform:rotate(90deg);':'')+'margin-right:4px;">▶</span>'
+        + dept.name
+      +'</span>'
+      +'</div>';
+    return '<div>' + deptHtml
+      + '<div style="' + (isOpen ? '' : 'display:none;') + '">' + childrenHtml + '</div>'
+      + '</div>';
+  }).join('');
+  // 设置 indeterminate 状态
+  grpTreeData.forEach(function(dept, gi) {
+    var deptAllChecked = dept.children.length > 0 && dept.children.every(function(c){ return groupCurrentMembers.indexOf(c) >= 0; });
+    var deptSomeChecked = dept.children.some(function(c){ return groupCurrentMembers.indexOf(c) >= 0; });
+    var cbs = body.querySelectorAll('input[type=checkbox]');
+    // 找对应部门 checkbox（第 gi 个 dept checkbox）
+    var deptCbs = Array.prototype.filter.call(cbs, function(cb){ return cb.getAttribute('onchange') && cb.getAttribute('onchange').indexOf('toggleGrpDept') >= 0; });
+    if (deptCbs[gi]) deptCbs[gi].indeterminate = deptSomeChecked && !deptAllChecked;
+  });
+}
+function toggleGrpGroup(gi) {
+  grpOpenGroups[gi] = grpOpenGroups[gi] === false ? true : false;
+  var si = document.querySelector('#grpDropdown input[type=text], #grpDropdown input:not([type=checkbox])');
+  renderGrpTree(si ? si.value : '');
+}
+function toggleGrpDept(cb, gi) {
+  var dept = grpTreeData[gi];
+  if (!dept) return;
+  dept.children.forEach(function(c) {
+    var idx = groupCurrentMembers.indexOf(c);
+    if (cb.checked && idx < 0) groupCurrentMembers.push(c);
+    if (!cb.checked && idx >= 0) groupCurrentMembers.splice(idx, 1);
+  });
+  renderGrpSelected();
+  var si = document.querySelector('#grpDropdown input[type=text], #grpDropdown input:not([type=checkbox])');
+  renderGrpTree(si ? si.value : '');
+}
+function toggleGrpMember(cb, name) {
+  var idx = groupCurrentMembers.indexOf(name);
+  if (cb.checked && idx < 0) groupCurrentMembers.push(name);
+  if (!cb.checked && idx >= 0) groupCurrentMembers.splice(idx, 1);
+  renderGrpSelected();
+  var si = document.querySelector('#grpDropdown input[type=text], #grpDropdown input:not([type=checkbox])');
+  renderGrpTree(si ? si.value : '');
+}
+function removeGrpMember(name) {
+  var idx = groupCurrentMembers.indexOf(name);
+  if (idx >= 0) groupCurrentMembers.splice(idx, 1);
+  renderGrpSelected();
+  var si = document.querySelector('#grpDropdown input[type=text], #grpDropdown input:not([type=checkbox])');
+  renderGrpTree(si ? si.value : '');
+}
+function renderGrpSelected() {
+  var area = document.getElementById('grpSelectedArea');
+  var ph = document.getElementById('grpPlaceholder');
+  if (!area) return;
+  area.innerHTML = '';
+  groupCurrentMembers.forEach(function(n) {
+    var span = document.createElement('span');
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;padding:1px 8px;border-radius:10px;font-size:11px;';
+    span.innerHTML = n + ' <span style="cursor:pointer;opacity:0.7;" onclick="event.stopPropagation();removeGrpMember(\''+n+'\')">✕</span>';
+    area.appendChild(span);
+  });
+  if (ph) ph.style.display = groupCurrentMembers.length > 0 ? 'none' : 'inline';
+}
+
+function renderGroupList() {
+  var kw = (document.getElementById('groupSearchInput') && document.getElementById('groupSearchInput').value.trim().toLowerCase()) || '';
+  var filtered = groupData.filter(function(g) {
+    return !kw || g.name.toLowerCase().indexOf(kw) >= 0 || g.members.some(function(m){ return m.toLowerCase().indexOf(kw) >= 0; });
+  });
+  var tbody = document.getElementById('groupTableBody');
+  var empty = document.getElementById('groupEmpty');
+  var countEl = document.getElementById('groupCount');
+  if (countEl) countEl.textContent = groupData.length;
+  if (!tbody) return;
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  tbody.innerHTML = filtered.map(function(g) {
+    var preview = g.members.slice(0, 4).map(function(m) {
+      return '<span style="display:inline-block;padding:1px 7px;background:#f0faf7;border:1px solid #b7e8d8;border-radius:10px;font-size:11px;color:#00b389;margin:1px;">'+m+'</span>';
+    }).join('');
+    if (g.members.length > 4) preview += '<span style="font-size:11px;color:#aaa;margin-left:2px;">+' + (g.members.length - 4) + '</span>';
+    return '<tr>'
+      +'<td style="font-weight:600;color:#222;">'+g.name+'</td>'
+      +'<td style="color:#888;">'+(g.desc||'—')+'</td>'
+      +'<td style="text-align:center;font-weight:600;color:#00b389;">'+g.members.length+'</td>'
+      +'<td>'+preview+'</td>'
+      +'<td style="color:#aaa;">'+g.created+'</td>'
+      +'<td><div class="td-ops">'
+        +'<span class="td-op" onclick="openGroupModal('+g.id+')">编辑</span>'
+        +'<span class="td-op danger" onclick="deleteGroup('+g.id+')">删除</span>'
+      +'</div></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function openGroupModal(id) {
+  groupEditingId = id || null;
+  groupCurrentMembers = [];
+  document.getElementById('groupModalTitle').textContent = id ? '编辑分组' : '新增分组';
+  if (id) {
+    var g = groupData.find(function(x){ return x.id === id; });
+    if (!g) return;
+    document.getElementById('groupName').value = g.name;
+    document.getElementById('groupDesc').value = g.desc || '';
+    groupCurrentMembers = g.members.slice();
+  } else {
+    document.getElementById('groupName').value = '';
+    document.getElementById('groupDesc').value = '';
+  }
+  // 重置下拉
+  var dd = document.getElementById('grpDropdown');
+  if (dd) dd.style.display = 'none';
+  renderGrpSelected();
+  openModal('modalGroupEdit');
+}
+
+function saveGroup() {
+  var name = document.getElementById('groupName').value.trim();
+  if (!name) { showToast('请填写分组名称'); return; }
+  var desc = document.getElementById('groupDesc').value.trim();
+  if (groupEditingId) {
+    var g = groupData.find(function(x){ return x.id === groupEditingId; });
+    if (g) { g.name = name; g.desc = desc; g.members = groupCurrentMembers.slice(); }
+  } else {
+    var today = new Date();
+    var pad = function(n){ return n < 10 ? '0'+n : ''+n; };
+    groupData.push({ id: groupNextId++, name: name, desc: desc, members: groupCurrentMembers.slice(),
+      created: today.getFullYear()+'-'+pad(today.getMonth()+1)+'-'+pad(today.getDate()) });
+  }
+  closeModal('modalGroupEdit');
+  renderGroupList();
+  showToast(groupEditingId ? '分组已更新' : '分组创建成功');
+}
+
+function deleteGroup(id) {
+  var g = groupData.find(function(x){ return x.id === id; });
+  if (!g) return;
+  if (!confirm('确认删除分组「' + g.name + '」？')) return;
+  groupData = groupData.filter(function(x){ return x.id !== id; });
+  renderGroupList();
+  showToast('已删除');
+}
+
 // ─── PANEL ROUTER ───
 var menuMap = {
   'catalog': 'menu-catalog',
@@ -3331,7 +3557,8 @@ var menuMap = {
   'audit-handle': 'menu-audit-handle',
   'quiz-bank': 'menu-quiz-bank',
   'quiz-paper': 'menu-quiz-paper',
-  'quiz-score': 'menu-quiz-score'
+  'quiz-score': 'menu-quiz-score',
+  'group-mgmt': 'menu-group-mgmt'
 };
 
 function showPanel(name) {
@@ -3354,6 +3581,7 @@ function showPanel(name) {
     labelRenderTree();
   }
   if (name === 'briefing') { briefingRender && briefingRender(); }
+  if (name === 'group-mgmt') { renderGroupList(); }
   if (name === 'quiz-bank') { quizBankRender && quizBankRender(); }
   if (name === 'quiz-score') { quizScoreRender && quizScoreRender(); }
 }

@@ -613,6 +613,11 @@ function confirmDispatch() {
 }
 
 // ── 派发对象树形选择器 ──
+var dispGroupsData = [
+  { id:1, name:'客服事业部全员', members:['覃国权','Lucy','Ines','Kevin','Chloe','May'] },
+  { id:2, name:'运营部全员', members:['Tom','Amy','Sam','Brian'] },
+  { id:3, name:'新人培训组', members:['Chloe','Brian'] }
+];
 var dispTreeData = [
   { name:'全体客服', children:[] },
   { name:'银行客服CS事业部', children:['覃国权','Lucy','Ines','Amy'] },
@@ -621,6 +626,8 @@ var dispTreeData = [
 ];
 var selectedDisp = new Set();
 var dispOpenGroups = {};
+var dispGroupsOpen = true;
+var dispDeptOpen = true;
 
 function toggleDispPicker() {
   var dd = document.getElementById('dispDropdown');
@@ -645,7 +652,30 @@ function renderDispTree(keyword) {
   var body = document.getElementById('dispTreeBody');
   if (!body) return;
   var kw = (keyword||'').toLowerCase();
-  body.innerHTML = dispTreeData.map(function(group, gi) {
+
+  // ── 分组区块 ──
+  var groupsSection = '';
+  var filteredGroups = dispGroupsData.filter(function(g){
+    return !kw || g.name.toLowerCase().indexOf(kw)>=0 || g.members.some(function(m){ return m.toLowerCase().indexOf(kw)>=0; });
+  });
+  if (filteredGroups.length > 0) {
+    var groupRows = filteredGroups.map(function(g) {
+      var allChecked = g.members.length>0 && g.members.every(function(m){ return selectedDisp.has('grp:'+g.id+':'+m); });
+      var someChecked = g.members.some(function(m){ return selectedDisp.has('grp:'+g.id+':'+m); });
+      var label = g.name + ' <span style="color:#aaa;font-size:10px;font-weight:400;">（'+g.members.length+'人）</span>';
+      return '<label style="display:flex;align-items:center;gap:6px;padding:4px 12px 4px 20px;cursor:pointer;font-size:12px;" onmouseenter="this.style.background=\'#fffbe6\'" onmouseleave="this.style.background=\'\'">'
+        +'<input type="checkbox" style="accent-color:#faad14;" '+(allChecked?'checked':'')+' data-grpid="'+g.id+'" onchange="toggleDispGroup2(this,'+g.id+')">'
+        + label + '</label>';
+    }).join('');
+    groupsSection = '<div>'
+      +'<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#fffdf0;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:4px;" onclick="dispGroupsOpen=!dispGroupsOpen;renderDispTree(document.querySelector(\'#dispDropdown input\')?document.querySelector(\'#dispDropdown input\').value:\'\')">'
+        +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(dispGroupsOpen?'transform:rotate(90deg);':'')+'">▶</span> 🏷️ 人员分组</div>'
+      +'<div style="'+(dispGroupsOpen?'':'display:none;')+'">'+groupRows+'</div>'
+      +'</div>';
+  }
+
+  // ── 部门区块 ──
+  var deptRows = dispTreeData.map(function(group, gi) {
     var filteredChildren = group.children.filter(function(c){ return !kw || c.toLowerCase().indexOf(kw)>=0 || group.name.toLowerCase().indexOf(kw)>=0; });
     var groupMatch = !kw || group.name.toLowerCase().indexOf(kw)>=0;
     if (!groupMatch && filteredChildren.length===0) return '';
@@ -653,26 +683,67 @@ function renderDispTree(keyword) {
     var childrenHtml = '';
     if (group.children.length > 0) {
       var displayChildren = kw ? filteredChildren : group.children;
+      var allChecked = group.children.every(function(c){ return selectedDisp.has(c); });
+      var someChecked = group.children.some(function(c){ return selectedDisp.has(c); });
       childrenHtml = displayChildren.map(function(c) {
         var checked = selectedDisp.has(c) ? 'checked' : '';
         return '<label style="display:flex;align-items:center;gap:6px;padding:4px 14px 4px 28px;cursor:pointer;font-size:12px;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
           +'<input type="checkbox" style="accent-color:#00b389;" '+checked+' onchange="toggleDispItem(this,\''+c+'\')">'+c+'</label>';
       }).join('');
+      var groupHtml = '<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:6px;">'
+        +'<input type="checkbox" style="accent-color:#00b389;flex-shrink:0;" '+(allChecked?'checked':'')+' onchange="toggleDispDept(this,'+gi+')" onclick="event.stopPropagation()">'
+        +'<span style="flex:1;cursor:pointer;" onclick="toggleDispGroup('+gi+')">'
+          +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(isOpen?'transform:rotate(90deg);':'')+'margin-right:2px;">▶</span>'+group.name
+        +'</span></div>';
+      return '<div>'+groupHtml+'<div style="'+(isOpen?'':'display:none;')+'">'+childrenHtml+'</div></div>';
+    } else {
+      var groupName = group.name;
+      return '<div><label style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#222;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
+        +'<input type="checkbox" style="accent-color:#00b389;" '+(selectedDisp.has(groupName)?'checked':'')+' onchange="toggleDispItem(this,\''+groupName+'\')">'+groupName+'</label></div>';
     }
-    var groupName = group.name;
-    var groupHtml = group.children.length===0
-      ? '<label style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#222;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
-        +'<input type="checkbox" style="accent-color:#00b389;" '+(selectedDisp.has(groupName)?'checked':'')+' onchange="toggleDispItem(this,\''+groupName+'\')">'+groupName+'</label>'
-      : '<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:4px;" onclick="toggleDispGroup('+gi+')">'
-        +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(isOpen?'transform:rotate(90deg);':'')+'">▶</span> '+groupName+'</div>';
-    return '<div>'+groupHtml
-      +(group.children.length>0 ? '<div style="'+(isOpen?'':'display:none;')+'">'+childrenHtml+'</div>' : '')
-      +'</div>';
   }).join('');
+
+  var deptSection = '<div>'
+    +'<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#f5f5f5;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:4px;" onclick="dispDeptOpen=!dispDeptOpen;renderDispTree(document.querySelector(\'#dispDropdown input\')?document.querySelector(\'#dispDropdown input\').value:\'\')">'
+      +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(dispDeptOpen?'transform:rotate(90deg);':'')+'">▶</span> 🏢 部门人员</div>'
+    +'<div style="'+(dispDeptOpen?'':'display:none;')+'">'+deptRows+'</div>'
+    +'</div>';
+
+  body.innerHTML = groupsSection + deptSection;
+
+  // 设置 indeterminate
+  dispGroupsData.forEach(function(g) {
+    var cb = body.querySelector('input[data-grpid="'+g.id+'"]');
+    if (!cb) return;
+    var allC = g.members.every(function(m){ return selectedDisp.has('grp:'+g.id+':'+m); });
+    var someC = g.members.some(function(m){ return selectedDisp.has('grp:'+g.id+':'+m); });
+    cb.indeterminate = someC && !allC;
+  });
 }
 
 function toggleDispGroup(gi) {
   dispOpenGroups[gi] = dispOpenGroups[gi]===false ? true : false;
+  var si = document.querySelector('#dispDropdown input');
+  renderDispTree(si ? si.value : '');
+}
+function toggleDispDept(cb, gi) {
+  var dept = dispTreeData[gi];
+  if (!dept) return;
+  dept.children.forEach(function(c) {
+    if (cb.checked) selectedDisp.add(c); else selectedDisp.delete(c);
+  });
+  renderDispSelected();
+  var si = document.querySelector('#dispDropdown input');
+  renderDispTree(si ? si.value : '');
+}
+function toggleDispGroup2(cb, gid) {
+  var g = dispGroupsData.find(function(x){ return x.id===gid; });
+  if (!g) return;
+  g.members.forEach(function(m) {
+    var key = 'grp:'+gid+':'+m;
+    if (cb.checked) selectedDisp.add(key); else selectedDisp.delete(key);
+  });
+  renderDispSelected();
   var si = document.querySelector('#dispDropdown input');
   renderDispTree(si ? si.value : '');
 }
@@ -685,6 +756,8 @@ function toggleDispItem(cb, name) {
 }
 function removeDispItem(name) {
   selectedDisp.delete(name);
+  // 同步删除可能的分组key
+  dispGroupsData.forEach(function(g) { selectedDisp.delete('grp:'+g.id+':'+name); });
   renderDispSelected();
   var si = document.querySelector('#dispDropdown input');
   renderDispTree(si ? si.value : '');
@@ -694,13 +767,34 @@ function renderDispSelected() {
   var ph = document.getElementById('dispPlaceholder');
   if (!area) return;
   area.innerHTML = '';
+  // 先渲染分组标签
+  dispGroupsData.forEach(function(g) {
+    var allC = g.members.length>0 && g.members.every(function(m){ return selectedDisp.has('grp:'+g.id+':'+m); });
+    var someC = g.members.some(function(m){ return selectedDisp.has('grp:'+g.id+':'+m); });
+    if (!someC) return;
+    var span = document.createElement('span');
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#fffbe6;border:1px solid #ffe58f;color:#d48806;padding:1px 8px;border-radius:10px;font-size:11px;';
+    var label = allC ? g.name : g.name+'(部分)';
+    span.innerHTML = '🏷️ '+label+' <span style="cursor:pointer;opacity:0.7;" onclick="event.stopPropagation();removeDispGroup2('+g.id+')">✕</span>';
+    area.appendChild(span);
+  });
+  // 再渲染个人/部门标签
   selectedDisp.forEach(function(n) {
+    if (n.indexOf('grp:')===0) return;
     var span = document.createElement('span');
     span.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;padding:1px 8px;border-radius:10px;font-size:11px;';
     span.innerHTML = n+' <span style="cursor:pointer;opacity:0.7;" onclick="event.stopPropagation();removeDispItem(\''+n+'\')">✕</span>';
     area.appendChild(span);
   });
-  if (ph) ph.style.display = selectedDisp.size>0 ? 'none' : 'inline';
+  if (ph) ph.style.display = area.children.length>0 ? 'none' : 'inline';
+}
+function removeDispGroup2(gid) {
+  var g = dispGroupsData.find(function(x){ return x.id===gid; });
+  if (!g) return;
+  g.members.forEach(function(m){ selectedDisp.delete('grp:'+gid+':'+m); });
+  renderDispSelected();
+  var si = document.querySelector('#dispDropdown input');
+  renderDispTree(si ? si.value : '');
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }

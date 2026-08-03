@@ -140,7 +140,7 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
   <div class="menu-section">考试及每日Briefing管理</div>
   <div class="menu-item active" id="menu-todo" onclick="showPanel('todo')">📋 待完成</div>
   <div class="menu-item" id="menu-history" onclick="showPanel('history')">✅ 已完成</div>
-  <div class="menu-item" id="menu-briefing" onclick="showPanel('briefing')">🎬 每日Briefing管理</div>
+  <div class="menu-item" id="menu-briefing" onclick="showPanel('briefing')">🎬 学考板块</div>
 </div>
 
 <!-- 主内容区 -->
@@ -178,17 +178,20 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
     </div>
   </div>
 
-  <!-- 每日Briefing管理 -->
+  <!-- 学考板块 -->
   <div class="panel" id="panel-briefing">
     <div class="page-header">
-      <div class="page-title">每日Briefing管理</div>
+      <div class="page-title">学考板块</div>
       <div style="font-size:12px;color:#aaa;">2026-07-02</div>
     </div>
     <div class="page-content">
 
-      <!-- Briefing 列表视图 -->
+      <!-- 列表视图 -->
       <div id="briefing-list-view">
-        <div class="briefing-item" onclick="openBriefingDetail()">
+        <div style="margin-bottom:12px;">
+          <input id="briefingSearch" class="table-search" style="width:100%;max-width:360px;" placeholder="🔍 搜索标题或补充内容关键词..." oninput="filterBriefingList(this.value)">
+        </div>
+        <div class="briefing-item" data-title="2026-07-02 开户业务及转账规则更新说明" data-content="本次Briefing重点介绍MCV开户新增视频验证步骤及港元转人民币跨境转账新规" onclick="openBriefingDetail()">
           <div class="briefing-item-header">
             <span class="briefing-date">今日 · 2026-07-02</span>
             <div style="display:flex;gap:4px;">
@@ -202,7 +205,7 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
           <div class="briefing-progress-label">已观看 45%，完成观看后可解锁小测</div>
         </div>
         <div style="padding:10px 4px;font-size:11px;color:#aaa;font-weight:600;border-top:1px solid #e8e8e8;margin-top:8px;margin-bottom:8px;">历史记录</div>
-        <div class="briefing-item" onclick="openBriefingDetail2()">
+        <div class="briefing-item" data-title="2026-07-01 VA账户新功能说明" data-content="VA账户新增账单导出功能，转账限额提升至20万港元" onclick="openBriefingDetail2()">
           <div class="briefing-item-header">
             <span class="briefing-date">2026-07-01</span>
             <div style="display:flex;gap:4px;">
@@ -213,7 +216,7 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
           <div class="briefing-title">📹 2026-07-01 VA账户新功能说明</div>
           <div class="briefing-meta">时长 12:15 · 主讲：Tom</div>
         </div>
-        <div class="briefing-item">
+        <div class="briefing-item" data-title="2026-06-30 基金相关查询处理流程" data-content="基金产品查询、赎回申请及异常情况处理标准流程说明">
           <div class="briefing-item-header">
             <span class="briefing-date">2026-06-30</span>
             <div style="display:flex;gap:4px;">
@@ -253,11 +256,29 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
           </div>
         </div>
 
-        <!-- Tabs: 补充 / 小测 / 附件 -->
+        <!-- Tabs: 打卡 / 补充 / 小测 / 附件 -->
         <div style="display:flex;border-bottom:1px solid #f0f0f0;">
+          <div class="briefing-content-tab" id="bct-checkin" onclick="switchBriefingContent('checkin')">✅ 打卡</div>
           <div class="briefing-content-tab active" id="bct-text" onclick="switchBriefingContent('text')">📄 补充</div>
           <div class="briefing-content-tab" id="bct-quiz" onclick="switchBriefingContent('quiz')">📝 小测 <span style="font-size:10px;color:#aaa;">（观看≥80%后解锁）</span></div>
           <div class="briefing-content-tab" id="bct-attach" onclick="switchBriefingContent('attach')">📎 附件</div>
+        </div>
+
+        <!-- 打卡 -->
+        <div id="bc-checkin" style="display:none;padding:24px 20px;text-align:center;">
+          <div id="checkin-pending">
+            <div style="font-size:40px;margin-bottom:12px;">📋</div>
+            <div style="font-size:14px;font-weight:600;color:#222;margin-bottom:6px;">线下参与打卡</div>
+            <div style="font-size:12px;color:#888;margin-bottom:24px;line-height:1.8;">如您已在线下现场参与本次学考学习，<br>可点击下方按钮完成打卡，打卡后可直接解锁小测</div>
+            <button class="btn btn-primary" style="padding:10px 32px;font-size:13px;" onclick="doCheckIn()">我已线下参与学习</button>
+            <div style="margin-top:16px;font-size:11px;color:#aaa;">我确认已线下学习并对打卡行为负责</div>
+          </div>
+          <div id="checkin-done" style="display:none;">
+            <div style="font-size:40px;margin-bottom:12px;">✅</div>
+            <div style="font-size:14px;font-weight:600;color:#52c41a;margin-bottom:6px;">打卡成功</div>
+            <div style="font-size:12px;color:#888;margin-bottom:8px;">您已完成本次线下学习打卡，小测现已解锁</div>
+            <div style="font-size:11px;color:#aaa;">打卡时间：<span id="checkinTime"></span></div>
+          </div>
         </div>
 
         <!-- 补充 -->
@@ -813,7 +834,28 @@ function showResult(id) {
   openModal('modalResult');
 }
 
-// ═══ 每日Briefing管理 ═══
+// ═══ 学考板块 ═══
+function filterBriefingList(kw) {
+  var items = document.querySelectorAll('#briefing-list-view .briefing-item');
+  var q = kw.trim().toLowerCase();
+  var hasResult = false;
+  items.forEach(function(el) {
+    var title = (el.dataset.title || '').toLowerCase();
+    var content = (el.dataset.content || '').toLowerCase();
+    var match = !q || title.indexOf(q) >= 0 || content.indexOf(q) >= 0;
+    el.style.display = match ? '' : 'none';
+    if (match) hasResult = true;
+  });
+  var empty = document.getElementById('briefingSearchEmpty');
+  if (!empty) {
+    empty = document.createElement('div');
+    empty.id = 'briefingSearchEmpty';
+    empty.style.cssText = 'text-align:center;padding:40px 20px;color:#bbb;font-size:13px;';
+    empty.textContent = '未找到相关内容';
+    document.getElementById('briefing-list-view').appendChild(empty);
+  }
+  empty.style.display = (q && !hasResult) ? 'block' : 'none';
+}
 function openBriefingDetail() {
   document.getElementById('briefing-list-view').style.display = 'none';
   document.getElementById('briefing-detail-view').style.display = 'block';
@@ -830,13 +872,27 @@ function closeBriefingDetail() {
   document.getElementById('briefing-list-view').style.display = 'block';
 }
 function switchBriefingContent(tab) {
-  ['text','quiz','attach'].forEach(function(t) {
+  ['checkin','text','quiz','attach'].forEach(function(t) {
     var tabEl = document.getElementById('bct-' + t);
     var body  = document.getElementById('bc-'  + t);
     var isActive = t === tab;
-    if (tabEl) { tabEl.classList.toggle('active', isActive); }
+    if (tabEl) tabEl.classList.toggle('active', isActive);
     if (body)  body.style.display = isActive ? 'block' : 'none';
   });
+}
+
+function doCheckIn() {
+  var now = new Date();
+  var pad = function(n){ return n < 10 ? '0'+n : n; };
+  var timeStr = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())
+    +' '+pad(now.getHours())+':'+pad(now.getMinutes());
+  document.getElementById('checkin-pending').style.display = 'none';
+  document.getElementById('checkin-done').style.display = 'block';
+  document.getElementById('checkinTime').textContent = timeStr;
+  // 打卡后解锁小测
+  document.getElementById('quiz-locked').style.display = 'none';
+  document.getElementById('quiz-content').style.display = 'block';
+  showToast('打卡成功，小测已解锁');
 }
 function setSpeed(btn, speed) {
   document.querySelectorAll('.speed-btn').forEach(function(b){ b.classList.remove('active'); });

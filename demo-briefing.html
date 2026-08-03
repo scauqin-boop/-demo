@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>每日Briefing管理</title>
+<title>学考板块</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:-apple-system,'PingFang HK','Microsoft YaHei',sans-serif; font-size:13px; color:#333; background:#f0f2f5; }
@@ -70,7 +70,7 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
 </head>
 <body>
 <div class="topbar">
-  <div class="topbar-logo">众安客服管理系统 — 每日Briefing管理</div>
+  <div class="topbar-logo">众安客服管理系统 — 学考板块</div>
   <div class="topbar-nav">
     <a href="demo-admin-system.html">← 返回管理系统</a>
     <a href="demo-quiz-bank.html">题库管理</a>
@@ -83,8 +83,8 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
   <!-- 列表视图 -->
   <div class="list-view" id="listView">
     <div class="page-header">
-      <div class="page-title">每日Briefing管理</div>
-      <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="openModal('modalNew')">+ 新建Briefing</button></div>
+      <div class="page-title">学考板块</div>
+      <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="openModal('modalNew')">+ 新建学考</button></div>
     </div>
     <div class="toolbar">
       <span style="font-size:12px;color:#666;">日期：</span>
@@ -128,7 +128,7 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
 <!-- 新建弹窗 -->
 <div class="modal-overlay" id="modalNew">
   <div class="modal">
-    <div class="modal-header"><h3>新建Briefing</h3><span class="modal-close" onclick="closeModal('modalNew')">✕</span></div>
+    <div class="modal-header"><h3>新建学考</h3><span class="modal-close" onclick="closeModal('modalNew')">✕</span></div>
     <div class="modal-body">
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="form-group"><div class="form-label">日期 <span class="req">*</span></div><input class="form-control" type="date" id="bnDate" value="2026-07-06"></div>
@@ -141,7 +141,7 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">Briefing补充 <span style="font-size:11px;color:#aaa;">（支持Ctrl+V粘贴图片）</span></div>
+          <div class="form-label">补充 <span style="font-size:11px;color:#aaa;">（支持Ctrl+V粘贴图片）</span></div>
           <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
             <div style="display:flex;gap:2px;padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;">
               <button type="button" class="rt-btn" onclick="document.getElementById('bnEditor').focus();document.execCommand('bold')"><b>B</b></button>
@@ -157,6 +157,20 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
             <button class="btn btn-default btn-sm" onclick="addAttach()">+ 选择文件</button>
             <span style="font-size:11px;color:#aaa;margin-left:8px;">doc/docx/pdf/xls/jpg/png，≤50MB</span>
             <div id="attachList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+          </div>
+        </div>
+        <div style="border-top:1px solid #f0f0f0;padding-top:12px;">
+          <div style="font-size:12px;font-weight:600;color:#222;margin-bottom:10px;">🤖 AI 自动生成小测</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <div class="form-label">生成题目数量</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="number" class="form-control" id="bnAiCount" style="width:90px;" value="5" min="1" max="20">
+              <span style="font-size:12px;color:#666;">题（最多20题）</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">用户提示词 <span style="font-size:11px;color:#aaa;">（选填，描述你希望小测的侧重方向）</span></div>
+            <textarea class="form-control" id="bnAiPrompt" rows="3" style="resize:vertical;" placeholder="例：重点考察开户被拒的处理流程，难度适中，每题4个选项，包含1道多选题"></textarea>
           </div>
         </div>
       </div>
@@ -185,6 +199,18 @@ td { padding:9px 12px; font-size:12px; color:#444; border-bottom:1px solid #f8f8
         <div class="form-group">
           <div class="form-label">解锁前提</div>
           <select class="form-control"><option>看完视频后解锁</option><option>无限制，随时可作答</option></select>
+          <div style="margin-top:8px;padding:10px 12px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;">
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="checkInEnable" style="margin-top:2px;accent-color:#00b389;" onchange="toggleCheckInNote()">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#222;">开放线下参与打卡</div>
+                <div style="font-size:11px;color:#888;margin-top:2px;">学员选择打卡后，可无视观看进度限制直接解锁小测</div>
+              </div>
+            </label>
+            <div id="checkInNote" style="display:none;margin-top:8px;padding:6px 10px;background:#fff7e6;border:1px solid #ffd591;border-radius:4px;font-size:11px;color:#d46b08;">
+              ⚠️ 已开启打卡功能：线下已打卡的学员将跳过观看进度限制，可直接进入小测作答
+            </div>
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="form-group"><div class="form-label">可重做次数</div><input class="form-control" placeholder="不填则不限" type="number"></div>
@@ -304,6 +330,7 @@ function render() {
       +'<td>'+(b.status==='published'?passBar(b.passRate):'<span style="color:#ccc;">—</span>')+'</td>'
       +'<td><div style="display:flex;gap:8px;">'
       +'<span class="td-op" onclick="openDetail('+b.id+')">修改</span>'
+      +'<span class="td-op" onclick="showToast(\'正在下载学员观看及打卡情况...\')">下载</span>'
       +(b.status==='ai_done'?'<span class="td-op" style="color:#52c41a;" onclick="publish('+b.id+')">发布</span>':'')
       +'<span class="td-op danger" onclick="del('+b.id+')">删除</span>'
       +'</div></td>'
@@ -316,16 +343,21 @@ function showStats(type, id) {
   if (!b) return;
   document.getElementById('statsTitle').textContent = type==='watch'?'观看完成率详情':'小测通过率详情';
   var data = type==='watch'
-    ? [{n:'覃国权',v:100,s:'已完成'},{n:'Lucy',v:85,s:'已完成'},{n:'Tom',v:45,s:'进行中'},{n:'Sam',v:0,s:'未开始'}]
+    ? [{n:'覃国权',v:100,s:'已完成',checkin:'已打卡'},{n:'Lucy',v:85,s:'已完成',checkin:'已打卡'},{n:'Tom',v:45,s:'进行中',checkin:'未打卡'},{n:'Sam',v:0,s:'未开始',checkin:'未打卡'}]
     : [{n:'覃国权',v:92,s:'通过'},{n:'Ines',v:100,s:'通过'},{n:'Amy',v:55,s:'未通过'},{n:'Sam',v:null,s:'未作答'}];
   var col = type==='watch'?'#00b389':'#1890ff';
-  document.getElementById('statsBody').innerHTML = '<table><thead><tr><th>姓名</th><th>'+(type==='watch'?'观看进度':'得分')+'</th><th>状态</th></tr></thead><tbody>'
+  document.getElementById('statsBody').innerHTML = '<table><thead><tr><th>姓名</th><th>'+(type==='watch'?'观看进度':'得分')+'</th>'+(type==='watch'?'<th>观看状态</th><th>打卡情况</th>':'<th>状态</th>')+'</tr></thead><tbody>'
     +data.map(function(d){
       var val = d.v!==null?d.v+'%':'—';
       var badge = d.s==='通过'?'badge-green':d.s==='未通过'?'badge-red':d.s==='已完成'?'badge-green':d.s==='进行中'?'badge-orange':'badge-gray';
+      var checkInBadge = d.checkin==='已打卡'
+        ? '<span class="badge badge-green">已打卡</span>'
+        : '<span class="badge badge-gray">未打卡</span>';
       return '<tr><td>'+d.n+'</td><td><div style="display:flex;align-items:center;gap:6px;">'
         +(d.v!==null?'<div class="progress-bar"><div class="progress-fill" style="width:'+d.v+'%;background:'+col+';"></div></div>':'')
-        +'<span>'+val+'</span></div></td><td><span class="badge '+badge+'">'+d.s+'</span></td></tr>';
+        +'<span>'+val+'</span></div></td><td><span class="badge '+badge+'">'+d.s+'</span></td>'
+        +(type==='watch'?'<td>'+checkInBadge+'</td>':'')
+        +'</tr>';
     }).join('')+'</tbody></table>';
   openModal('modalStats');
 }
@@ -463,7 +495,15 @@ function switchTab(tab) {
       +'</div>'
       +'<div style="font-size:11px;color:#aaa;margin-top:4px;">填 0 表示无限制，随时可作答；按时参加会议的人员无需回看视频，默认设为 0%</div>'
       +'</div>'
-      // 试卷有效期模式
+      // 打卡选项
+      +'<div style="margin-bottom:12px;padding:10px 12px;background:#f9fffe;border:1px solid #e0f0ed;border-radius:4px;">'
+      +'<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;" onclick="toggleBfCheckIn()">'
+      +'<input type="checkbox" id="bfCheckInEnable" style="margin-top:2px;accent-color:#00b389;">'
+      +'<div><div style="font-size:12px;font-weight:600;color:#222;">开放线下参与打卡</div>'
+      +'<div style="font-size:11px;color:#888;margin-top:2px;">学员选择打卡后，可无视观看进度限制直接解锁小测</div>'
+      +'</div></label>'
+      +'<div id="bfCheckInNote" style="display:none;margin-top:8px;padding:6px 10px;background:#fff7e6;border:1px solid #ffd591;border-radius:4px;font-size:11px;color:#d46b08;">⚠️ 已开启打卡功能：线下已打卡的学员将跳过观看进度限制，可直接进入小测作答</div>'
+      +'</div>'
       +'<div class="form-group" style="margin-bottom:12px;">'
       +'<div class="form-label">试卷有效期模式</div>'
       +'<div style="display:flex;gap:6px;">'
@@ -605,12 +645,29 @@ function handlePaste(e) {
   }
 }
 
+function toggleBfCheckIn() {
+  var cb = document.getElementById('bfCheckInEnable');
+  var note = document.getElementById('bfCheckInNote');
+  if (cb && note) note.style.display = cb.checked ? 'block' : 'none';
+}
+
+function toggleCheckInNote() {
+  var note = document.getElementById('checkInNote');
+  var cb = document.getElementById('checkInEnable');
+  if (note) note.style.display = cb && cb.checked ? 'block' : 'none';
+}
+
 function updatePassUnit() {
   var map = {score:'分', rate:'%', count:'题'};
   document.getElementById('passUnit').textContent = map[document.getElementById('passType').value]||'';
 }
 
 // ── 派发对象树形选择器 ──
+var dispGroupsData = [
+  { id:1, name:'客服事业部全员', members:['覃国权','Lucy','Ines','Kevin','Chloe','May'] },
+  { id:2, name:'运营部全员', members:['Tom','Amy','Sam','Brian'] },
+  { id:3, name:'新人培训组', members:['Chloe','Brian'] }
+];
 var dispatchTreeData = [
   { name:'全体客服', children:[] },
   { name:'银行客服CS事业部', children:['覃国权','Lucy','Ines','Amy'] },
@@ -619,6 +676,8 @@ var dispatchTreeData = [
 ];
 var selectedDispatch = new Set();
 var dispatchOpenGroups = {};
+var dispatchGroupsOpen = true;
+var dispatchDeptOpen = true;
 
 function toggleDispatchPicker() {
   var dd = document.getElementById('dispatchDropdown');
@@ -643,38 +702,99 @@ function renderDispatchTree(keyword) {
   var body = document.getElementById('dispatchTreeBody');
   if (!body) return;
   var kw = (keyword||'').toLowerCase();
-  body.innerHTML = dispatchTreeData.map(function(group, gi) {
+
+  // ── 分组区块 ──
+  var filteredGroups = dispGroupsData.filter(function(g){
+    return !kw || g.name.toLowerCase().indexOf(kw)>=0 || g.members.some(function(m){ return m.toLowerCase().indexOf(kw)>=0; });
+  });
+  var groupsSection = '';
+  if (filteredGroups.length > 0) {
+    var groupRows = filteredGroups.map(function(g) {
+      var allChecked = g.members.length>0 && g.members.every(function(m){ return selectedDispatch.has('grp:'+g.id+':'+m); });
+      var someChecked = g.members.some(function(m){ return selectedDispatch.has('grp:'+g.id+':'+m); });
+      var label = g.name + ' <span style="color:#aaa;font-size:10px;font-weight:400;">（'+g.members.length+'人）</span>';
+      return '<label style="display:flex;align-items:center;gap:6px;padding:4px 12px 4px 20px;cursor:pointer;font-size:12px;" onmouseenter="this.style.background=\'#fffbe6\'" onmouseleave="this.style.background=\'\'">'
+        +'<input type="checkbox" style="accent-color:#faad14;" '+(allChecked?'checked':'')+' data-grpid="'+g.id+'" onchange="toggleDispatchGroup2(this,'+g.id+')">'
+        + label + '</label>';
+    }).join('');
+    groupsSection = '<div>'
+      +'<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#fffdf0;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:4px;" onclick="dispatchGroupsOpen=!dispatchGroupsOpen;renderDispatchTree(document.querySelector(\'#dispatchDropdown input\')?document.querySelector(\'#dispatchDropdown input\').value:\'\')">'
+        +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(dispatchGroupsOpen?'transform:rotate(90deg);':'')+'">▶</span> 🏷️ 人员分组</div>'
+      +'<div style="'+(dispatchGroupsOpen?'':'display:none;')+'">'+groupRows+'</div>'
+      +'</div>';
+  }
+
+  // ── 部门区块 ──
+  var deptRows = dispatchTreeData.map(function(group, gi) {
     var filteredChildren = group.children.filter(function(c){ return !kw || c.toLowerCase().indexOf(kw)>=0 || group.name.toLowerCase().indexOf(kw)>=0; });
     var groupMatch = !kw || group.name.toLowerCase().indexOf(kw)>=0;
     if (!groupMatch && filteredChildren.length===0) return '';
     var isOpen = dispatchOpenGroups[gi] !== false;
-    var showAll = groupMatch && !kw;
     var childrenHtml = '';
     if (group.children.length > 0) {
       var displayChildren = kw ? filteredChildren : group.children;
+      var allChecked = group.children.every(function(c){ return selectedDispatch.has(c); });
       childrenHtml = displayChildren.map(function(c) {
         var checked = selectedDispatch.has(c) ? 'checked' : '';
         return '<label style="display:flex;align-items:center;gap:6px;padding:4px 14px 4px 28px;cursor:pointer;font-size:12px;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
           +'<input type="checkbox" style="accent-color:#00b389;" '+checked+' onchange="toggleDispatchItem(this,\''+c+'\')">'+c+'</label>';
       }).join('');
+      var groupHtml = '<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:6px;">'
+        +'<input type="checkbox" style="accent-color:#00b389;flex-shrink:0;" '+(allChecked?'checked':'')+' onchange="toggleDispatchDept(this,'+gi+')" onclick="event.stopPropagation()">'
+        +'<span style="flex:1;cursor:pointer;" onclick="toggleDispatchGroupDept('+gi+')">'
+          +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(isOpen?'transform:rotate(90deg);':'')+'margin-right:2px;">▶</span>'+group.name
+        +'</span></div>';
+      return '<div>'+groupHtml+'<div style="'+(isOpen?'':'display:none;')+'">'+childrenHtml+'</div></div>';
+    } else {
+      var groupName = group.name;
+      return '<div><label style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#222;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
+        +'<input type="checkbox" style="accent-color:#00b389;" '+(selectedDispatch.has(groupName)?'checked':'')+' onchange="toggleDispatchItem(this,\''+groupName+'\')">'+groupName+'</label></div>';
     }
-    var allChecked = group.children.length>0 && group.children.every(function(c){ return selectedDispatch.has(c); });
-    var groupName = group.name;
-    var groupCheckbox = group.children.length===0
-      ? '<label style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#222;" onmouseenter="this.style.background=\'#f5fffe\'" onmouseleave="this.style.background=\'\'">'
-        +'<input type="checkbox" style="accent-color:#00b389;" '+(selectedDispatch.has(groupName)?'checked':'')+' onchange="toggleDispatchItem(this,\''+groupName+'\')">'+groupName+'</label>'
-      : '<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#fafafa;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:4px;" onclick="toggleDispatchGroup('+gi+')">'
-        +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(isOpen?'transform:rotate(90deg);':'')+'">▶</span> '+groupName
-        +(allChecked?' <span style="color:#52c41a;font-size:9px;margin-left:auto;">全选</span>':'')
-        +'</div>';
-    return '<div>'+groupCheckbox
-      +(group.children.length>0 ? '<div style="'+(isOpen?'':'display:none;')+'">'+childrenHtml+'</div>' : '')
-      +'</div>';
   }).join('');
+
+  var deptSection = '<div>'
+    +'<div style="padding:5px 10px;font-size:11px;font-weight:600;color:#555;background:#f5f5f5;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;align-items:center;gap:4px;" onclick="dispatchDeptOpen=!dispatchDeptOpen;renderDispatchTree(document.querySelector(\'#dispatchDropdown input\')?document.querySelector(\'#dispatchDropdown input\').value:\'\')">'
+      +'<span style="font-size:9px;transition:transform 0.2s;display:inline-block;'+(dispatchDeptOpen?'transform:rotate(90deg);':'')+'">▶</span> 🏢 部门人员</div>'
+    +'<div style="'+(dispatchDeptOpen?'':'display:none;')+'">'+deptRows+'</div>'
+    +'</div>';
+
+  body.innerHTML = groupsSection + deptSection;
+
+  // 设置 indeterminate
+  dispGroupsData.forEach(function(g) {
+    var cb = body.querySelector('input[data-grpid="'+g.id+'"]');
+    if (!cb) return;
+    var allC = g.members.every(function(m){ return selectedDispatch.has('grp:'+g.id+':'+m); });
+    var someC = g.members.some(function(m){ return selectedDispatch.has('grp:'+g.id+':'+m); });
+    cb.indeterminate = someC && !allC;
+  });
 }
 
-function toggleDispatchGroup(gi) {
+function toggleDispatchGroupDept(gi) {
   dispatchOpenGroups[gi] = dispatchOpenGroups[gi]===false ? true : false;
+  var searchInput = document.querySelector('#dispatchDropdown input');
+  renderDispatchTree(searchInput ? searchInput.value : '');
+}
+
+function toggleDispatchDept(cb, gi) {
+  var dept = dispatchTreeData[gi];
+  if (!dept) return;
+  dept.children.forEach(function(c) {
+    if (cb.checked) selectedDispatch.add(c); else selectedDispatch.delete(c);
+  });
+  renderDispatchSelected();
+  var searchInput = document.querySelector('#dispatchDropdown input');
+  renderDispatchTree(searchInput ? searchInput.value : '');
+}
+
+function toggleDispatchGroup2(cb, gid) {
+  var g = dispGroupsData.find(function(x){ return x.id===gid; });
+  if (!g) return;
+  g.members.forEach(function(m) {
+    var key = 'grp:'+gid+':'+m;
+    if (cb.checked) selectedDispatch.add(key); else selectedDispatch.delete(key);
+  });
+  renderDispatchSelected();
   var searchInput = document.querySelector('#dispatchDropdown input');
   renderDispatchTree(searchInput ? searchInput.value : '');
 }
@@ -683,7 +803,55 @@ function filterDispatchTree(val) {
   renderDispatchTree(val);
 }
 
-// ── 发布设置交互 ──
+function toggleDispatchItem(cb, name) {
+  if (cb.checked) selectedDispatch.add(name); else selectedDispatch.delete(name);
+  renderDispatchSelected();
+  var searchInput = document.querySelector('#dispatchDropdown input');
+  renderDispatchTree(searchInput ? searchInput.value : '');
+}
+
+function removeDispatchItem(name) {
+  selectedDispatch.delete(name);
+  renderDispatchSelected();
+  var searchInput = document.querySelector('#dispatchDropdown input');
+  renderDispatchTree(searchInput ? searchInput.value : '');
+}
+
+function removeDispatchGroup2(gid) {
+  var g = dispGroupsData.find(function(x){ return x.id===gid; });
+  if (!g) return;
+  g.members.forEach(function(m){ selectedDispatch.delete('grp:'+gid+':'+m); });
+  renderDispatchSelected();
+  var searchInput = document.querySelector('#dispatchDropdown input');
+  renderDispatchTree(searchInput ? searchInput.value : '');
+}
+
+function renderDispatchSelected() {
+  var area = document.getElementById('dispatchSelectedArea');
+  var ph = document.getElementById('dispatchPlaceholder');
+  if (!area) return;
+  area.innerHTML = '';
+  // 先渲染分组标签
+  dispGroupsData.forEach(function(g) {
+    var allC = g.members.length>0 && g.members.every(function(m){ return selectedDispatch.has('grp:'+g.id+':'+m); });
+    var someC = g.members.some(function(m){ return selectedDispatch.has('grp:'+g.id+':'+m); });
+    if (!someC) return;
+    var span = document.createElement('span');
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#fffbe6;border:1px solid #ffe58f;color:#d48806;padding:1px 8px;border-radius:10px;font-size:11px;';
+    var label = allC ? g.name : g.name+'(部分)';
+    span.innerHTML = '🏷️ '+label+' <span style="cursor:pointer;opacity:0.7;" onclick="event.stopPropagation();removeDispatchGroup2('+g.id+')">✕</span>';
+    area.appendChild(span);
+  });
+  // 再渲染个人/部门标签
+  selectedDispatch.forEach(function(n) {
+    if (n.indexOf('grp:')===0) return;
+    var span = document.createElement('span');
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;padding:1px 8px;border-radius:10px;font-size:11px;';
+    span.innerHTML = n+' <span style="cursor:pointer;opacity:0.7;" onclick="event.stopPropagation();removeDispatchItem(\''+n+'\')">✕</span>';
+    area.appendChild(span);
+  });
+  if (ph) ph.style.display = area.children.length>0 ? 'none' : 'inline';
+}
 function setBfValidityMode(mode) {
   document.getElementById('bfValidityTimed').className = 'btn btn-sm ' + (mode==='timed' ? 'btn-primary' : 'btn-default');
   document.getElementById('bfValidityUnlimited').className = 'btn btn-sm ' + (mode==='unlimited' ? 'btn-primary' : 'btn-default');
@@ -708,34 +876,6 @@ function updateBfPassUnit(sel) {
   var map = {score:'分', rate:'%', count:'题'};
   var unit = document.getElementById('bfPassUnit');
   if (unit) unit.textContent = map[sel.value] || '分';
-}
-
-function toggleDispatchItem(cb, name) {
-  if (cb.checked) selectedDispatch.add(name); else selectedDispatch.delete(name);
-  renderDispatchSelected();
-  var searchInput = document.querySelector('#dispatchDropdown input');
-  renderDispatchTree(searchInput ? searchInput.value : '');
-}
-
-function removeDispatchItem(name) {
-  selectedDispatch.delete(name);
-  renderDispatchSelected();
-  var searchInput = document.querySelector('#dispatchDropdown input');
-  renderDispatchTree(searchInput ? searchInput.value : '');
-}
-
-function renderDispatchSelected() {
-  var area = document.getElementById('dispatchSelectedArea');
-  var ph = document.getElementById('dispatchPlaceholder');
-  if (!area) return;
-  area.innerHTML = '';
-  selectedDispatch.forEach(function(n) {
-    var span = document.createElement('span');
-    span.style.cssText = 'display:inline-flex;align-items:center;gap:3px;background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;padding:1px 8px;border-radius:10px;font-size:11px;';
-    span.innerHTML = n+' <span style="cursor:pointer;opacity:0.7;" onclick="event.stopPropagation();removeDispatchItem(\''+n+'\')">✕</span>';
-    area.appendChild(span);
-  });
-  if (ph) ph.style.display = selectedDispatch.size>0 ? 'none' : 'inline';
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }

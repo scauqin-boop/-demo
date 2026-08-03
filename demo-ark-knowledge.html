@@ -285,6 +285,90 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 2px; }
+
+  /* ── 划词笔记浮动按钮 ── */
+  #selectionNoteBtn {
+    display: none; position: fixed; z-index: 3000;
+    background: #222; color: #fff; border: none; border-radius: 5px;
+    padding: 5px 11px; font-size: 12px; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25); gap: 5px; align-items: center;
+  }
+  #selectionNoteBtn::after {
+    content: '';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);
+    border:5px solid transparent;border-top-color:#222;border-bottom:none;
+  }
+
+  /* ── 收藏目录选择弹窗 ── */
+  .fav-folder-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.42); z-index:3000; align-items:center; justify-content:center; }
+  .fav-folder-modal.open { display:flex; }
+  .fav-folder-box { background:#fff; border-radius:8px; width:380px; max-height:560px; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+  .fav-folder-head { padding:13px 16px; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .fav-folder-head h3 { font-size:14px; font-weight:700; color:#222; }
+  .fav-folder-tree { flex:1; overflow-y:auto; padding:8px 0; }
+  .fav-folder-item { display:flex; align-items:center; gap:5px; padding:6px 14px; cursor:pointer; font-size:12px; color:#333; border-left:2px solid transparent; transition:all 0.15s; user-select:none; }
+  .fav-folder-item:hover { background:#f5fffe; }
+  .fav-folder-item.selected { background:#e6faf5; border-left-color:#00b389; color:#00b389; font-weight:600; }
+  .fav-folder-item .fi-arrow { font-size:9px; color:#aaa; width:12px; flex-shrink:0; transition:transform 0.2s; }
+  .fav-folder-item .fi-arrow.open { transform:rotate(90deg); }
+  .fav-folder-item .fi-icon { font-size:13px; flex-shrink:0; }
+  .fav-folder-item .fi-label { flex:1; }
+  .fav-folder-item .fi-add-btn { opacity:0; font-size:10px; color:#00b389; padding:1px 5px; border:1px solid #00b389; border-radius:3px; white-space:nowrap; transition:opacity 0.15s; }
+  .fav-folder-item:hover .fi-add-btn { opacity:1; }
+  .fav-folder-foot { padding:10px 16px; border-top:1px solid #f0f0f0; display:flex; gap:8px; justify-content:flex-end; flex-shrink:0; }
+
+  /* ── 我的收藏全屏页 ── */
+  #favPage { display:none; position:fixed; inset:0; top:48px; background:#f0f2f5; z-index:200; flex-direction:column; overflow:hidden; }
+  #favPage.open { display:flex; }
+  .fav-page-head { background:#fff; padding:12px 20px; border-bottom:1px solid #e8e8e8; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+  .fav-page-head .fp-back { cursor:pointer; color:#00b389; font-size:13px; display:flex; align-items:center; gap:4px; }
+  .fav-page-head h2 { font-size:15px; font-weight:700; color:#222; flex:1; }
+  .fav-page-tabs { display:flex; gap:0; border-bottom:1px solid #e8e8e8; background:#fff; flex-shrink:0; padding:0 20px; }
+  .fav-page-tab { padding:10px 20px; font-size:13px; color:#666; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.15s; }
+  .fav-page-tab.active { color:#00b389; border-bottom-color:#00b389; font-weight:600; }
+  .fav-page-body { flex:1; overflow:hidden; display:flex; gap:0; }
+
+  /* 左侧自定义目录树 */
+  .fav-left { width:220px; background:#fff; border-right:1px solid #e8e8e8; overflow-y:auto; padding:8px 0; flex-shrink:0; }
+  .fav-left-title { padding:8px 14px 4px; font-size:11px; font-weight:600; color:#999; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; justify-content:space-between; }
+  .fav-left-title .fl-add { cursor:pointer; color:#00b389; font-size:11px; }
+  .fav-dir-item { display:flex; align-items:center; gap:4px; padding:5px 12px; cursor:pointer; font-size:12px; color:#444; border-left:2px solid transparent; transition:all 0.15s; }
+  .fav-dir-item:hover { background:#f5fffe; }
+  .fav-dir-item.active { background:#e6faf5; border-left-color:#00b389; color:#00b389; font-weight:600; }
+  .fav-dir-item .fd-arrow { font-size:9px; color:#aaa; width:10px; flex-shrink:0; transition:transform 0.2s; }
+  .fav-dir-item .fd-arrow.open { transform:rotate(90deg); }
+
+  /* 右侧内容 */
+  .fav-right { flex:1; overflow-y:auto; padding:14px 16px; }
+  .fav-section-title { font-size:12px; font-weight:700; color:#555; padding:6px 0; margin-bottom:8px; border-bottom:2px solid #00b389; display:flex; align-items:center; gap:6px; }
+  .fav-entry-card { background:#fff; border:1px solid #e8e8e8; border-radius:6px; margin-bottom:8px; padding:10px 14px; transition:box-shadow 0.2s; }
+  .fav-entry-card:hover { box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+  .fav-entry-card .fec-title { font-size:13px; font-weight:600; color:#222; margin-bottom:4px; line-height:1.4; }
+  .fav-entry-card .fec-path { font-size:11px; color:#aaa; margin-bottom:6px; }
+  .fav-entry-card .fec-answer { font-size:12px; color:#555; line-height:1.7; background:#f9f9f9; border-radius:4px; padding:8px 10px; }
+  .fav-entry-card .fec-footer { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+  .fav-entry-card .fec-folder { font-size:11px; color:#00b389; }
+  .fav-entry-card .fec-ops { display:flex; gap:6px; }
+  .fav-entry-card .fec-op { font-size:11px; color:#aaa; cursor:pointer; padding:2px 6px; border:1px solid #e8e8e8; border-radius:3px; }
+  .fav-entry-card .fec-op:hover { color:#ff4d4f; border-color:#ffa39e; }
+
+  /* 笔记卡片 */
+  .fav-note-card { background:#fff; border:1px solid #e8e8e8; border-radius:6px; margin-bottom:8px; padding:10px 14px; transition:box-shadow 0.2s; }
+  .fav-note-card:hover { box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+  .fav-note-card.outdated { border-color:#ffd591; background:#fffdf0; }
+  .fav-note-card .fnc-highlight { font-size:12px; color:#555; background:#fff3b0; border-radius:3px; padding:4px 8px; line-height:1.7; margin-bottom:8px; border-left:3px solid #faad14; font-style:italic; }
+  .fav-note-card .fnc-highlight.outdated { background:#f5f5f5; color:#aaa; text-decoration:line-through; }
+  .fav-note-card .fnc-src { font-size:11px; color:#aaa; margin-bottom:4px; }
+  .fav-note-card .fnc-warn { font-size:11px; color:#fa8c16; background:#fff7e6; border:1px solid #ffd591; padding:3px 8px; border-radius:4px; margin-bottom:6px; }
+  .fav-note-card .fnc-footer { display:flex; align-items:center; justify-content:space-between; margin-top:6px; }
+  .fav-note-card .fnc-folder { font-size:11px; color:#00b389; }
+  .fav-note-card .fnc-ops { display:flex; gap:6px; }
+  .fav-note-card .fnc-op { font-size:11px; color:#aaa; cursor:pointer; padding:2px 6px; border:1px solid #e8e8e8; border-radius:3px; }
+  .fav-note-card .fnc-op:hover { color:#ff4d4f; border-color:#ffa39e; }
+
+  /* toast */
+  #toastWrap { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .toast { background:rgba(0,0,0,0.75); color:#fff; padding:7px 16px; border-radius:20px; font-size:13px; animation:fadeInUp 0.2s; }
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);} }
 </style>
 </head>
 <body>
@@ -458,7 +542,7 @@
           <div class="toggle-pill"><div class="toggle-knob"></div></div>
           🤖 AI搜索
         </div>
-        <button class="fav-btn">⭐ 我的收藏</button>
+        <button class="fav-btn" onclick="openFavPage()">⭐ 我的收藏</button>
       </div>
     </div>
 
@@ -545,7 +629,7 @@
   <!-- Drawer Tabs -->
   <div class="drawer-tabs">
     <div class="drawer-tab active" id="dtab-knowledge" onclick="switchDrawerTab('knowledge')">📋 知识更新 <span class="dtab-badge">3</span></div>
-    <div class="drawer-tab" id="dtab-briefing" onclick="switchDrawerTab('briefing')">🎬 每日Briefing <span class="dtab-badge" style="background:#7c3aed;">1</span></div>
+    <div class="drawer-tab" id="dtab-briefing" onclick="switchDrawerTab('briefing')">🎬 学考板块 <span class="dtab-badge" style="background:#7c3aed;">1</span></div>
   </div>
 
   <!-- Tab: 知识更新 -->
@@ -639,11 +723,29 @@
         </div>
       </div>
 
-      <!-- Tabs: 补充 / 小测 / 附件 -->
+      <!-- Tabs: 打卡 / 补充 / 小测 / 附件 -->
       <div style="display:flex;border-bottom:1px solid #f0f0f0;">
+        <div class="briefing-content-tab" id="bct-checkin" onclick="switchBriefingContent('checkin')">✅ 打卡</div>
         <div class="briefing-content-tab active" id="bct-text" onclick="switchBriefingContent('text')">📄 补充</div>
         <div class="briefing-content-tab" id="bct-quiz" onclick="switchBriefingContent('quiz')">📝 小测 <span style="font-size:10px;color:#aaa;">（观看≥80%后解锁）</span></div>
         <div class="briefing-content-tab" id="bct-attach" onclick="switchBriefingContent('attach')">📎 附件</div>
+      </div>
+
+      <!-- 打卡 -->
+      <div id="bc-checkin" style="display:none;padding:20px 16px;text-align:center;">
+        <div id="checkin-pending">
+          <div style="font-size:36px;margin-bottom:10px;">📋</div>
+          <div style="font-size:13px;font-weight:600;color:#222;margin-bottom:5px;">线下参与打卡</div>
+          <div style="font-size:11px;color:#888;margin-bottom:20px;line-height:1.8;">如您已在线下现场参与本次学考学习，<br>可点击下方按钮完成打卡，打卡后可直接解锁小测</div>
+          <button style="padding:8px 28px;background:#00b389;color:#fff;border:none;border-radius:4px;font-size:13px;cursor:pointer;font-weight:600;" onclick="doCheckIn()">我已线下参与学习</button>
+          <div style="margin-top:14px;font-size:11px;color:#aaa;">我确认已线下学习并对打卡行为负责</div>
+        </div>
+        <div id="checkin-done" style="display:none;">
+          <div style="font-size:36px;margin-bottom:10px;">✅</div>
+          <div style="font-size:13px;font-weight:600;color:#52c41a;margin-bottom:5px;">打卡成功</div>
+          <div style="font-size:11px;color:#888;margin-bottom:6px;">您已完成本次线下学习打卡，小测现已解锁</div>
+          <div style="font-size:11px;color:#aaa;">打卡时间：<span id="checkinTime"></span></div>
+        </div>
       </div>
 
       <!-- 补充 -->
@@ -786,6 +888,8 @@ function renderArkKnowledge(data) {
   var tbody = document.getElementById('arkKnowledgeBody');
   if (!tbody) return;
   tbody.innerHTML = (data||arkKnowledgeData).map(function(r) {
+    // 存收藏payload，避免把内容插入按钮属性
+    favEntryPayloadMap[r.id] = { id: r.id, q: r.q, path: r.path, ans: r.tcAns || '' };
     // 标签（最多2个+N tooltip）
     var tagsHtml = (function() {
       if (!r.tags || r.tags.length === 0) return '<span style="color:#ddd;font-size:11px;">—</span>';
@@ -835,40 +939,17 @@ function renderArkKnowledge(data) {
         +'<span>🔄 更新：'+r.updated+'</span>'
       +'</div>'
 
-      // 语种切换
-      +'<div style="display:flex;gap:6px;padding:10px 0;">'
-        +(r.tc ? '<button id="aklt_'+rid+'_tc" onclick="event.stopPropagation();arkSwitchLang(\''+rid+'\',\'tc\')" style="padding:5px 14px;border:1px solid #00b389;border-radius:14px;background:#00b389;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">繁 繁体中文</button>' : '')
-        +(r.sc ? '<button id="aklt_'+rid+'_sc" onclick="event.stopPropagation();arkSwitchLang(\''+rid+'\',\'sc\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">简 简体中文</button>' : '')
-        +(r.en ? '<button id="aklt_'+rid+'_en" onclick="event.stopPropagation();arkSwitchLang(\''+rid+'\',\'en\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">EN English</button>' : '')
-      +'</div>'
+      // 问题块
+      +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;margin-top:10px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 問題</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+r.q+'</div>'
+        +'</div>'
 
-      // 问题块（各语种）
-      +(r.tc ? '<div id="akq_'+rid+'_tc" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 問題（繁体中文）</div>'
-        +'<div style="font-size:13px;font-weight:600;color:#222;">'+r.q+'</div>'
-        +'</div>' : '')
-      +(r.sc ? '<div id="akq_'+rid+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题（简体中文）</div>'
-        +'<div style="font-size:13px;font-weight:600;color:#222;">'+r.q+'</div>'
-        +'</div>' : '')
-      +(r.en ? '<div id="akq_'+rid+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 Question (English)</div>'
-        +'<div style="font-size:13px;font-weight:600;color:#222;">'+r.q+'</div>'
-        +'</div>' : '')
-
-      // 答案块（各语种）
-      +(r.tc ? '<div id="aka_'+rid+'_tc" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案（繁体中文）</div>'
+      // 答案块
+      +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案</div>'
         +'<div style="font-size:12px;line-height:1.8;color:#444;">'+(r.tcAns||'（暂无内容）')+'</div>'
-        +'</div>' : '')
-      +(r.sc ? '<div id="aka_'+rid+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 答案（简体中文）</div>'
-        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+(r.scAns||'（暂无内容）')+'</div>'
-        +'</div>' : '')
-      +(r.en ? '<div id="aka_'+rid+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💡 Answer (English)</div>'
-        +'<div style="font-size:12px;line-height:1.8;color:#444;">'+(r.enAns||'(No content)')+'</div>'
-        +'</div>' : '')
+        +'</div>'
 
       // 附件
       +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:12px;">'
@@ -879,7 +960,7 @@ function renderArkKnowledge(data) {
       // 底部按钮（仅保留更新日志、收藏、报错）
       +'<div style="display:flex;gap:6px;">'
         +'<button class="k-action-btn" onclick="event.stopPropagation();openLogBubble(this,\''+r.id+'\')">📋 更新日志</button>'
-        +'<button class="k-action-btn" onclick="event.stopPropagation()">⭐ 收藏</button>'
+        +'<button class="k-action-btn" onclick="event.stopPropagation();openFavByEntryId(\''+r.id+'\')">⭐ 收藏</button>'
         +'<button class="k-action-btn" onclick="event.stopPropagation();openErrorModal(\''+r.path+'\')" style="color:#ff4d4f;border-color:#ffa39e;">⚠️ 报错</button>'
       +'</div>'
 
@@ -1161,6 +1242,7 @@ function buildSearchResults(q, isAI) {
                        '<span class="k-tag keyword-match">关键字匹配</span>';
     const langTags = r.tags.map(t => `<span class="k-tag lang">${t}</span>`).join('');
     const excerptHtml = r.excerpt ? `<div class="k-excerpt" style="display:block">${r.excerpt}</div>` : '';
+    favEntryPayloadMap['sr_'+r.id] = { id: r.id, q: r.title, path: r.path, ans: '' };
     return `
     <div class="k-card" id="result-card-${i+1}">
       <div class="k-card-header" onclick="toggleCard(this)">
@@ -1179,7 +1261,7 @@ function buildSearchResults(q, isAI) {
         <div class="k-answer"><p>（点击展开查看完整内容）</p></div>
         <div class="k-footer-actions">
           <button class="k-action-btn" onclick="openLogBubble(this,'sr')">📋 更新日志</button>
-          <button class="k-action-btn">⭐ 收藏</button>
+          <button class="k-action-btn" onclick="openFavByEntryId('sr_${r.id}')">⭐ 收藏</button>
           <button class="k-action-btn" onclick="openErrorModal()" style="color:#ff4d4f;border-color:#ffa39e;">⚠️ 报错</button>
         </div>
       </div>
@@ -1246,7 +1328,8 @@ function jumpToKnowledge(title, path) {
       + '<div style="font-size:12px;line-height:1.9;color:#444;background:#fff;padding:10px 12px;border-radius:4px;border:1px solid #f0f0f0;margin-bottom:10px;">（最新更新内容，请联系KM获取详情）</div>'
       + '<div style="display:flex;gap:6px;">'
       + '<button class="k-action-btn" onclick="openLogBubble(this,\'new\')">📋 更新日志</button>'
-      + '<button class="k-action-btn">⭐ 收藏</button>'
+      + (function(){ favEntryPayloadMap['NEW'] = {id:'NEW', q:title, path:path, ans:''}; return ''; })()
+      + '<button class="k-action-btn" onclick="openFavByEntryId(\'NEW\')">⭐ 收藏</button>'
       + '<button class="k-action-btn" onclick="openErrorModal(\''+path+'\')" style="color:#ff4d4f;border-color:#ffa39e;">⚠️ 报错</button>'
       + '</div></td></tr>'
       + '</tbody></table>';
@@ -1286,13 +1369,25 @@ function closeBriefingDetail() {
   document.getElementById('briefing-list-view').style.display = 'block';
 }
 function switchBriefingContent(tab) {
-  ['text','quiz','attach'].forEach(function(t) {
+  ['checkin','text','quiz','attach'].forEach(function(t) {
     var tabEl = document.getElementById('bct-' + t);
     var body  = document.getElementById('bc-'  + t);
     var isActive = t === tab;
     if (tabEl) { tabEl.style.borderBottomColor = isActive ? '#00b389' : 'transparent'; tabEl.style.color = isActive ? '#00b389' : '#666'; tabEl.style.fontWeight = isActive ? '600' : '400'; }
     if (body)  body.style.display = isActive ? 'block' : 'none';
   });
+}
+function doCheckIn() {
+  var now = new Date();
+  var pad = function(n){ return n < 10 ? '0'+n : n; };
+  var timeStr = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())
+    +' '+pad(now.getHours())+':'+pad(now.getMinutes());
+  document.getElementById('checkin-pending').style.display = 'none';
+  document.getElementById('checkin-done').style.display = 'block';
+  document.getElementById('checkinTime').textContent = timeStr;
+  document.getElementById('quiz-locked').style.display = 'none';
+  document.getElementById('quiz-content').style.display = 'block';
+  showToast('打卡成功，小测已解锁');
 }
 function setSpeed(btn, speed) {
   document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
@@ -1461,8 +1556,516 @@ function openLogBubble(btn, kId) {
   bubble.style.display = 'block';
   setTimeout(function(){ document.addEventListener('click', closeBubbleOutside, {once:true}); }, 0);
 }
+// ═══════════════════════════════════════════════════
+// ─── 收藏系统 ───
+// ═══════════════════════════════════════════════════
+
+// ── 数据结构 ──
+// 按条目id缓存收藏payload，避免内容被插入HTML属性
+var favEntryPayloadMap = {};
+
+function openFavByEntryId(entryId) {
+  var payload = favEntryPayloadMap[entryId];
+  if (!payload) { showToast('获取条目信息失败'); return; }
+  openFavFolderModal('entry', payload);
+}
+var favNextFolderId = 10;
+// 自定义目录树，最多4级，children 可嵌套
+var favFolders = [
+  { id:1, name:'工作常用', children:[
+    { id:2, name:'开户业务', children:[] },
+    { id:3, name:'转账业务', children:[] }
+  ]},
+  { id:4, name:'学习笔记', children:[
+    { id:5, name:'新客户流程', children:[] }
+  ]}
+];
+// 整条收藏 { id, entryId, q, path, ans, folderId, savedAt, version }
+var favEntries = [
+  { id:'fe1', entryId:'001', q:'如何在众安银行开立个人账户？', path:'银行事业部 › 个人银行 › 开户业务 › 开户介绍', ans:'眾安銀行（ZA Bank）開戶介紹，18歲以上香港居民持有效身份證，通過App全程網上辦理，一般5-10分鐘完成。', folderId:2, savedAt:'2026-07-01', version:1 }
+];
+// 划词笔记 { id, entryId, q, path, highlight, folderId, savedAt, outdated }
+var favNotes = [
+  { id:'fn1', entryId:'001', q:'如何在众安银行开立个人账户？', path:'银行事业部 › 个人银行 › 开户业务 › 开户介绍', highlight:'眾安銀行（ZA Bank）開戶介紹，18歲以上香港居民持有效身份證', folderId:5, savedAt:'2026-06-20', outdated:false },
+  { id:'fn2', entryId:'002', q:'开户流程详解', path:'银行事业部 › 个人银行 › 开户业务 › 开户介绍', highlight:'下載App → 輸入身份證 → 人臉識別 → 填寫資料', folderId:5, savedAt:'2026-06-15', outdated:true }
+];
+
+// ── 目录弹窗状态 ──
+var favModalMode = 'entry'; // 'entry' | 'note' | 'manage'
+var favModalPayload = null; // { id, q, path, ans } 或 { highlight, ... }
+var favSelectedFolderId = null;
+var favFolderOpenMap = {};
+
+// ── 目录树工具 ──
+function findFolder(folders, id) {
+  for (var i=0; i<folders.length; i++) {
+    if (folders[i].id === id) return folders[i];
+    if (folders[i].children.length) {
+      var r = findFolder(folders[i].children, id);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+function folderDepth(folders, id, d) {
+  d = d || 0;
+  for (var i=0; i<folders.length; i++) {
+    if (folders[i].id === id) return d;
+    if (folders[i].children.length) {
+      var r = folderDepth(folders[i].children, id, d+1);
+      if (r !== -1) return r;
+    }
+  }
+  return -1;
+}
+function getFolderPath(folders, id, path) {
+  path = path || [];
+  for (var i=0; i<folders.length; i++) {
+    var p2 = path.concat([folders[i].name]);
+    if (folders[i].id === id) return p2;
+    if (folders[i].children.length) {
+      var r = getFolderPath(folders[i].children, id, p2);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+function folderName(id) {
+  var p = getFolderPath(favFolders, id);
+  return p ? p.join(' / ') : '未分类';
+}
+
+// ── 弹窗目录树渲染 ──
+function renderFavFolderTree() {
+  var el = document.getElementById('favFolderTree');
+  if (!el) return;
+  el.innerHTML = renderFavFolderNodes(favFolders, 0);
+  // 未分类选项
+  var uncatDiv = document.createElement('div');
+  uncatDiv.className = 'fav-folder-item' + (favSelectedFolderId===0 ? ' selected' : '');
+  uncatDiv.style.paddingLeft = '14px';
+  uncatDiv.innerHTML = '<span class="fi-icon">📂</span><span class="fi-label">未分类</span>';
+  uncatDiv.onclick = function() { selectFavFolder(0); };
+  el.insertBefore(uncatDiv, el.firstChild);
+}
+function renderFavFolderNodes(nodes, depth) {
+  return nodes.map(function(n) {
+    var isOpen = favFolderOpenMap[n.id] !== false;
+    var hasChildren = n.children.length > 0;
+    var isSelected = favSelectedFolderId === n.id;
+    var indent = (depth * 14 + 14) + 'px';
+    var arrowHtml = hasChildren
+      ? '<span class="fi-arrow'+(isOpen?' open':'')+'">▶</span>'
+      : '<span class="fi-arrow" style="visibility:hidden;">▶</span>';
+    var depth4 = folderDepth(favFolders, n.id);
+    var canAddChild = (depth4 < 3);
+    var addBtn = canAddChild
+      ? '<span class="fi-add-btn" onclick="event.stopPropagation();addSubFolder('+n.id+')">+ 子目录</span>'
+      : '';
+    var row = '<div class="fav-folder-item'+(isSelected?' selected':'')+'" style="padding-left:'+indent+';" '
+      +'onclick="event.stopPropagation();selectFavFolder('+n.id+')">'
+      +arrowHtml
+      +'<span class="fi-icon">'+(hasChildren?'📁':'📂')+'</span>'
+      +'<span class="fi-label">'+n.name+'</span>'
+      +addBtn
+      +'<span class="fi-add-btn" onclick="event.stopPropagation();renameFavFolder('+n.id+')" style="margin-left:2px;color:#888;border-color:#d9d9d9;">重命名</span>'
+      +'</div>';
+    if (hasChildren) {
+      row += '<div style="'+(isOpen?'':'display:none;')+'" id="ffn-'+n.id+'">'
+        + renderFavFolderNodes(n.children, depth+1)
+        + '</div>';
+    }
+    return row;
+  }).join('');
+}
+function selectFavFolder(id) {
+  favSelectedFolderId = id;
+  renderFavFolderTree();
+}
+function addRootFolder() {
+  var name = prompt('新建目录名称：');
+  if (!name || !name.trim()) return;
+  favFolders.push({ id: favNextFolderId++, name: name.trim(), children: [] });
+  renderFavFolderTree();
+  renderFavLeftTree();
+}
+function addSubFolder(parentId) {
+  var parent = findFolder(favFolders, parentId);
+  if (!parent) return;
+  var depth = folderDepth(favFolders, parentId);
+  if (depth >= 3) { showToast('最多支持4级目录'); return; }
+  var name = prompt('新建子目录名称：');
+  if (!name || !name.trim()) return;
+  parent.children.push({ id: favNextFolderId++, name: name.trim(), children: [] });
+  favFolderOpenMap[parentId] = true;
+  renderFavFolderTree();
+  renderFavLeftTree();
+}
+function renameFavFolder(id) {
+  var f = findFolder(favFolders, id);
+  if (!f) return;
+  var name = prompt('重命名目录：', f.name);
+  if (!name || !name.trim()) return;
+  f.name = name.trim();
+  renderFavFolderTree();
+  renderFavLeftTree();
+}
+
+// ── 弹窗开关 ──
+function openFavFolderModal(mode, payload) {
+  favModalMode = mode;
+  favModalPayload = payload || null;
+  favSelectedFolderId = null;
+  var title = { entry:'选择收藏目录', note:'选择笔记存放目录', manage:'管理目录' }[mode] || '选择收藏目录';
+  var titleEl = document.getElementById('favFolderModalTitle');
+  if (titleEl) titleEl.textContent = title;
+  renderFavFolderTree();
+  document.getElementById('favFolderModal').classList.add('open');
+}
+function closeFavFolderModal() {
+  document.getElementById('favFolderModal').classList.remove('open');
+  favModalPayload = null;
+}
+function confirmFavFolder() {
+  if (favSelectedFolderId === null) { showToast('请选择一个目录'); return; }
+  if (favModalMode === 'entry' && favModalPayload) {
+    var eid = favModalPayload.id;
+    var exists = favEntries.find(function(e){ return e.entryId==eid && e.folderId===favSelectedFolderId; });
+    if (exists) { showToast('已在该目录下收藏过此条目'); closeFavFolderModal(); return; }
+    favEntries.push({ id:'fe'+(Date.now()), entryId:eid, q:favModalPayload.q, path:favModalPayload.path, ans:favModalPayload.ans, folderId:favSelectedFolderId, savedAt:todayStr(), version:1 });
+    showToast('已收藏到「'+folderName(favSelectedFolderId)+'」');
+  } else if (favModalMode === 'note' && favModalPayload) {
+    favNotes.push({ id:'fn'+(Date.now()), entryId:favModalPayload.entryId, q:favModalPayload.q, path:favModalPayload.path, highlight:favModalPayload.highlight, folderId:favSelectedFolderId, savedAt:todayStr(), outdated:false });
+    showToast('笔记已保存到「'+folderName(favSelectedFolderId)+'」');
+  } else if (favModalMode === 'manage') {
+    addRootFolder();
+    return;
+  }
+  closeFavFolderModal();
+}
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+}
+
+// ── 划词监听 ──
+var selectionPayload = null;
+document.addEventListener('mouseup', function(e) {
+  var btn = document.getElementById('selectionNoteBtn');
+  // 如果点到的就是按钮本身，不处理
+  if (btn && btn.contains(e.target)) return;
+  var sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+    if (btn) btn.style.display = 'none';
+    return;
+  }
+  var text = sel.toString().trim();
+  // 找到最近的 k-body 或 k-answer 区域，记录条目信息
+  var range = sel.getRangeAt(0);
+  var container = range.commonAncestorContainer;
+  var ansEl = container.nodeType===3 ? container.parentElement : container;
+  var kbody = ansEl.closest ? ansEl.closest('.k-body, .wiki-item, .k-answer') : null;
+  // 找到关联的条目问题和路径
+  var entryQ = '', entryPath = '', entryId = '';
+  if (kbody) {
+    var kcard = kbody.closest ? kbody.closest('.k-card') : null;
+    if (kcard) {
+      var titleEl2 = kcard.querySelector('.k-title');
+      var pathEl = kcard.querySelector('.k-path');
+      if (titleEl2) entryQ = titleEl2.textContent.trim();
+      if (pathEl) entryPath = pathEl.textContent.replace('🗂 ','').trim();
+    }
+    var wikiItem = kbody.closest ? kbody.closest('.wiki-item') : null;
+    if (wikiItem) {
+      var qEl = wikiItem.querySelector('.wiki-item-q');
+      if (qEl) entryQ = qEl.textContent.trim();
+    }
+  }
+  selectionPayload = { highlight: text, entryId: entryId, q: entryQ, path: entryPath };
+  // 定位按钮
+  var rect = range.getBoundingClientRect();
+  if (btn) {
+    btn.style.display = 'flex';
+    btn.style.left = (rect.left + rect.width/2 - 50) + 'px';
+    btn.style.top = (rect.top - 36 + window.scrollY) + 'px';
+  }
+});
+document.addEventListener('mousedown', function(e) {
+  var btn = document.getElementById('selectionNoteBtn');
+  if (btn && !btn.contains(e.target)) btn.style.display = 'none';
+});
+function openNoteFromSelection() {
+  document.getElementById('selectionNoteBtn').style.display = 'none';
+  if (!selectionPayload) return;
+  openFavFolderModal('note', selectionPayload);
+}
+
+// ── 我的收藏页面 ──
+var favPageTab = 'entry';
+var favPageFolderId = '__all__'; // '__all__' | folder id
+
+function openFavPage() {
+  document.getElementById('favPage').classList.add('open');
+  favPageTab = 'entry';
+  favPageFolderId = '__all__';
+  renderFavLeftTree();
+  renderFavRightContent();
+  document.getElementById('fpTab-entry').classList.add('active');
+  document.getElementById('fpTab-note').classList.remove('active');
+}
+function closeFavPage() {
+  document.getElementById('favPage').classList.remove('open');
+}
+function switchFavTab(tab) {
+  favPageTab = tab;
+  document.getElementById('fpTab-entry').classList.toggle('active', tab==='entry');
+  document.getElementById('fpTab-note').classList.toggle('active', tab==='note');
+  renderFavRightContent();
+}
+
+// 左侧目录树（我的收藏页）
+function renderFavLeftTree() {
+  var el = document.getElementById('favLeftTree');
+  if (!el) return;
+  el.innerHTML = '<div class="fav-left-title">自定义目录 <span class="fl-add" onclick="addRootFolderAndRefresh()">+ 新建</span></div>'
+    + renderFavDirNodes(favFolders, 0)
+    + '<div class="fav-dir-item'+(favPageFolderId==='__all__'?' active':'')+'" onclick="selectFavDirFilter(\'__all__\')" style="margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px;">'
+      +'<span style="font-size:12px;">📋 全部收藏</span>'
+    +'</div>';
+}
+function renderFavDirNodes(nodes, depth) {
+  return nodes.map(function(n) {
+    var isOpen = favFolderOpenMap['page_'+n.id] !== false;
+    var hasChildren = n.children.length > 0;
+    var isActive = favPageFolderId === n.id;
+    var indent = (depth * 12 + 10) + 'px';
+    var arrowHtml = hasChildren
+      ? '<span class="fd-arrow'+(isOpen?' open':'')+'">▶</span>'
+      : '<span class="fd-arrow" style="visibility:hidden">▶</span>';
+    var row = '<div class="fav-dir-item'+(isActive?' active':'')+'" style="padding-left:'+indent+';" onclick="selectFavDirFilter('+n.id+')">'
+      + arrowHtml
+      + '<span style="font-size:11px;margin-right:3px;">'+(hasChildren?'📁':'📂')+'</span>'
+      + '<span style="flex:1;font-size:12px;">'+n.name+'</span>'
+      + (hasChildren ? '<span style="font-size:9px;color:#ccc;cursor:pointer;" onclick="event.stopPropagation();toggleFavDir('+n.id+')">'+( isOpen?'▲':'▼')+'</span>' : '')
+      + '</div>';
+    if (hasChildren) {
+      row += '<div style="'+(isOpen?'':'display:none;')+'" id="fdir-'+n.id+'">'
+        + renderFavDirNodes(n.children, depth+1)
+        + '</div>';
+    }
+    return row;
+  }).join('');
+}
+function toggleFavDir(id) {
+  favFolderOpenMap['page_'+id] = favFolderOpenMap['page_'+id] === false ? true : false;
+  renderFavLeftTree();
+}
+function selectFavDirFilter(id) {
+  favPageFolderId = id;
+  renderFavLeftTree();
+  renderFavRightContent();
+}
+function addRootFolderAndRefresh() {
+  var name = prompt('新建目录名称：');
+  if (!name || !name.trim()) return;
+  favFolders.push({ id: favNextFolderId++, name: name.trim(), children: [] });
+  renderFavLeftTree();
+}
+
+// 右侧内容
+function renderFavRightContent() {
+  var el = document.getElementById('favRightContent');
+  if (!el) return;
+  if (favPageTab === 'entry') renderFavEntries(el);
+  else renderFavNotes(el);
+}
+
+function getFolderIds(folderId) {
+  // 返回该目录及其所有子目录的id数组
+  if (folderId === '__all__') return null;
+  var ids = [folderId];
+  var f = findFolder(favFolders, folderId);
+  if (f) collectChildIds(f, ids);
+  return ids;
+}
+function collectChildIds(folder, arr) {
+  folder.children.forEach(function(c) { arr.push(c.id); collectChildIds(c, arr); });
+}
+
+function renderFavEntries(el) {
+  var ids = getFolderIds(favPageFolderId);
+  var items = ids ? favEntries.filter(function(e){ return ids.indexOf(e.folderId)>=0 || ids.indexOf(0)>=0; }) : favEntries;
+  if (items.length === 0) { el.innerHTML = '<div style="padding:40px;text-align:center;color:#bbb;font-size:13px;">暂无收藏</div>'; return; }
+
+  // 先按自定义目录分组，再按原始路径排
+  var grouped = groupByFolder(items);
+  var html = '';
+  grouped.forEach(function(g) {
+    html += '<div class="fav-section-title">📁 '+g.folderPath+'</div>';
+    // 按原始路径排序
+    g.items.sort(function(a,b){ return a.path.localeCompare(b.path); });
+    g.items.forEach(function(e) {
+      html += '<div class="fav-entry-card">'
+        +'<div class="fec-title">'+e.q+'</div>'
+        +'<div class="fec-path">🗂 '+e.path+'</div>'
+        +'<div class="fec-answer">'+e.ans+'</div>'
+        +'<div class="fec-footer">'
+          +'<span class="fec-folder">📂 '+folderName(e.folderId)+'</span>'
+          +'<div class="fec-ops">'
+            +'<span class="fec-op" onclick="moveFavEntry(\''+e.id+'\')">移动</span>'
+            +'<span class="fec-op" onclick="deleteFavEntry(\''+e.id+'\')">删除</span>'
+          +'</div>'
+        +'</div>'
+        +'</div>';
+    });
+  });
+  el.innerHTML = html;
+}
+
+function renderFavNotes(el) {
+  var ids = getFolderIds(favPageFolderId);
+  var items = ids ? favNotes.filter(function(n){ return ids.indexOf(n.folderId)>=0; }) : favNotes;
+  if (items.length === 0) { el.innerHTML = '<div style="padding:40px;text-align:center;color:#bbb;font-size:13px;">暂无笔记</div>'; return; }
+
+  var grouped = groupByFolder(items);
+  var html = '';
+  grouped.forEach(function(g) {
+    html += '<div class="fav-section-title">📁 '+g.folderPath+'</div>';
+    g.items.sort(function(a,b){ return a.path.localeCompare(b.path); });
+    g.items.forEach(function(n) {
+      var outdatedWarn = n.outdated ? '<div class="fnc-warn">⚠️ 此划词内容已有更新，建议重新收藏</div>' : '';
+      html += '<div class="fav-note-card'+(n.outdated?' outdated':'')+'">'
+        +'<div class="fnc-src">📌 '+n.q+' · <span style="color:#aaa;">'+n.path+'</span></div>'
+        + outdatedWarn
+        +'<div class="fnc-highlight'+(n.outdated?' outdated':'')+'">"'+n.highlight+'"</div>'
+        +'<div class="fnc-footer">'
+          +'<span class="fnc-folder">📂 '+folderName(n.folderId)+'</span>'
+          +'<div class="fnc-ops">'
+            +'<span class="fnc-op" onclick="moveFavNote(\''+n.id+'\')">移动</span>'
+            +'<span class="fnc-op" onclick="deleteFavNote(\''+n.id+'\')">删除</span>'
+          +'</div>'
+        +'</div>'
+        +'</div>';
+    });
+  });
+  el.innerHTML = html;
+}
+
+function groupByFolder(items) {
+  var map = {};
+  items.forEach(function(item) {
+    var fid = item.folderId;
+    if (!map[fid]) map[fid] = { folderPath: folderName(fid), items: [] };
+    map[fid].items.push(item);
+  });
+  // 排序：按目录路径字母
+  return Object.values(map).sort(function(a,b){ return a.folderPath.localeCompare(b.folderPath); });
+}
+
+function moveFavEntry(id) {
+  var e = favEntries.find(function(x){ return x.id===id; });
+  if (!e) return;
+  favModalMode = 'move-entry';
+  favModalPayload = e;
+  favSelectedFolderId = null;
+  document.getElementById('favFolderModalTitle').textContent = '移动到目录';
+  renderFavFolderTree();
+  document.getElementById('favFolderModal').classList.add('open');
+  // 改确认按钮行为
+  document.getElementById('favFolderModal').querySelector('button:last-child').onclick = function() {
+    if (favSelectedFolderId === null) { showToast('请选择目录'); return; }
+    e.folderId = favSelectedFolderId;
+    closeFavFolderModal();
+    renderFavLeftTree();
+    renderFavRightContent();
+    showToast('已移动');
+    document.getElementById('favFolderModal').querySelector('button:last-child').onclick = confirmFavFolder;
+  };
+}
+function deleteFavEntry(id) {
+  favEntries = favEntries.filter(function(e){ return e.id!==id; });
+  renderFavRightContent();
+  showToast('已删除收藏');
+}
+function moveFavNote(id) {
+  var n = favNotes.find(function(x){ return x.id===id; });
+  if (!n) return;
+  favModalMode = 'move-note';
+  favModalPayload = n;
+  favSelectedFolderId = null;
+  document.getElementById('favFolderModalTitle').textContent = '移动到目录';
+  renderFavFolderTree();
+  document.getElementById('favFolderModal').classList.add('open');
+  document.getElementById('favFolderModal').querySelector('button:last-child').onclick = function() {
+    if (favSelectedFolderId === null) { showToast('请选择目录'); return; }
+    n.folderId = favSelectedFolderId;
+    closeFavFolderModal();
+    renderFavLeftTree();
+    renderFavRightContent();
+    showToast('已移动');
+    document.getElementById('favFolderModal').querySelector('button:last-child').onclick = confirmFavFolder;
+  };
+}
+function deleteFavNote(id) {
+  favNotes = favNotes.filter(function(n){ return n.id!==id; });
+  renderFavRightContent();
+  showToast('已删除笔记');
+}
+
+function showToast(msg) {
+  var w = document.getElementById('toastWrap');
+  if (!w) return;
+  var t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
 document.addEventListener('DOMContentLoaded', function() { renderArkKnowledge(); });
 </script>
+
+<!-- 划词笔记浮动按钮 -->
+<button id="selectionNoteBtn" onclick="openNoteFromSelection()">📝 添加笔记</button>
+
+<!-- 收藏目录选择弹窗 -->
+<div class="fav-folder-modal" id="favFolderModal" onclick="if(event.target===this)closeFavFolderModal()">
+  <div class="fav-folder-box">
+    <div class="fav-folder-head">
+      <h3 id="favFolderModalTitle">选择收藏目录</h3>
+      <span style="cursor:pointer;color:#aaa;font-size:16px;" onclick="closeFavFolderModal()">✕</span>
+    </div>
+    <div style="padding:8px 14px 0;border-bottom:1px solid #f5f5f5;flex-shrink:0;">
+      <div style="font-size:12px;color:#666;margin-bottom:6px;">选择目录（可新建），最多4级</div>
+    </div>
+    <div class="fav-folder-tree" id="favFolderTree"></div>
+    <div class="fav-folder-foot">
+      <button style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" onclick="closeFavFolderModal()">取消</button>
+      <button style="padding:5px 14px;border:1px solid #00b389;border-radius:4px;background:#00b389;color:#fff;cursor:pointer;font-size:12px;" onclick="confirmFavFolder()">确认收藏</button>
+    </div>
+  </div>
+</div>
+
+<!-- 我的收藏全屏页面 -->
+<div id="favPage">
+  <div class="fav-page-head">
+    <span class="fp-back" onclick="closeFavPage()">◀ 返回知识库</span>
+    <h2>⭐ 我的收藏</h2>
+    <button style="padding:5px 12px;border:1px solid #00b389;background:#00b389;color:#fff;border-radius:5px;font-size:12px;cursor:pointer;" onclick="openFavFolderModal('manage')">+ 新建目录</button>
+  </div>
+  <div class="fav-page-tabs">
+    <div class="fav-page-tab active" id="fpTab-entry" onclick="switchFavTab('entry')">📌 整条收藏</div>
+    <div class="fav-page-tab" id="fpTab-note" onclick="switchFavTab('note')">📝 划词笔记</div>
+  </div>
+  <div class="fav-page-body">
+    <!-- 左侧自定义目录 -->
+    <div class="fav-left" id="favLeftTree"></div>
+    <!-- 右侧内容 -->
+    <div class="fav-right" id="favRightContent"></div>
+  </div>
+</div>
+
+<!-- toast -->
+<div id="toastWrap"></div>
 
 <!-- 报错弹窗 -->
 <div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;align-items:center;justify-content:center;" id="modalError" onclick="if(event.target===this)closeErrorModal()">
