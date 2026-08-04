@@ -1190,11 +1190,21 @@ function showAISearch(q) {
             <span class="script-badge">📚 知识库标准话术</span>
             <span class="script-id-link" onclick="highlightCard(1)">【#512 開戶被拒 — 身份證件問題】</span>
           </div>
+          <div style="margin-bottom:10px;padding:8px 12px;background:#f0faf7;border-left:3px solid #00b389;border-radius:0 4px 4px 0;">
+            <div style="font-size:11px;font-weight:700;color:#00875a;margin-bottom:4px;">🤖 总结</div>
+            <div style="font-size:12px;color:#444;line-height:1.8;">根据搜索结果，开户被拒最常见原因是<strong>身份证件不符合要求</strong>（证件过期或图片模糊），其次是<strong>制裁名单匹配</strong>及<strong>内部风控规则触发</strong>。建议先引导客户确认证件有效性，如问题持续则提交人工跟进。</div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#00875a;margin-bottom:6px;">💬 参考话术</div>
           <div class="script-body">感謝您聯絡眾安銀行。根據您描述的情況，開戶申請被拒最常見的原因是<strong>身份證件資料不符合要求</strong>，例如證件已過期或上傳圖片模糊。建議您重新拍攝清晰的身份證正反面圖片，確認證件在有效期內後，再次提交申請。如問題持續，請聯絡我們的客戶服務團隊，我們將為您跟進處理。</div>
           <div class="script-notice-kb">✅ 以上話術引用自知識庫原文，摘要部分由AI綜合知識庫生成，請核對原文後使用。</div>
         </div>`
       : `<div class="script-card-ai">
           <div class="script-label">🤖 AI参考话术（仅供参考，请根据实际情况调整）</div>
+          <div style="margin-bottom:10px;padding:8px 12px;background:#f5f0ff;border-left:3px solid #7c3aed;border-radius:0 4px 4px 0;">
+            <div style="font-size:11px;font-weight:700;color:#6d28d9;margin-bottom:4px;">🤖 总结</div>
+            <div style="font-size:12px;color:#444;line-height:1.8;">根据搜索结果，开户被拒可能涉及<strong>证件问题</strong>、<strong>风控规则触发</strong>或<strong>信息不一致</strong>三类原因，知识库中暂无完全匹配的标准话术，以下为AI综合生成的参考回复。</div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#6d28d9;margin-bottom:6px;">💬 参考话术</div>
           <div class="script-body">感謝您的耐心等候。關於您的開戶申請被拒的情況，可能原因包括：證件資料不符合要求、系統風控規則觸發，或填寫資料與現有記錄不一致等。建議您確認提交的身份證件是否清晰有效，並重新嘗試開戶流程。如問題持續，請聯絡我們的客戶服務團隊，我們將為您跟進處理。</div>
           <div class="script-notice-ai">⚠️ 以上内容由AI综合知识库生成，可能包含内部专用信息，仅供客服内部参考，请以知识库原文为准，<strong>严禁直接转述或转发给客户。</strong></div>
         </div>`;
@@ -1233,8 +1243,8 @@ function buildSearchResults(q, isAI) {
   return results.map((r,i) => {
     const matchLabel = r.matchType === 'title' ? '<span class="k-tag title-match">标题匹配</span>' :
                        r.matchType === 'content' ? '<span class="k-tag content-match">答案匹配</span>' :
-                       '<span class="k-tag keyword-match">关键字匹配</span>';
-    const langTags = r.tags.map(t => `<span class="k-tag lang">${t}</span>`).join('');
+                       '';
+    const langTags = '';
     const excerptHtml = r.excerpt ? `<div class="k-excerpt" style="display:block">${r.excerpt}</div>` : '';
     favEntryPayloadMap['sr_'+r.id] = { id: r.id, q: r.title, path: r.path, ans: '' };
     return `
@@ -1251,7 +1261,6 @@ function buildSearchResults(q, isAI) {
       </div>
       <div class="k-meta"><span class="hot">🔥 热度 ${r.hot}</span><span>更新 ${r.updated}</span></div>
       <div class="k-body">
-        <div class="lang-tabs"><div class="lang-tab active">繁体中文</div>${r.tags.includes('简') ? '<div class="lang-tab">简体中文</div>' : ''}</div>
         <div class="k-answer"><p>（点击展开查看完整内容）</p></div>
         <div class="k-footer-actions">
           <button class="k-action-btn" onclick="openLogBubble(this,'sr')">📋 更新日志</button>
