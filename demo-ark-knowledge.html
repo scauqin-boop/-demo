@@ -591,9 +591,6 @@
               <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;white-space:nowrap;">知识ID</th>
               <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;">问题</th>
               <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;">标签</th>
-              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;text-align:center;">繁体中文</th>
-              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;text-align:center;">简体中文</th>
-              <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;text-align:center;">英文</th>
               <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;cursor:pointer;white-space:nowrap;" onclick="sortByHot()">热度 ↕</th>
               <th style="padding:8px 12px;font-size:11px;color:#666;font-weight:600;cursor:pointer;white-space:nowrap;" onclick="sortByTime()">更新时间 ↕</th>
             </tr>
@@ -922,15 +919,12 @@ function renderArkKnowledge(data) {
       +'<td style="padding:8px 12px;font-size:11px;color:#aaa;">'+r.id+'</td>'
       +'<td style="padding:8px 12px;font-size:12px;font-weight:600;color:#222;">'+r.q+' <span style="font-size:10px;color:#aaa;" id="aarr_'+eid+'">▶</span></td>'
       +'<td style="padding:8px 12px;">'+tagsHtml+'</td>'
-      +'<td style="padding:8px 12px;text-align:center;">'+(r.tc?'<span style="color:#52c41a;font-size:14px;">✓</span>':'<span style="color:#eee;">—</span>')+'</td>'
-      +'<td style="padding:8px 12px;text-align:center;">'+(r.sc?'<span style="color:#52c41a;font-size:14px;">✓</span>':'<span style="color:#eee;">—</span>')+'</td>'
-      +'<td style="padding:8px 12px;text-align:center;">'+(r.en?'<span style="color:#52c41a;font-size:14px;">✓</span>':'<span style="color:#eee;">—</span>')+'</td>'
       +'<td style="padding:8px 12px;color:#fa8c16;font-size:12px;">🔥 '+r.hot+'</td>'
       +'<td style="padding:8px 12px;font-size:11px;color:#aaa;white-space:nowrap;">'+r.updated+'</td>'
       +'</tr>';
 
     // 展开行
-    var expandRow = '<tr id="'+eid+'" style="display:none;"><td colspan="8" style="padding:0;">'
+    var expandRow = '<tr id="'+eid+'" style="display:none;"><td colspan="5" style="padding:0;">'
       +'<div style="background:#f9fffe;padding:14px 18px;">'
 
       // 路径 + 时间
@@ -1307,9 +1301,6 @@ function jumpToKnowledge(title, path) {
       + '<th style="padding:8px 12px;font-size:11px;color:#666;">知识ID</th>'
       + '<th style="padding:8px 12px;font-size:11px;color:#666;">问题</th>'
       + '<th style="padding:8px 12px;font-size:11px;color:#666;">标签</th>'
-      + '<th style="padding:8px 12px;font-size:11px;color:#666;text-align:center;">繁体中文</th>'
-      + '<th style="padding:8px 12px;font-size:11px;color:#666;text-align:center;">简体中文</th>'
-      + '<th style="padding:8px 12px;font-size:11px;color:#666;text-align:center;">英文</th>'
       + '<th style="padding:8px 12px;font-size:11px;color:#666;">热度</th>'
       + '<th style="padding:8px 12px;font-size:11px;color:#666;">更新时间</th>'
       + '</tr></thead>'
@@ -1318,13 +1309,10 @@ function jumpToKnowledge(title, path) {
       + '<td style="padding:8px 12px;font-size:11px;color:#aaa;">#NEW</td>'
       + '<td style="padding:8px 12px;font-size:12px;font-weight:600;color:#00b389;">'+title+' <span class="k-tag" style="background:#e6f7ff;color:#1890ff;border:1px solid #91d5ff;font-size:10px;padding:1px 5px;border-radius:4px;">今日更新</span></td>'
       + '<td style="padding:8px 12px;">—</td>'
-      + '<td style="padding:8px 12px;text-align:center;color:#52c41a;">✓</td>'
-      + '<td style="padding:8px 12px;text-align:center;color:#ddd;">—</td>'
-      + '<td style="padding:8px 12px;text-align:center;color:#ddd;">—</td>'
       + '<td style="padding:8px 12px;color:#fa8c16;">🔥 0</td>'
       + '<td style="padding:8px 12px;font-size:11px;color:#aaa;">今日</td>'
       + '</tr>'
-      + '<tr style="background:#f9fffe;"><td colspan="8" style="padding:12px 16px;">'
+      + '<tr style="background:#f9fffe;"><td colspan="5" style="padding:12px 16px;">'
       + '<div style="font-size:12px;line-height:1.9;color:#444;background:#fff;padding:10px 12px;border-radius:4px;border:1px solid #f0f0f0;margin-bottom:10px;">（最新更新内容，请联系KM获取详情）</div>'
       + '<div style="display:flex;gap:6px;">'
       + '<button class="k-action-btn" onclick="openLogBubble(this,\'new\')">📋 更新日志</button>'
