@@ -371,6 +371,12 @@
   .folder-inline-row .fi-ok { padding:3px 10px; background:#00b389; color:#fff; border:none; border-radius:4px; font-size:12px; cursor:pointer; white-space:nowrap; }
   .folder-inline-row .fi-cancel { padding:3px 8px; background:#fff; color:#aaa; border:1px solid #d9d9d9; border-radius:4px; font-size:12px; cursor:pointer; white-space:nowrap; }
   .folder-inline-row .fi-hint { font-size:11px; color:#888; white-space:nowrap; flex-shrink:0; }
+  /* 目录删除按钮 — hover 显示 */
+  .fd-del, .fi-del { visibility:hidden; font-size:10px; color:#bbb; cursor:pointer; padding:0 3px; white-space:nowrap; flex-shrink:0; border-radius:3px; transition:color 0.15s; }
+  .fav-dir-item:hover .fd-del,
+  .fav-folder-item:hover .fi-del { visibility:visible; }
+  .fd-del:hover, .fi-del:hover { color:#ff4d4f; }
+  .fd-del.confirming, .fi-del.confirming { color:#ff4d4f; font-weight:600; visibility:visible; }
 
   /* toast */
   #toastWrap { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; align-items:center; }
@@ -1610,6 +1616,14 @@ function findFolder(folders, id) {
   }
   return null;
 }
+// 从树中删除指定节点（递归），返回是否找到并删除
+function removeFolder(folders, id) {
+  for (var i=0; i<folders.length; i++) {
+    if (folders[i].id === id) { folders.splice(i, 1); return true; }
+    if (folders[i].children.length && removeFolder(folders[i].children, id)) return true;
+  }
+  return false;
+}
 function folderDepth(folders, id, d) {
   d = d || 0;
   for (var i=0; i<folders.length; i++) {
@@ -1678,6 +1692,7 @@ function renderFavFolderNodes(nodes, depth) {
       +arrowHtml
       +'<span class="fi-icon">'+(hasChildren?'📁':'📂')+'</span>'
       +'<span class="fi-label">'+n.name+'</span>'
+      +'<span class="fi-del" data-fid="'+n.id+'" title="删除目录" onclick="event.stopPropagation();modalTryDeleteFolder(this,'+n.id+')">✕</span>'
       +'</div>';
     if (hasChildren) {
       row += '<div style="'+(isOpen?'':'display:none;')+'" id="ffn-'+n.id+'">'
@@ -1937,11 +1952,13 @@ function renderFavDirNodes(nodes, depth) {
     var addChildBtn = canAddChild
       ? '<span style="font-size:10px;color:#00b389;cursor:pointer;padding:0 4px;white-space:nowrap;flex-shrink:0;" onclick="event.stopPropagation();pageStartInlineChild('+n.id+')">+子目录</span>'
       : '';
+    var delBtn = '<span class="fd-del" data-fid="'+n.id+'" title="删除目录" onclick="event.stopPropagation();pageTryDeleteFolder(this,'+n.id+')">✕</span>';
     var row = '<div class="fav-dir-item'+(isActive?' active':'')+'" style="padding-left:'+indent+';" onclick="selectFavDirFilter('+n.id+')">'
       + arrowHtml
       + '<span style="font-size:11px;margin-right:3px;">'+(hasChildren?'📁':'📂')+'</span>'
       + '<span style="flex:1;font-size:12px;">'+n.name+'</span>'
       + addChildBtn
+      + delBtn
       + '</div>';
     if (hasChildren) {
       row += '<div style="'+(isOpen?'':'display:none;')+'" id="fdir-'+n.id+'">'
@@ -2022,6 +2039,79 @@ function pageCancelInline() {
 function addRootFolderFromPage() { pageStartInline('root'); }
 // 兼容旧调用
 function addRootFolderAndRefresh() { pageStartInline('root'); }
+
+// 左树删除目录 — 二次确认（hover 显示，点一次变红提示，再点确认删除）
+function pageTryDeleteFolder(btn, id) {
+  if (btn.classList.contains('confirming')) {
+    // 第二次点击 — 执行删除
+    pageDeleteFolder(id);
+  } else {
+    // 第一次点击 — 进入确认态，重置其他正在确认的按钮
+    document.querySelectorAll('.fd-del.confirming').forEach(function(b) {
+      b.classList.remove('confirming'); b.textContent = '✕';
+    });
+    btn.classList.add('confirming');
+    btn.textContent = '确认删除?';
+    // 点别处取消
+    setTimeout(function() {
+      document.addEventListener('click', function cancel(e) {
+        if (e.target !== btn) { btn.classList.remove('confirming'); btn.textContent = '✕'; }
+        document.removeEventListener('click', cancel);
+      });
+    }, 0);
+  }
+}
+// 左树删除目录（含子目录），条目归入未分类
+function pageDeleteFolder(id) {
+  var folders = favPageTab === 'note' ? noteFolders : favFolders;
+  var delIds = [id];
+  var node = findFolder(folders, id);
+  if (node) collectChildIds(node, delIds);
+  if (favPageTab === 'note') {
+    favNotes.forEach(function(n) { if (delIds.indexOf(n.folderId) >= 0) n.folderId = 0; });
+  } else {
+    favEntries.forEach(function(e) { if (delIds.indexOf(e.folderId) >= 0) e.folderId = 0; });
+  }
+  removeFolder(folders, id);
+  if (delIds.indexOf(favPageFolderId) >= 0) favPageFolderId = '__all__';
+  renderFavLeftTree();
+  renderFavRightContent();
+}
+
+// 弹窗删除目录 — 二次确认
+function modalTryDeleteFolder(btn, id) {
+  if (btn.classList.contains('confirming')) {
+    modalDeleteFolder(id);
+  } else {
+    document.querySelectorAll('.fi-del.confirming').forEach(function(b) {
+      b.classList.remove('confirming'); b.textContent = '✕';
+    });
+    btn.classList.add('confirming');
+    btn.textContent = '确认删除?';
+    setTimeout(function() {
+      document.addEventListener('click', function cancel(e) {
+        if (e.target !== btn) { btn.classList.remove('confirming'); btn.textContent = '✕'; }
+        document.removeEventListener('click', cancel);
+      });
+    }, 0);
+  }
+}
+// 弹窗删除目录
+function modalDeleteFolder(id) {
+  var folders = getFoldersByMode(favModalMode);
+  var delIds = [id];
+  var node = findFolder(folders, id);
+  if (node) collectChildIds(node, delIds);
+  if (favModalMode === 'note' || favModalMode === 'move-note') {
+    favNotes.forEach(function(n) { if (delIds.indexOf(n.folderId) >= 0) n.folderId = 0; });
+  } else {
+    favEntries.forEach(function(e) { if (delIds.indexOf(e.folderId) >= 0) e.folderId = 0; });
+  }
+  removeFolder(folders, id);
+  if (delIds.indexOf(favSelectedFolderId) >= 0) favSelectedFolderId = 0;
+  renderFavFolderTree();
+  renderFavLeftTree();
+}
 
 // 右侧内容
 function renderFavRightContent() {
