@@ -401,8 +401,22 @@ tr:hover td { background: #fafffe; }
 
       <!-- 左侧目录树 -->
       <div style="width:280px;background:#fff;border-right:1px solid #e8e8e8;display:flex;flex-direction:column;flex-shrink:0;">
-        <div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;">
+        <div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <span style="font-size:13px;font-weight:700;color:#222;">目录管理</span>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;" title="显示简体中文版本">
+              <span style="font-size:11px;color:#555;white-space:nowrap;">简体</span>
+              <span class="lang-toggle" id="toggle-sc" onclick="catToggleLang('sc',this)" style="display:inline-flex;align-items:center;width:32px;height:18px;border-radius:9px;background:#d9d9d9;padding:2px;cursor:pointer;transition:background 0.2s;flex-shrink:0;">
+                <span style="width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:transform 0.2s;display:block;"></span>
+              </span>
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;" title="显示英语版本">
+              <span style="font-size:11px;color:#555;white-space:nowrap;">EN</span>
+              <span class="lang-toggle" id="toggle-en" onclick="catToggleLang('en',this)" style="display:inline-flex;align-items:center;width:32px;height:18px;border-radius:9px;background:#d9d9d9;padding:2px;cursor:pointer;transition:background 0.2s;flex-shrink:0;">
+                <span style="width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:transform 0.2s;display:block;"></span>
+              </span>
+            </label>
+          </div>
         </div>
         <div style="padding:8px 12px;border-bottom:1px solid #f0f0f0;">
           <input class="table-search" style="width:100%;" placeholder="搜索目录名称" oninput="catSearch(this.value)">
@@ -485,6 +499,15 @@ tr:hover td { background: #fafffe; }
             </div>
           </div>
 
+          <!-- 三语说明 + 语言tab -->
+          <div style="background:#e6f7ff;border:1px solid #91d5ff;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#1890ff;">📌 <strong>语种规则：</strong>繁体中文为必填。简体中文和英文若有填写，客服在ARK勾选对应语种时会自动显示；附件在所有已填写语种下均可查看。
+          </div>
+          <div style="border-bottom:1px solid #f0f0f0;display:flex;margin-bottom:12px;">
+            <div id="etab-tc" onclick="switchEntryLang('tc')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid #00b389;color:#00b389;font-weight:600;">繁体中文 <span style="color:#ff4d4f;">*</span></div>
+            <div id="etab-sc" onclick="switchEntryLang('sc')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#888;">简体中文（选填）</div>
+            <div id="etab-en" onclick="switchEntryLang('en')" style="padding:6px 16px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;color:#888;">English（选填）</div>
+          </div>
+
           <!-- 问题 + 解释事项 -->
           <div id="entry-lang-tc">
             <div class="form-group" style="margin-bottom:10px;">
@@ -538,6 +561,36 @@ tr:hover td { background: #fafffe; }
               <div style="border:1px dashed #d9d9d9;border-radius:4px;padding:8px 12px;background:#fafafa;">
                 <div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-default btn-sm" onclick="simulateUpload()">+ 选择文件</button><span style="font-size:11px;color:#aaa;">doc/docx/pdf/xls/xlsx/ppt/jpg/png，≤50MB；各语种均可查看</span></div>
                 <div id="attachList" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 简体中文 -->
+          <div id="entry-lang-sc" style="display:none;">
+            <div class="form-group" style="margin-bottom:10px;">
+              <div class="form-label">相关问题（简体）</div>
+              <input class="form-control" placeholder="请输入问题标题（简体中文）">
+            </div>
+            <div class="form-group">
+              <div class="form-label">解释事项（简体）</div>
+              <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
+                <div style="padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:11px;color:#aaa;">富文本工具栏（同繁体）</div>
+                <div contenteditable="true" style="min-height:160px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- English -->
+          <div id="entry-lang-en" style="display:none;">
+            <div class="form-group" style="margin-bottom:10px;">
+              <div class="form-label">Question (English)</div>
+              <input class="form-control" placeholder="Enter question title in English">
+            </div>
+            <div class="form-group">
+              <div class="form-label">Answer (English)</div>
+              <div style="border:1px solid #d9d9d9;border-radius:4px;overflow:hidden;">
+                <div style="padding:5px 8px;background:#fafafa;border-bottom:1px solid #f0f0f0;font-size:11px;color:#aaa;">Rich text editor (same as Chinese)</div>
+                <div contenteditable="true" style="min-height:160px;padding:10px 12px;font-size:13px;line-height:1.9;outline:none;"></div>
               </div>
             </div>
           </div>
@@ -1247,6 +1300,17 @@ tr:hover td { background: #fafffe; }
 // ══════════════════════════════════════
 // 目录管理
 // ══════════════════════════════════════
+/* ── 语言切换开关 ── */
+var catLangState = { sc: false, en: false };
+function catToggleLang(lang, el) {
+  catLangState[lang] = !catLangState[lang];
+  var on = catLangState[lang];
+  el.style.background = on ? '#00b389' : '#d9d9d9';
+  var knob = el.querySelector('span');
+  knob.style.transform = on ? 'translateX(14px)' : 'translateX(0)';
+  showToast((lang === 'sc' ? '简体中文' : '英语') + '版本已' + (on ? '开启' : '关闭'));
+}
+
 var catData = [
   { id:1, pid:0, level:1, name:'银行客服CS事业部', status:'enabled', type:'root' },
   { id:2, pid:1, level:2, name:'个人银行', status:'enabled', type:'module' },
@@ -1632,19 +1696,49 @@ function catKnowledgeTable(node) {
         +'<span>📅 创建：'+r.time+'</span>'
         +'<span>🔄 更新：'+r.time+'</span>'
         +'</div>'
-      // 第2行：问题
-      +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;margin-top:10px;">'
-        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题</div>'
+      // 第2行：三语种切换
+      +'<div style="display:flex;gap:6px;padding:10px 0;">'
+        +'<button class="lang-tab" id="lt_'+r.id+'_tc" onclick="switchKLang(\''+r.id+'\',\'tc\')" style="padding:5px 14px;border:1px solid #00b389;border-radius:14px;background:#00b389;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">繁 繁体中文</button>'
+        +'<button class="lang-tab" id="lt_'+r.id+'_sc" onclick="switchKLang(\''+r.id+'\',\'sc\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">简 简体中文</button>'
+        +'<button class="lang-tab" id="lt_'+r.id+'_en" onclick="switchKLang(\''+r.id+'\',\'en\')" style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:14px;background:#fff;color:#555;font-size:12px;cursor:pointer;">EN English</button>'
+        +'</div>'
+      // 第3行：问题（三语种）
+      +'<div id="kq_'+r.id+'_tc" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题（繁体中文）</div>'
         +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.tc.q+'</div>'
         +'</div>'
-      // 第3行：答案
-      +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
+      +'<div id="kq_'+r.id+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 问题（简体中文）</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.sc.q+'</div>'
+        +'</div>'
+      +'<div id="kq_'+r.id+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📌 Question (English)</div>'
+        +'<div style="font-size:13px;font-weight:600;color:#222;">'+langs.en.q+'</div>'
+        +'</div>'
+      // 第4行：答案（三语种）
+      +'<div id="ka_'+r.id+'_tc" style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
-          +'<span style="font-size:11px;color:#aaa;">💡 答案</span>'
+          +'<span style="font-size:11px;color:#aaa;">💡 答案（繁体中文）</span>'
           +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'tc\')">📑 目录导航</span>'
         +'</div>'
         +'<div id="koutline_'+r.id+'_tc" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
         +'<div id="kacontent_'+r.id+'_tc" style="font-size:12px;line-height:1.8;color:#444;">'+langs.tc.a+'</div>'
+        +'</div>'
+      +'<div id="ka_'+r.id+'_sc" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
+          +'<span style="font-size:11px;color:#aaa;">💡 答案（简体中文）</span>'
+          +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'sc\')">📑 目录导航</span>'
+        +'</div>'
+        +'<div id="koutline_'+r.id+'_sc" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
+        +'<div id="kacontent_'+r.id+'_sc" style="font-size:12px;line-height:1.8;color:#444;">'+langs.sc.a+'</div>'
+        +'</div>'
+      +'<div id="ka_'+r.id+'_en" style="display:none;background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;margin-bottom:8px;position:relative;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
+          +'<span style="font-size:11px;color:#aaa;">💡 Answer (English)</span>'
+          +'<span style="font-size:11px;color:#00b389;cursor:pointer;padding:2px 8px;border:1px solid #b7e8d8;border-radius:3px;background:#f0faf7;" onclick="event.stopPropagation();toggleKOutline(\''+r.id+'\',\'en\')">📑 目录导航</span>'
+        +'</div>'
+        +'<div id="koutline_'+r.id+'_en" style="display:none;background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:8px 12px;margin-bottom:8px;"></div>'
+        +'<div id="kacontent_'+r.id+'_en" style="font-size:12px;line-height:1.8;color:#444;">'+langs.en.a+'</div>'
         +'</div>'
       // 第5行：附件
       +'<div style="background:#fff;border:1px solid #f0f0f0;border-radius:4px;padding:10px 14px;">'

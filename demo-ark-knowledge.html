@@ -365,6 +365,13 @@
   .fav-note-card .fnc-op { font-size:11px; color:#aaa; cursor:pointer; padding:2px 6px; border:1px solid #e8e8e8; border-radius:3px; }
   .fav-note-card .fnc-op:hover { color:#ff4d4f; border-color:#ffa39e; }
 
+  /* ── 目录内联输入行 ── */
+  .folder-inline-row { display:flex; align-items:center; gap:6px; padding:5px 10px 5px 14px; background:#f0faf7; border-top:1px solid #d9f0e8; flex-shrink:0; }
+  .folder-inline-row input { flex:1; border:1px solid #00b389; border-radius:4px; padding:4px 8px; font-size:12px; outline:none; min-width:0; }
+  .folder-inline-row .fi-ok { padding:3px 10px; background:#00b389; color:#fff; border:none; border-radius:4px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .folder-inline-row .fi-cancel { padding:3px 8px; background:#fff; color:#aaa; border:1px solid #d9d9d9; border-radius:4px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .folder-inline-row .fi-hint { font-size:11px; color:#888; white-space:nowrap; flex-shrink:0; }
+
   /* toast */
   #toastWrap { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; align-items:center; }
   .toast { background:rgba(0,0,0,0.75); color:#fff; padding:7px 16px; border-radius:20px; font-size:13px; animation:fadeInUp 0.2s; }
@@ -1560,16 +1567,21 @@ function openFavByEntryId(entryId) {
   if (!payload) { showToast('获取条目信息失败'); return; }
   openFavFolderModal('entry', payload);
 }
-var favNextFolderId = 10;
-// 自定义目录树，最多4级，children 可嵌套
+var favNextFolderId = 20;
+// 收藏专用目录树（整条收藏用），最多4级
 var favFolders = [
   { id:1, name:'工作常用', children:[
     { id:2, name:'开户业务', children:[] },
     { id:3, name:'转账业务', children:[] }
   ]},
-  { id:4, name:'学习笔记', children:[
-    { id:5, name:'新客户流程', children:[] }
-  ]}
+  { id:4, name:'重点知识', children:[] }
+];
+// 笔记专用目录树（划词笔记用），最多4级
+var noteFolders = [
+  { id:11, name:'学习笔记', children:[
+    { id:12, name:'新客户流程', children:[] }
+  ]},
+  { id:13, name:'待复习', children:[] }
 ];
 // 整条收藏 { id, entryId, q, path, ans, folderId, savedAt, version }
 var favEntries = [
@@ -1577,8 +1589,8 @@ var favEntries = [
 ];
 // 划词笔记 { id, entryId, q, path, highlight, folderId, savedAt, outdated }
 var favNotes = [
-  { id:'fn1', entryId:'001', q:'如何在众安银行开立个人账户？', path:'银行事业部 › 个人银行 › 开户业务 › 开户介绍', highlight:'眾安銀行（ZA Bank）開戶介紹，18歲以上香港居民持有效身份證', folderId:5, savedAt:'2026-06-20', outdated:false },
-  { id:'fn2', entryId:'002', q:'开户流程详解', path:'银行事业部 › 个人银行 › 开户业务 › 开户介绍', highlight:'下載App → 輸入身份證 → 人臉識別 → 填寫資料', folderId:5, savedAt:'2026-06-15', outdated:true }
+  { id:'fn1', entryId:'001', q:'如何在众安银行开立个人账户？', path:'银行事业部 › 个人银行 › 开户业务 › 开户介绍', highlight:'眾安銀行（ZA Bank）開戶介紹，18歲以上香港居民持有效身份證', folderId:12, savedAt:'2026-06-20', outdated:false },
+  { id:'fn2', entryId:'002', q:'开户流程详解', path:'银行事业部 › 个人银行 › 开户业务 › 开户介绍', highlight:'下載App → 輸入身份證 → 人臉識別 → 填寫資料', folderId:12, savedAt:'2026-06-15', outdated:true }
 ];
 
 // ── 目录弹窗状态 ──
@@ -1587,7 +1599,7 @@ var favModalPayload = null; // { id, q, path, ans } 或 { highlight, ... }
 var favSelectedFolderId = null;
 var favFolderOpenMap = {};
 
-// ── 目录树工具 ──
+// ── 目录树工具（通用，接受 folders 参数）──
 function findFolder(folders, id) {
   for (var i=0; i<folders.length; i++) {
     if (folders[i].id === id) return folders[i];
@@ -1621,16 +1633,26 @@ function getFolderPath(folders, id, path) {
   }
   return null;
 }
-function folderName(id) {
-  var p = getFolderPath(favFolders, id);
+// 根据 mode 获取对应目录树
+function getFoldersByMode(mode) {
+  return (mode === 'note' || mode === 'move-note') ? noteFolders : favFolders;
+}
+// 获取条目所属目录名（先尝试收藏目录，再尝试笔记目录）
+function folderName(id, folders) {
+  var tree = folders || favFolders;
+  var p = getFolderPath(tree, id);
+  if (!p && folders !== noteFolders) p = getFolderPath(noteFolders, id);
   return p ? p.join(' / ') : '未分类';
 }
 
 // ── 弹窗目录树渲染 ──
+var favInlineMode = null; // null | 'root' | 'child'  (弹窗内联输入状态)
+
 function renderFavFolderTree() {
   var el = document.getElementById('favFolderTree');
   if (!el) return;
-  el.innerHTML = renderFavFolderNodes(favFolders, 0);
+  var folders = getFoldersByMode(favModalMode);
+  el.innerHTML = renderFavFolderNodes(folders, 0);
   // 未分类选项
   var uncatDiv = document.createElement('div');
   uncatDiv.className = 'fav-folder-item' + (favSelectedFolderId===0 ? ' selected' : '');
@@ -1638,8 +1660,11 @@ function renderFavFolderTree() {
   uncatDiv.innerHTML = '<span class="fi-icon">📂</span><span class="fi-label">未分类</span>';
   uncatDiv.onclick = function() { selectFavFolder(0); };
   el.insertBefore(uncatDiv, el.firstChild);
+  // 更新底部按钮状态
+  updateModalFolderBtns();
 }
 function renderFavFolderNodes(nodes, depth) {
+  var folders = getFoldersByMode(favModalMode);
   return nodes.map(function(n) {
     var isOpen = favFolderOpenMap[n.id] !== false;
     var hasChildren = n.children.length > 0;
@@ -1648,18 +1673,11 @@ function renderFavFolderNodes(nodes, depth) {
     var arrowHtml = hasChildren
       ? '<span class="fi-arrow'+(isOpen?' open':'')+'">▶</span>'
       : '<span class="fi-arrow" style="visibility:hidden;">▶</span>';
-    var depth4 = folderDepth(favFolders, n.id);
-    var canAddChild = (depth4 < 3);
-    var addBtn = canAddChild
-      ? '<span class="fi-add-btn" onclick="event.stopPropagation();addSubFolder('+n.id+')">+ 子目录</span>'
-      : '';
     var row = '<div class="fav-folder-item'+(isSelected?' selected':'')+'" style="padding-left:'+indent+';" '
       +'onclick="event.stopPropagation();selectFavFolder('+n.id+')">'
       +arrowHtml
       +'<span class="fi-icon">'+(hasChildren?'📁':'📂')+'</span>'
       +'<span class="fi-label">'+n.name+'</span>'
-      +addBtn
-      +'<span class="fi-add-btn" onclick="event.stopPropagation();renameFavFolder('+n.id+')" style="margin-left:2px;color:#888;border-color:#d9d9d9;">重命名</span>'
       +'</div>';
     if (hasChildren) {
       row += '<div style="'+(isOpen?'':'display:none;')+'" id="ffn-'+n.id+'">'
@@ -1669,31 +1687,103 @@ function renderFavFolderNodes(nodes, depth) {
     return row;
   }).join('');
 }
+function updateModalFolderBtns() {
+  var folders = getFoldersByMode(favModalMode);
+  var childBtn = document.getElementById('modalAddChildBtn');
+  if (!childBtn) return;
+  var canChild = false;
+  if (favSelectedFolderId !== null && favSelectedFolderId !== 0) {
+    var d = folderDepth(folders, favSelectedFolderId);
+    canChild = (d < 3);
+  }
+  childBtn.disabled = !canChild;
+  childBtn.style.opacity = canChild ? '1' : '0.4';
+  childBtn.style.cursor = canChild ? 'pointer' : 'not-allowed';
+}
 function selectFavFolder(id) {
   favSelectedFolderId = id;
+  favInlineMode = null;
+  // 清除内联输入行（如果有）
+  var existing = document.getElementById('modalFolderInlineRow');
+  if (existing) existing.remove();
   renderFavFolderTree();
 }
-function addRootFolder() {
-  var name = prompt('新建目录名称：');
-  if (!name || !name.trim()) return;
-  favFolders.push({ id: favNextFolderId++, name: name.trim(), children: [] });
+
+// 弹窗内联新建——在 fav-folder-tree 底部插入输入行
+function modalStartInlineFolder(mode) {
+  favInlineMode = mode;
+  // 清除已有的内联行
+  var old = document.getElementById('modalFolderInlineRow');
+  if (old) old.remove();
+  var folders = getFoldersByMode(favModalMode);
+
+  var hint = mode === 'root' ? '新建根目录' : '在「'+getFolderName(favSelectedFolderId, folders)+'」下新建子目录';
+  var row = document.createElement('div');
+  row.id = 'modalFolderInlineRow';
+  row.className = 'folder-inline-row';
+  row.innerHTML = '<span class="fi-hint">'+hint+'：</span>'
+    + '<input id="modalFolderInlineInput" placeholder="目录名称" autocomplete="off">'
+    + '<button class="fi-ok" onclick="modalConfirmInlineFolder()">确定</button>'
+    + '<button class="fi-cancel" onclick="modalCancelInlineFolder()">取消</button>';
+
+  // 插到 fav-folder-tree 之后（foot 之前）
+  var tree = document.getElementById('favFolderTree');
+  tree.parentNode.insertBefore(row, tree.nextSibling);
+  setTimeout(function() {
+    var inp = document.getElementById('modalFolderInlineInput');
+    if (inp) {
+      inp.focus();
+      inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') modalConfirmInlineFolder();
+        if (e.key === 'Escape') modalCancelInlineFolder();
+      });
+    }
+  }, 20);
+}
+function getFolderName(id, folders) {
+  var p = getFolderPath(folders, id);
+  return p ? p[p.length-1] : '未分类';
+}
+function modalConfirmInlineFolder() {
+  var inp = document.getElementById('modalFolderInlineInput');
+  if (!inp) return;
+  var name = inp.value.trim();
+  if (!name) { showToast('请输入目录名称'); inp.focus(); return; }
+  var folders = getFoldersByMode(favModalMode);
+
+  if (favInlineMode === 'root') {
+    folders.push({ id: favNextFolderId++, name: name, children: [] });
+  } else if (favInlineMode === 'child') {
+    var parent = findFolder(folders, favSelectedFolderId);
+    if (!parent) return;
+    parent.children.push({ id: favNextFolderId++, name: name, children: [] });
+    favFolderOpenMap[favSelectedFolderId] = true;
+  }
+  favInlineMode = null;
+  var row = document.getElementById('modalFolderInlineRow');
+  if (row) row.remove();
   renderFavFolderTree();
   renderFavLeftTree();
+}
+function modalCancelInlineFolder() {
+  favInlineMode = null;
+  var row = document.getElementById('modalFolderInlineRow');
+  if (row) row.remove();
+}
+
+function addRootFolder() {
+  modalStartInlineFolder('root');
 }
 function addSubFolder(parentId) {
-  var parent = findFolder(favFolders, parentId);
-  if (!parent) return;
-  var depth = folderDepth(favFolders, parentId);
+  var folders = getFoldersByMode(favModalMode);
+  var depth = folderDepth(folders, parentId);
   if (depth >= 3) { showToast('最多支持4级目录'); return; }
-  var name = prompt('新建子目录名称：');
-  if (!name || !name.trim()) return;
-  parent.children.push({ id: favNextFolderId++, name: name.trim(), children: [] });
-  favFolderOpenMap[parentId] = true;
-  renderFavFolderTree();
-  renderFavLeftTree();
+  favSelectedFolderId = parentId;
+  modalStartInlineFolder('child');
 }
 function renameFavFolder(id) {
-  var f = findFolder(favFolders, id);
+  var folders = getFoldersByMode(favModalMode);
+  var f = findFolder(folders, id);
   if (!f) return;
   var name = prompt('重命名目录：', f.name);
   if (!name || !name.trim()) return;
@@ -1724,10 +1814,10 @@ function confirmFavFolder() {
     var exists = favEntries.find(function(e){ return e.entryId==eid && e.folderId===favSelectedFolderId; });
     if (exists) { showToast('已在该目录下收藏过此条目'); closeFavFolderModal(); return; }
     favEntries.push({ id:'fe'+(Date.now()), entryId:eid, q:favModalPayload.q, path:favModalPayload.path, ans:favModalPayload.ans, folderId:favSelectedFolderId, savedAt:todayStr(), version:1 });
-    showToast('已收藏到「'+folderName(favSelectedFolderId)+'」');
+    showToast('已收藏到「'+folderName(favSelectedFolderId, favFolders)+'」');
   } else if (favModalMode === 'note' && favModalPayload) {
     favNotes.push({ id:'fn'+(Date.now()), entryId:favModalPayload.entryId, q:favModalPayload.q, path:favModalPayload.path, highlight:favModalPayload.highlight, folderId:favSelectedFolderId, savedAt:todayStr(), outdated:false });
-    showToast('笔记已保存到「'+folderName(favSelectedFolderId)+'」');
+    showToast('笔记已保存到「'+folderName(favSelectedFolderId, noteFolders)+'」');
   } else if (favModalMode === 'manage') {
     addRootFolder();
     return;
@@ -1809,22 +1899,32 @@ function closeFavPage() {
 }
 function switchFavTab(tab) {
   favPageTab = tab;
+  favPageFolderId = '__all__'; // 切换 tab 时重置目录筛选
   document.getElementById('fpTab-entry').classList.toggle('active', tab==='entry');
   document.getElementById('fpTab-note').classList.toggle('active', tab==='note');
+  renderFavLeftTree();
   renderFavRightContent();
 }
 
-// 左侧目录树（我的收藏页）
+// 左侧目录树（我的收藏页）—— 根据当前 tab 显示对应目录
+var pageInlineMode = null; // null | 'root' | 'child'
+var pageInlineParentId = null;
+
 function renderFavLeftTree() {
   var el = document.getElementById('favLeftTree');
   if (!el) return;
-  el.innerHTML = '<div class="fav-left-title">自定义目录 <span class="fl-add" onclick="addRootFolderAndRefresh()">+ 新建</span></div>'
-    + renderFavDirNodes(favFolders, 0)
+  var folders = favPageTab === 'note' ? noteFolders : favFolders;
+  el.innerHTML = '<div class="fav-left-title">'
+    + (favPageTab === 'note' ? '笔记目录' : '收藏目录')
+    + ' <span class="fl-add" onclick="pageStartInline(\'root\')">+ 新建</span></div>'
+    + renderFavDirNodes(folders, 0)
     + '<div class="fav-dir-item'+(favPageFolderId==='__all__'?' active':'')+'" onclick="selectFavDirFilter(\'__all__\')" style="margin-top:8px;border-top:1px solid #f0f0f0;padding-top:8px;">'
-      +'<span style="font-size:12px;">📋 全部收藏</span>'
+      +'<span style="font-size:12px;">📋 全部</span>'
     +'</div>';
+  if (pageInlineMode) _appendPageInlineRow(el, folders);
 }
 function renderFavDirNodes(nodes, depth) {
+  var folders = favPageTab === 'note' ? noteFolders : favFolders;
   return nodes.map(function(n) {
     var isOpen = favFolderOpenMap['page_'+n.id] !== false;
     var hasChildren = n.children.length > 0;
@@ -1833,11 +1933,15 @@ function renderFavDirNodes(nodes, depth) {
     var arrowHtml = hasChildren
       ? '<span class="fd-arrow'+(isOpen?' open':'')+'">▶</span>'
       : '<span class="fd-arrow" style="visibility:hidden">▶</span>';
+    var canAddChild = (folderDepth(folders, n.id) < 3);
+    var addChildBtn = canAddChild
+      ? '<span style="font-size:10px;color:#00b389;cursor:pointer;padding:0 4px;white-space:nowrap;flex-shrink:0;" onclick="event.stopPropagation();pageStartInlineChild('+n.id+')">+子目录</span>'
+      : '';
     var row = '<div class="fav-dir-item'+(isActive?' active':'')+'" style="padding-left:'+indent+';" onclick="selectFavDirFilter('+n.id+')">'
       + arrowHtml
       + '<span style="font-size:11px;margin-right:3px;">'+(hasChildren?'📁':'📂')+'</span>'
       + '<span style="flex:1;font-size:12px;">'+n.name+'</span>'
-      + (hasChildren ? '<span style="font-size:9px;color:#ccc;cursor:pointer;" onclick="event.stopPropagation();toggleFavDir('+n.id+')">'+( isOpen?'▲':'▼')+'</span>' : '')
+      + addChildBtn
       + '</div>';
     if (hasChildren) {
       row += '<div style="'+(isOpen?'':'display:none;')+'" id="fdir-'+n.id+'">'
@@ -1853,15 +1957,71 @@ function toggleFavDir(id) {
 }
 function selectFavDirFilter(id) {
   favPageFolderId = id;
+  pageInlineMode = null;
   renderFavLeftTree();
   renderFavRightContent();
 }
-function addRootFolderAndRefresh() {
-  var name = prompt('新建目录名称：');
-  if (!name || !name.trim()) return;
-  favFolders.push({ id: favNextFolderId++, name: name.trim(), children: [] });
+
+// 左树内联新建
+function pageStartInline(mode, parentId) {
+  pageInlineMode = mode;
+  pageInlineParentId = parentId || null;
+  renderFavLeftTree();
+  setTimeout(function() {
+    var inp = document.getElementById('pageInlineInput');
+    if (inp) {
+      inp.focus();
+      inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') pageConfirmInline();
+        if (e.key === 'Escape') { pageInlineMode = null; renderFavLeftTree(); }
+      });
+    }
+  }, 20);
+}
+function pageStartInlineChild(parentId) {
+  favFolderOpenMap['page_'+parentId] = true;
+  pageStartInline('child', parentId);
+}
+function _appendPageInlineRow(el, folders) {
+  var hint = pageInlineMode === 'root'
+    ? '新建根目录'
+    : '在「' + getFolderName(pageInlineParentId, folders) + '」下新建子目录';
+  var row = document.createElement('div');
+  row.className = 'folder-inline-row';
+  row.style.margin = '4px 0';
+  row.innerHTML = '<span class="fi-hint">' + hint + '：</span>'
+    + '<input id="pageInlineInput" placeholder="目录名称" autocomplete="off">'
+    + '<button class="fi-ok" onclick="pageConfirmInline()">确定</button>'
+    + '<button class="fi-cancel" onclick="pageCancelInline()">取消</button>';
+  var allItem = el.lastElementChild;
+  el.insertBefore(row, allItem);
+}
+function pageConfirmInline() {
+  var inp = document.getElementById('pageInlineInput');
+  if (!inp) return;
+  var name = inp.value.trim();
+  if (!name) { showToast('请输入目录名称'); inp.focus(); return; }
+  var folders = favPageTab === 'note' ? noteFolders : favFolders;
+  if (pageInlineMode === 'root') {
+    folders.push({ id: favNextFolderId++, name: name, children: [] });
+  } else if (pageInlineMode === 'child') {
+    var parent = findFolder(folders, pageInlineParentId);
+    if (!parent) return;
+    parent.children.push({ id: favNextFolderId++, name: name, children: [] });
+    favFolderOpenMap['page_' + pageInlineParentId] = true;
+  }
+  pageInlineMode = null;
+  pageInlineParentId = null;
   renderFavLeftTree();
 }
+function pageCancelInline() {
+  pageInlineMode = null;
+  pageInlineParentId = null;
+  renderFavLeftTree();
+}
+function addRootFolderFromPage() { pageStartInline('root'); }
+// 兼容旧调用
+function addRootFolderAndRefresh() { pageStartInline('root'); }
 
 // 右侧内容
 function renderFavRightContent() {
@@ -1871,11 +2031,11 @@ function renderFavRightContent() {
   else renderFavNotes(el);
 }
 
-function getFolderIds(folderId) {
+function getFolderIds(folderId, folders) {
   // 返回该目录及其所有子目录的id数组
   if (folderId === '__all__') return null;
   var ids = [folderId];
-  var f = findFolder(favFolders, folderId);
+  var f = findFolder(folders, folderId);
   if (f) collectChildIds(f, ids);
   return ids;
 }
@@ -1884,12 +2044,12 @@ function collectChildIds(folder, arr) {
 }
 
 function renderFavEntries(el) {
-  var ids = getFolderIds(favPageFolderId);
+  var ids = getFolderIds(favPageFolderId, favFolders);
   var items = ids ? favEntries.filter(function(e){ return ids.indexOf(e.folderId)>=0 || ids.indexOf(0)>=0; }) : favEntries;
   if (items.length === 0) { el.innerHTML = '<div style="padding:40px;text-align:center;color:#bbb;font-size:13px;">暂无收藏</div>'; return; }
 
   // 先按自定义目录分组，再按原始路径排
-  var grouped = groupByFolder(items);
+  var grouped = groupByFolder(items, favFolders);
   var html = '';
   grouped.forEach(function(g) {
     html += '<div class="fav-section-title">📁 '+g.folderPath+'</div>';
@@ -1901,7 +2061,7 @@ function renderFavEntries(el) {
         +'<div class="fec-path">🗂 '+e.path+'</div>'
         +'<div class="fec-answer">'+e.ans+'</div>'
         +'<div class="fec-footer">'
-          +'<span class="fec-folder">📂 '+folderName(e.folderId)+'</span>'
+          +'<span class="fec-folder">📂 '+folderName(e.folderId, favFolders)+'</span>'
           +'<div class="fec-ops">'
             +'<span class="fec-op" onclick="moveFavEntry(\''+e.id+'\')">移动</span>'
             +'<span class="fec-op" onclick="deleteFavEntry(\''+e.id+'\')">删除</span>'
@@ -1914,11 +2074,11 @@ function renderFavEntries(el) {
 }
 
 function renderFavNotes(el) {
-  var ids = getFolderIds(favPageFolderId);
+  var ids = getFolderIds(favPageFolderId, noteFolders);
   var items = ids ? favNotes.filter(function(n){ return ids.indexOf(n.folderId)>=0; }) : favNotes;
   if (items.length === 0) { el.innerHTML = '<div style="padding:40px;text-align:center;color:#bbb;font-size:13px;">暂无笔记</div>'; return; }
 
-  var grouped = groupByFolder(items);
+  var grouped = groupByFolder(items, noteFolders);
   var html = '';
   grouped.forEach(function(g) {
     html += '<div class="fav-section-title">📁 '+g.folderPath+'</div>';
@@ -1930,7 +2090,7 @@ function renderFavNotes(el) {
         + outdatedWarn
         +'<div class="fnc-highlight'+(n.outdated?' outdated':'')+'">"'+n.highlight+'"</div>'
         +'<div class="fnc-footer">'
-          +'<span class="fnc-folder">📂 '+folderName(n.folderId)+'</span>'
+          +'<span class="fnc-folder">📂 '+folderName(n.folderId, noteFolders)+'</span>'
           +'<div class="fnc-ops">'
             +'<span class="fnc-op" onclick="moveFavNote(\''+n.id+'\')">移动</span>'
             +'<span class="fnc-op" onclick="deleteFavNote(\''+n.id+'\')">删除</span>'
@@ -1942,11 +2102,11 @@ function renderFavNotes(el) {
   el.innerHTML = html;
 }
 
-function groupByFolder(items) {
+function groupByFolder(items, folders) {
   var map = {};
   items.forEach(function(item) {
     var fid = item.folderId;
-    if (!map[fid]) map[fid] = { folderPath: folderName(fid), items: [] };
+    if (!map[fid]) map[fid] = { folderPath: folderName(fid, folders), items: [] };
     map[fid].items.push(item);
   });
   // 排序：按目录路径字母
@@ -1959,7 +2119,7 @@ function moveFavEntry(id) {
   favModalMode = 'move-entry';
   favModalPayload = e;
   favSelectedFolderId = null;
-  document.getElementById('favFolderModalTitle').textContent = '移动到目录';
+  document.getElementById('favFolderModalTitle').textContent = '移动到收藏目录';
   renderFavFolderTree();
   document.getElementById('favFolderModal').classList.add('open');
   // 改确认按钮行为
@@ -1984,7 +2144,7 @@ function moveFavNote(id) {
   favModalMode = 'move-note';
   favModalPayload = n;
   favSelectedFolderId = null;
-  document.getElementById('favFolderModalTitle').textContent = '移动到目录';
+  document.getElementById('favFolderModalTitle').textContent = '移动到笔记目录';
   renderFavFolderTree();
   document.getElementById('favFolderModal').classList.add('open');
   document.getElementById('favFolderModal').querySelector('button:last-child').onclick = function() {
@@ -2025,13 +2185,17 @@ document.addEventListener('DOMContentLoaded', function() { renderArkKnowledge();
       <h3 id="favFolderModalTitle">选择收藏目录</h3>
       <span style="cursor:pointer;color:#aaa;font-size:16px;" onclick="closeFavFolderModal()">✕</span>
     </div>
-    <div style="padding:8px 14px 0;border-bottom:1px solid #f5f5f5;flex-shrink:0;">
-      <div style="font-size:12px;color:#666;margin-bottom:6px;">选择目录（可新建），最多4级</div>
+    <div style="padding:8px 14px 6px;border-bottom:1px solid #f5f5f5;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:12px;color:#666;">选择目录（最多4级）</span>
+      <div style="display:flex;gap:6px;">
+        <button onclick="modalStartInlineFolder('root')" style="padding:3px 10px;border:1px solid #00b389;border-radius:4px;background:#fff;color:#00b389;font-size:11px;cursor:pointer;">+ 新建根目录</button>
+        <button id="modalAddChildBtn" onclick="modalStartInlineFolder('child')" disabled style="padding:3px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;color:#aaa;font-size:11px;cursor:not-allowed;opacity:0.4;">+ 新建子目录</button>
+      </div>
     </div>
     <div class="fav-folder-tree" id="favFolderTree"></div>
     <div class="fav-folder-foot">
       <button style="padding:5px 14px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" onclick="closeFavFolderModal()">取消</button>
-      <button style="padding:5px 14px;border:1px solid #00b389;border-radius:4px;background:#00b389;color:#fff;cursor:pointer;font-size:12px;" onclick="confirmFavFolder()">确认收藏</button>
+      <button style="padding:5px 14px;border:1px solid #00b389;border-radius:4px;background:#00b389;color:#fff;cursor:pointer;font-size:12px;" onclick="confirmFavFolder()">确认</button>
     </div>
   </div>
 </div>
@@ -2041,7 +2205,7 @@ document.addEventListener('DOMContentLoaded', function() { renderArkKnowledge();
   <div class="fav-page-head">
     <span class="fp-back" onclick="closeFavPage()">◀ 返回知识库</span>
     <h2>⭐ 我的收藏</h2>
-    <button style="padding:5px 12px;border:1px solid #00b389;background:#00b389;color:#fff;border-radius:5px;font-size:12px;cursor:pointer;" onclick="openFavFolderModal('manage')">+ 新建目录</button>
+    <button style="padding:5px 12px;border:1px solid #00b389;background:#00b389;color:#fff;border-radius:5px;font-size:12px;cursor:pointer;" onclick="addRootFolderFromPage()">+ 新建目录</button>
   </div>
   <div class="fav-page-tabs">
     <div class="fav-page-tab active" id="fpTab-entry" onclick="switchFavTab('entry')">📌 整条收藏</div>
