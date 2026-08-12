@@ -208,14 +208,23 @@
   .drawer-close { cursor: pointer; color: #aaa; font-size: 16px; padding: 4px; }
   .drawer-close:hover { color: #333; }
   .drawer-body { flex: 1; overflow-y: auto; padding: 8px 0; }
-  .drawer-item { padding: 10px 16px; border-bottom: 1px solid #f9f9f9; cursor: pointer; transition: background 0.15s; }
+  .drawer-item { position: relative; padding: 10px 16px; border-bottom: 1px solid #f9f9f9; cursor: pointer; transition: background 0.15s; }
   .drawer-item:hover { background: #f5fffe; }
+  .d-unread-dot { position: absolute; top: 12px; right: 14px; width: 8px; height: 8px; border-radius: 50%; background: #f5222d; }
+  .drawer-item.read .d-unread-dot { display: none; }
   .drawer-item .d-type { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-bottom: 4px; font-weight: 600; }
   .drawer-item .d-type.new { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
   .drawer-item .d-type.update { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
   .drawer-item .d-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 3px; line-height: 1.4; }
   .drawer-item .d-path { font-size: 11px; color: #aaa; margin-bottom: 2px; }
   .drawer-item .d-time { font-size: 10px; color: #ccc; }
+
+  /* knowledge tab: scrollable list + fixed footer button */
+  .drawer-body-knowledge { display: flex; flex-direction: column; padding: 0; }
+  .drawer-body-scroll { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .drawer-footer { flex-shrink: 0; padding: 10px 16px; border-top: 1px solid #f0f0f0; background: #fff; }
+  .drawer-footer-btn { width: 100%; padding: 9px 0; border: 1px solid #00b389; border-radius: 6px; background: #fff; color: #00b389; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .drawer-footer-btn:hover { background: #00b389; color: #fff; }
 
   /* wiki view */
   .wiki-view { display: none; padding: 14px 16px; }
@@ -567,7 +576,7 @@
       <div class="header-actions">
         <div class="today-btn" onclick="openDrawer()">
           📅 今日更新
-          <span class="badge">3</span>
+          <span class="badge" id="todayBtnBadge">3</span>
         </div>
       </div>
     </div>
@@ -638,29 +647,37 @@
   </div>
   <!-- Drawer Tabs -->
   <div class="drawer-tabs">
-    <div class="drawer-tab active" id="dtab-knowledge" onclick="switchDrawerTab('knowledge')">📋 知识更新 <span class="dtab-badge">3</span></div>
+    <div class="drawer-tab active" id="dtab-knowledge" onclick="switchDrawerTab('knowledge')">📋 知识更新 <span class="dtab-badge" id="dtab-knowledge-count">3</span></div>
     <div class="drawer-tab" id="dtab-briefing" onclick="switchDrawerTab('briefing')">🎬 学考板块 <span class="dtab-badge" style="background:#7c3aed;">1</span></div>
   </div>
 
   <!-- Tab: 知识更新 -->
-  <div class="drawer-body" id="drawer-knowledge">
-    <div class="drawer-item" onclick="jumpToKnowledge('开户MCV申请流程最新说明','个人银行 › 开户业务 › 开户介绍')">
-      <span class="d-type new">新增</span>
-      <div class="d-title">开户MCV申请流程最新说明</div>
-      <div class="d-path">个人银行 › 开户业务 › 开户介绍</div>
-      <div class="d-time">今日 09:32 · 更新人：Lucy</div>
+  <div class="drawer-body drawer-body-knowledge" id="drawer-knowledge">
+    <div class="drawer-body-scroll">
+      <div class="drawer-item" id="drawer-item-1" onclick="jumpToKnowledge('开户MCV申请流程最新说明','个人银行 › 开户业务 › 开户介绍',this)">
+        <span class="d-unread-dot"></span>
+        <span class="d-type new">新增</span>
+        <div class="d-title">开户MCV申请流程最新说明</div>
+        <div class="d-path">个人银行 › 开户业务 › 开户介绍</div>
+        <div class="d-time">今日 09:32 · 更新人：Lucy</div>
+      </div>
+      <div class="drawer-item" id="drawer-item-2" onclick="jumpToKnowledge('转账手续费收费标准（2026年7月版）','个人银行 › 转账业务 › 转账收费',this)">
+        <span class="d-unread-dot"></span>
+        <span class="d-type update">修改</span>
+        <div class="d-title">转账手续费收费标准（2026年7月版）</div>
+        <div class="d-path">个人银行 › 转账业务 › 转账收费</div>
+        <div class="d-time">今日 11:15 · 更新人：Tom</div>
+      </div>
+      <div class="drawer-item" id="drawer-item-3" onclick="jumpToKnowledge('VA账户开设常见拒绝原因整理','VA相關查詢 › 开户 › 开户被拒',this)">
+        <span class="d-unread-dot"></span>
+        <span class="d-type new">新增</span>
+        <div class="d-title">VA账户开设常见拒绝原因整理</div>
+        <div class="d-path">VA相關查詢 › 开户 › 开户被拒</div>
+        <div class="d-time">今日 14:48 · 更新人：Ines</div>
+      </div>
     </div>
-    <div class="drawer-item" onclick="jumpToKnowledge('转账手续费收费标准（2026年7月版）','个人银行 › 转账业务 › 转账收费')">
-      <span class="d-type update">修改</span>
-      <div class="d-title">转账手续费收费标准（2026年7月版）</div>
-      <div class="d-path">个人银行 › 转账业务 › 转账收费</div>
-      <div class="d-time">今日 11:15 · 更新人：Tom</div>
-    </div>
-    <div class="drawer-item" onclick="jumpToKnowledge('VA账户开设常见拒绝原因整理','VA相關查詢 › 开户 › 开户被拒')">
-      <span class="d-type new">新增</span>
-      <div class="d-title">VA账户开设常见拒绝原因整理</div>
-      <div class="d-path">VA相關查詢 › 开户 › 开户被拒</div>
-      <div class="d-time">今日 14:48 · 更新人：Ines</div>
+    <div class="drawer-footer">
+      <button class="drawer-footer-btn" onclick="viewUpdateHistory()">查看历史更新</button>
     </div>
   </div>
 
@@ -1287,8 +1304,9 @@ function highlightCard(n) {
   setTimeout(() => el.style.boxShadow = '', 2000);
 }
 
-function jumpToKnowledge(title, path) {
+function jumpToKnowledge(title, path, itemEl) {
   closeDrawer();
+  if (itemEl) markKnowledgeUpdateRead(itemEl);
   // 先找知识列表里匹配的条目
   var matched = arkKnowledgeData.find(function(r){ return r.q.indexOf(title)>=0 || title.indexOf(r.q)>=0; });
   document.getElementById('wikiView').classList.remove('open');
@@ -1341,6 +1359,16 @@ function jumpToKnowledge(title, path) {
 }
 
 // ─── DRAWER ───
+function markKnowledgeUpdateRead(itemEl) {
+  if (itemEl.classList.contains('read')) return;
+  itemEl.classList.add('read');
+  var countEl = document.getElementById('dtab-knowledge-count');
+  var count = Math.max(0, (parseInt(countEl.textContent, 10) || 0) - 1);
+  countEl.textContent = count;
+  var outerBadge = document.getElementById('todayBtnBadge');
+  var outerCount = Math.max(0, (parseInt(outerBadge.textContent, 10) || 0) - 1);
+  outerBadge.textContent = outerCount;
+}
 function openDrawer() {
   document.getElementById('todayDrawer').classList.add('open');
   document.getElementById('overlay').classList.add('show');
@@ -1352,8 +1380,11 @@ function closeDrawer() {
 function switchDrawerTab(tab) {
   document.getElementById('dtab-knowledge').classList.toggle('active', tab==='knowledge');
   document.getElementById('dtab-briefing').classList.toggle('active', tab==='briefing');
-  document.getElementById('drawer-knowledge').style.display = tab==='knowledge' ? 'block' : 'none';
+  document.getElementById('drawer-knowledge').style.display = tab==='knowledge' ? 'flex' : 'none';
   document.getElementById('drawer-briefing').style.display = tab==='briefing' ? 'block' : 'none';
+}
+function viewUpdateHistory() {
+  window.location.href = 'demo-history-updates.html';
 }
 
 // ─── BRIEFING ───
@@ -2262,7 +2293,15 @@ function showToast(msg) {
   setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2200);
 }
 
-document.addEventListener('DOMContentLoaded', function() { renderArkKnowledge(); });
+document.addEventListener('DOMContentLoaded', function() {
+  renderArkKnowledge();
+  var params = new URLSearchParams(window.location.search);
+  var jumpTitle = params.get('jumpTitle');
+  var jumpPath = params.get('jumpPath');
+  if (jumpTitle && jumpPath) {
+    setTimeout(function(){ jumpToKnowledge(jumpTitle, jumpPath, null); }, 60);
+  }
+});
 </script>
 
 <!-- 划词笔记浮动按钮 -->
