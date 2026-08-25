@@ -642,7 +642,7 @@
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 <div class="today-drawer" id="todayDrawer">
   <div class="drawer-header">
-    <h3>今日更新 <span>2026-07-02</span></h3>
+    <h3>今日更新 <span>2026-07-02</span><span id="drawerTotalCount" style="font-size:11px;font-weight:400;color:#999;margin-left:6px;">共3条更新</span></h3>
     <span class="drawer-close" onclick="closeDrawer()">✕</span>
   </div>
   <!-- Drawer Tabs -->
@@ -653,29 +653,7 @@
 
   <!-- Tab: 知识更新 -->
   <div class="drawer-body drawer-body-knowledge" id="drawer-knowledge">
-    <div class="drawer-body-scroll">
-      <div class="drawer-item" id="drawer-item-1" onclick="jumpToKnowledge('开户MCV申请流程最新说明','个人银行 › 开户业务 › 开户介绍',this)">
-        <span class="d-unread-dot"></span>
-        <span class="d-type new">新增</span>
-        <div class="d-title">开户MCV申请流程最新说明</div>
-        <div class="d-path">个人银行 › 开户业务 › 开户介绍</div>
-        <div class="d-time">今日 09:32 · 更新人：Lucy</div>
-      </div>
-      <div class="drawer-item" id="drawer-item-2" onclick="jumpToKnowledge('转账手续费收费标准（2026年7月版）','个人银行 › 转账业务 › 转账收费',this)">
-        <span class="d-unread-dot"></span>
-        <span class="d-type update">修改</span>
-        <div class="d-title">转账手续费收费标准（2026年7月版）</div>
-        <div class="d-path">个人银行 › 转账业务 › 转账收费</div>
-        <div class="d-time">今日 11:15 · 更新人：Tom</div>
-      </div>
-      <div class="drawer-item" id="drawer-item-3" onclick="jumpToKnowledge('VA账户开设常见拒绝原因整理','VA相關查詢 › 开户 › 开户被拒',this)">
-        <span class="d-unread-dot"></span>
-        <span class="d-type new">新增</span>
-        <div class="d-title">VA账户开设常见拒绝原因整理</div>
-        <div class="d-path">VA相關查詢 › 开户 › 开户被拒</div>
-        <div class="d-time">今日 14:48 · 更新人：Ines</div>
-      </div>
-    </div>
+    <div class="drawer-body-scroll" id="drawerKnowledgeScroll"></div>
     <div class="drawer-footer">
       <button class="drawer-footer-btn" onclick="viewUpdateHistory()">查看历史更新</button>
     </div>
@@ -1136,14 +1114,22 @@ function showAISearch(q) {
   // ── 触发规则 ──
   // 输入"空结果"  → 情况1：无任何条目
   // 输入"弱关联"  → 情况2：相关性过低
-  // 输入"超时"    → 情况3：LLM生成失败
+  // 输入"超时"    → 情况3：LLM生成失败（旧）
   // 输入"混合"    → 情况4：多业务混合提问
+  // 输入"矛盾"    → 情况5：检索内容自身矛盾
+  // 输入"无话术"  → 情况6：无可用对客话术素材
+  // 输入"停滞"    → 情况7：LLM服务停滞
+  // 输入"SOP"/"步骤" → 情况8：命中SOP分步骤内容
   // 其他          → 正常（奇=知识库原文，偶=AI生成）
 
   var scenario = q.indexOf('空结果') >= 0 ? 'empty'
     : q.indexOf('弱关联') >= 0 ? 'lowrel'
     : q.indexOf('超时') >= 0   ? 'timeout'
     : q.indexOf('混合') >= 0   ? 'mixed'
+    : q.indexOf('矛盾') >= 0   ? 'conflict'
+    : q.indexOf('无话术') >= 0 ? 'noscript'
+    : q.indexOf('停滞') >= 0   ? 'llmdown'
+    : (q.indexOf('SOP') >= 0 || q.indexOf('步骤') >= 0) ? 'sop'
     : 'normal';
 
   // 情况3：超时——不显示摘要区，直接顶部提示
@@ -1152,6 +1138,25 @@ function showAISearch(q) {
     statsText.innerHTML = '<span style="color:#ff4d4f;font-weight:600;">⏱ AI 摘要生成超时，直接查看下方知识点</span>';
     document.getElementById('warnText').style.display = 'none';
     document.getElementById('searchResults').innerHTML = buildSearchResults(q, false);
+    return;
+  }
+
+  // 情况7：LLM服务停滞——摘要区展示降级提示，不展示知识列表
+  if (scenario === 'llmdown') {
+    summary.classList.add('visible');
+    document.getElementById('aiLoading').style.display = 'none';
+    aiBody.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px;background:#fff2f0;border:1px solid #ffccc7;border-radius:6px;">
+        <span style="font-size:20px;flex-shrink:0;">🚫</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#cf1322;margin-bottom:4px;">AI 搜索服务暂时不可用</div>
+          <div style="font-size:12px;color:#555;line-height:1.8;">当前 AI 摘要服务未响应，请切换至<strong>普通搜索模式</strong>继续查询。</div>
+          <button onclick="toggleAI();doSearch()" style="margin-top:10px;padding:5px 14px;background:#fff;border:1px solid #00b389;border-radius:4px;color:#00b389;font-size:12px;cursor:pointer;font-weight:600;">切换至普通搜索</button>
+        </div>
+      </div>`;
+    statsText.textContent = '';
+    document.getElementById('warnText').style.display = 'none';
+    document.getElementById('searchResults').innerHTML = '';
     return;
   }
 
@@ -1207,6 +1212,110 @@ function showAISearch(q) {
           <div class="script-label">🤖 AI参考话术（仅供参考，请根据实际情况调整）</div>
           <div class="script-body">您的问题涉及开户和转账两个方向，建议分开查询以获取更精准的答案。如需了解开户流程，可搜索「開戶流程」；如需了解转账规则，可搜索「轉賬限額」。</div>
           <div class="script-notice-ai">💡 检测到多业务混合提问，建议拆分为单一问题分别查询，以获得更准确的知识库匹配结果。</div>
+        </div>`;
+      document.getElementById('searchResults').innerHTML = buildSearchResults(q, true);
+      return;
+    }
+
+    // ── 情况5：检索内容自身矛盾 ──
+    if (scenario === 'conflict') {
+      aiBody.innerHTML = `
+        <div style="background:#fff7e6;border:1px solid #ffd591;border-radius:6px;padding:10px 14px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#d46b08;margin-bottom:8px;">
+            <span style="font-size:14px;">⚠️</span> 知识库中存在多个来源的差异描述，请人工核实后再作答
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="background:#fff;border:1px solid #ffd591;border-radius:4px;padding:8px 10px;font-size:12px;line-height:1.7;">
+              <span style="font-weight:600;color:#333;">[#512]</span> 开户被拒 — 身份证件问题：
+              <span style="color:#555;">「身份证件<strong>过期或图片模糊</strong>会导致系统自动拒绝」</span>
+            </div>
+            <div style="background:#fff;border:1px solid #ffd591;border-radius:4px;padding:8px 10px;font-size:12px;line-height:1.7;">
+              <span style="font-weight:600;color:#333;">[#518]</span> 开户拒绝原因 — 信息不一致：
+              <span style="color:#555;">「证件过期时系统<strong>进入人工审核</strong>而非自动拒绝」</span>
+            </div>
+            <div style="margin-top:4px;font-size:11px;color:#d46b08;padding:4px 6px;background:#fff7e6;border-radius:3px;">
+              以上两条描述在"证件过期的处理方式"上存在差异，AI 不作取舍，请以最新版原文或联系 KM 核实为准。
+            </div>
+          </div>
+        </div>
+        <p style="font-size:12px;font-weight:600;margin-bottom:8px;">除差异项外，其他相关知识整合如下：</p>
+        <ol style="font-size:12px;line-height:1.9;padding-left:18px;">
+          <li style="margin-bottom:4px;">存在<strong>制裁名單匹配</strong>的情況會觸發自動拒絕，需由合規部門處理 <a class="src-link" onclick="highlightCard(2)">[#513]</a></li>
+          <li style="margin-bottom:4px;"><strong>內部風控規則觸發</strong>（具體條件屬內部規則，不可向客戶透露）<a class="src-link" onclick="highlightCard(3)">[#516]</a></li>
+        </ol>`;
+      document.getElementById('searchResults').innerHTML = buildSearchResults(q, true);
+      return;
+    }
+
+    // ── 情况6：无可用对客话术素材 ──
+    if (scenario === 'noscript') {
+      aiBody.innerHTML = `
+        <p style="font-size:12px;font-weight:600;margin-bottom:8px;">关于"${q}"，知识库中的相关信息整合如下：</p>
+        <ol style="font-size:12px;line-height:1.9;padding-left:18px;">
+          <li style="margin-bottom:4px;"><strong>內部風控規則觸發</strong>（具體條件屬內部規則，客服可告知客戶聯絡客服跟進）<a class="src-link" onclick="highlightCard(3)">[#516]</a> <span style="font-size:10px;background:#f9f0ff;border:1px solid #d3adf7;color:#531dab;border-radius:3px;padding:1px 5px;white-space:nowrap;">🔒 内部专用，不可转达客户</span></li>
+          <li style="margin-bottom:4px;">制裁名單合規审查规则（属内部处理流程，不可向客户披露）<a class="src-link" onclick="highlightCard(2)">[#513]</a> <span style="font-size:10px;background:#f9f0ff;border:1px solid #d3adf7;color:#531dab;border-radius:3px;padding:1px 5px;white-space:nowrap;">🔒 内部专用，不可转达客户</span></li>
+        </ol>
+        <div style="margin:12px 0;padding:10px 14px;background:#f0faf7;border-left:3px solid #00b389;border-radius:0 5px 5px 0;">
+          <div style="font-size:11px;font-weight:700;color:#00875a;margin-bottom:5px;">📝 总结</div>
+          <div style="font-size:12px;color:#444;line-height:1.9;">综合以上知识条目，「${q}」的处理涉及两类内部规则：其一为<strong>内部风控规则触发</strong>（#516），具体触发条件属内部保密信息，客服只需告知客户联系人工跟进，不得透露细节；其二为<strong>制裁名单合规审查</strong>（#513），一旦命中须移交合规部门处理，客服不可自行操作也不可向客户解释具体原因。两类情况下对客统一口径均为：建议客户联系客服人工跟进。</div>
+        </div>
+        <div style="background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#666;margin-bottom:6px;">
+            <span>💬</span> 建议回答话术
+          </div>
+          <div style="font-size:12px;color:#888;line-height:1.8;font-style:italic;">
+            检索到的内容均为内部专用规则，未包含适合的对客表达方式，建议根据业务理解自行组织话术。
+          </div>
+        </div>`;
+      document.getElementById('searchResults').innerHTML = buildSearchResults(q, true);
+      return;
+    }
+
+    // ── 情况8：SOP 分步骤内容 ──
+    if (scenario === 'sop') {
+      aiBody.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#1677ff;margin-bottom:10px;">
+          <span style="background:#e6f4ff;border:1px solid #91caff;border-radius:4px;padding:2px 8px;font-size:11px;">📋 SOP 流程</span>
+          <span style="color:#555;font-weight:400;">来源：#630 跨境汇款操作规程（完整版）</span>
+        </div>
+        <div style="font-size:11px;color:#fa8c16;background:#fff7e6;border:1px solid #ffd591;border-radius:4px;padding:5px 10px;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+          <span>⚡</span> 检测到 SOP 类内容，已按原始步骤顺序完整输出，未做裁剪
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0;">
+          ${[
+            { n:1, title:'客户发起汇款申请', body:'客户在 App「转账」→「跨境汇款」页面填写收款人信息、汇款金额及汇款用途，确认汇率后提交。', src:'#630', note:'' },
+            { n:2, title:'系统实时汇率锁定', body:'系统自动锁定当前汇率，锁定有效期 60 秒。超时未确认须重新获取汇率，<strong>不可人工干预汇率</strong>。', src:'#630', note:'内部' },
+            { n:3, title:'合规预筛查', body:'后台自动比对制裁名单及反洗钱规则。命中则进入人工审核队列，<strong>不可向客户透露具体触发条件</strong>。', src:'#630', note:'内部' },
+            { n:4, title:'银行内部审批', body:'审批时效：工作日 T+0 内完成（17:00 截单）；17:00 后或节假日顺延至下一工作日。', src:'#631', note:'' },
+            { n:5, title:'电文发送至代理行', body:'系统通过 SWIFT 向代理行发送电文。如代理行退票，客服须在收到通知后 24 小时内联系客户。', src:'#632', note:'' },
+            { n:6, title:'收款行入账', body:'一般 1–3 个工作日到账。受收款行处理时效影响，如超 5 个工作日未到账，可协助客户发起追踪。', src:'#633', note:'' },
+          ].map(function(s) {
+            var noteBadge = s.note === '内部'
+              ? '<span style="font-size:10px;background:#f9f0ff;border:1px solid #d3adf7;color:#531dab;border-radius:3px;padding:1px 5px;margin-left:6px;white-space:nowrap;">🔒 内部，不可转达</span>'
+              : '';
+            return '<div style="display:flex;gap:0;position:relative;">'
+              + '<div style="display:flex;flex-direction:column;align-items:center;width:28px;flex-shrink:0;">'
+                + '<div style="width:22px;height:22px;border-radius:50%;background:#1677ff;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;">' + s.n + '</div>'
+                + (s.n < 6 ? '<div style="width:2px;flex:1;background:#d0e4ff;min-height:14px;"></div>' : '')
+              + '</div>'
+              + '<div style="flex:1;padding:0 0 14px 10px;">'
+                + '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">'
+                  + '<span style="font-size:12px;font-weight:700;color:#222;">' + s.title + '</span>'
+                  + noteBadge
+                  + '<a class="src-link" onclick="highlightCard(1)" style="margin-left:auto;">[' + s.src + ']</a>'
+                + '</div>'
+                + '<div style="font-size:12px;color:#555;line-height:1.8;">' + s.body + '</div>'
+              + '</div>'
+              + '</div>';
+          }).join('')}
+        </div>
+        <div class="script-card-kb" style="margin-top:4px;">
+          <div class="script-label">
+            <span class="script-badge">📚 知识库标准话术</span>
+            <span class="script-id-link" onclick="highlightCard(1)">【#630 跨境汇款操作规程】</span>
+          </div>
+          <div class="script-body">感謝您聯絡眾安銀行。跨境匯款一般需要 <strong>1–3 個工作日</strong>到賬，具體時效視收款行處理進度而定。如超過 5 個工作日仍未到賬，請您提供匯款單號，我們將協助您向代理行發起追蹤查詢。</div>
+          <div class="script-notice-kb">✅ 話術引用自知識庫原文，SOP 步驟已完整輸出，請核對原文後使用。</div>
         </div>`;
       document.getElementById('searchResults').innerHTML = buildSearchResults(q, true);
       return;
@@ -1304,9 +1413,15 @@ function highlightCard(n) {
   setTimeout(() => el.style.boxShadow = '', 2000);
 }
 
-function jumpToKnowledge(title, path, itemEl) {
+function jumpToKnowledge(title, path, itemRef) {
   closeDrawer();
-  if (itemEl) markKnowledgeUpdateRead(itemEl);
+  if (itemRef !== undefined && itemRef !== null) {
+    if (typeof itemRef === 'number') {
+      markKnowledgeUpdateReadByIdx(itemRef);
+    } else {
+      markKnowledgeUpdateRead(itemRef);
+    }
+  }
   // 先找知识列表里匹配的条目
   var matched = arkKnowledgeData.find(function(r){ return r.q.indexOf(title)>=0 || title.indexOf(r.q)>=0; });
   document.getElementById('wikiView').classList.remove('open');
@@ -1358,16 +1473,52 @@ function jumpToKnowledge(title, path, itemEl) {
   }
 }
 
+// ─── DRAWER DATA ───
+var todayKnowledgeData = [
+  { idx:1, id:'#620', type:'new', label:'新增', title:'开户MCV申请流程最新说明', path:'个人银行 › 开户业务 › 开户介绍', time:'09:32', author:'Lucy', read:false },
+  { idx:2, id:'#531', type:'update', label:'修改', title:'转账手续费收费标准（2026年7月版）', path:'个人银行 › 转账业务 › 转账收费', time:'11:15', author:'Tom', read:false },
+  { idx:3, id:'#648', type:'new', label:'新增', title:'VA账户开设常见拒绝原因整理', path:'VA相關查詢 › 开户 › 开户被拒', time:'14:48', author:'Ines', read:false }
+];
+
+function renderTodayKnowledge() {
+  var el = document.getElementById('drawerKnowledgeScroll');
+  if (!el) return;
+  // 排序：未读在前（组内时间倒序），已读在后（组内时间倒序）
+  var sorted = todayKnowledgeData.slice().sort(function(a, b) {
+    if (a.read !== b.read) return a.read ? 1 : -1;
+    return b.time.localeCompare(a.time);
+  });
+  el.innerHTML = sorted.map(function(it) {
+    return '<div class="drawer-item' + (it.read ? ' read' : '') + '" id="drawer-item-' + it.idx + '" '
+      + 'onclick="jumpToKnowledge(\'' + it.title.replace(/'/g, "\\'") + '\',\'' + it.path.replace(/'/g, "\\'") + '\',' + it.idx + ')">'
+      + '<span class="d-unread-dot"></span>'
+      + '<span class="d-type ' + it.type + '">' + it.label + '</span>'
+      + '<div class="d-title"><span style="color:#aaa;font-weight:400;font-size:10px;margin-right:4px;">' + it.id + '</span>' + it.title + '</div>'
+      + '<div class="d-path">' + it.path + '</div>'
+      + '<div class="d-time">今日 ' + it.time + ' · 更新人：' + it.author + '</div>'
+      + '</div>';
+  }).join('');
+}
+
 // ─── DRAWER ───
-function markKnowledgeUpdateRead(itemEl) {
-  if (itemEl.classList.contains('read')) return;
-  itemEl.classList.add('read');
+function _doMarkRead(item) {
+  if (!item || item.read) return;
+  item.read = true;
   var countEl = document.getElementById('dtab-knowledge-count');
   var count = Math.max(0, (parseInt(countEl.textContent, 10) || 0) - 1);
   countEl.textContent = count;
   var outerBadge = document.getElementById('todayBtnBadge');
   var outerCount = Math.max(0, (parseInt(outerBadge.textContent, 10) || 0) - 1);
   outerBadge.textContent = outerCount;
+  renderTodayKnowledge();
+}
+function markKnowledgeUpdateRead(itemEl) {
+  var id = itemEl.id; // e.g. "drawer-item-2"
+  var idx = parseInt(id.replace('drawer-item-', ''), 10);
+  _doMarkRead(todayKnowledgeData.find(function(it){ return it.idx === idx; }));
+}
+function markKnowledgeUpdateReadByIdx(idx) {
+  _doMarkRead(todayKnowledgeData.find(function(it){ return it.idx === idx; }));
 }
 function openDrawer() {
   document.getElementById('todayDrawer').classList.add('open');
@@ -2295,6 +2446,7 @@ function showToast(msg) {
 
 document.addEventListener('DOMContentLoaded', function() {
   renderArkKnowledge();
+  renderTodayKnowledge();
   var params = new URLSearchParams(window.location.search);
   var jumpTitle = params.get('jumpTitle');
   var jumpPath = params.get('jumpPath');

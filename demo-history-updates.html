@@ -149,28 +149,28 @@
     {
       date: '2026-07-02',
       items: [
-        { type:'new', label:'新增', title:'开户MCV申请流程最新说明', path:'个人银行 › 开户业务 › 开户介绍', time:'09:32', author:'Lucy', read:false, kind:'knowledge' },
-        { type:'update', label:'修改', title:'转账手续费收费标准（2026年7月版）', path:'个人银行 › 转账业务 › 转账收费', time:'11:15', author:'Tom', read:false, kind:'knowledge' },
-        { type:'new', label:'新增', title:'VA账户开设常见拒绝原因整理', path:'VA相關查詢 › 开户 › 开户被拒', time:'14:48', author:'Ines', read:false, kind:'knowledge' }
+        { id:'#620', type:'new', label:'新增', title:'开户MCV申请流程最新说明', path:'个人银行 › 开户业务 › 开户介绍', time:'09:32', author:'Lucy', read:false, kind:'knowledge' },
+        { id:'#531', type:'update', label:'修改', title:'转账手续费收费标准（2026年7月版）', path:'个人银行 › 转账业务 › 转账收费', time:'11:15', author:'Tom', read:false, kind:'knowledge' },
+        { id:'#648', type:'new', label:'新增', title:'VA账户开设常见拒绝原因整理', path:'VA相關查詢 › 开户 › 开户被拒', time:'14:48', author:'Ines', read:false, kind:'knowledge' }
       ]
     },
     {
       date: '2026-07-01',
       items: [
-        { type:'update', label:'修改', title:'VA账户新功能常见问题汇总', path:'VA相關查詢 › 账户功能 › 新功能说明', time:'10:05', author:'Tom', read:true, kind:'knowledge' }
+        { id:'#603', type:'update', label:'修改', title:'VA账户新功能常见问题汇总', path:'VA相關查詢 › 账户功能 › 新功能说明', time:'10:05', author:'Tom', read:true, kind:'knowledge' }
       ]
     },
     {
       date: '2026-06-30',
       items: [
-        { type:'new', label:'新增', title:'基金申购常见拒绝原因整理', path:'个人银行 › 基金业务 › 申购问题', time:'09:48', author:'Lucy', read:true, kind:'knowledge' },
-        { type:'update', label:'修改', title:'基金赎回到账时间说明（2026年6月版）', path:'个人银行 › 基金业务 › 赎回规则', time:'13:22', author:'Ines', read:true, kind:'knowledge' }
+        { id:'#588', type:'new', label:'新增', title:'基金申购常见拒绝原因整理', path:'个人银行 › 基金业务 › 申购问题', time:'09:48', author:'Lucy', read:true, kind:'knowledge' },
+        { id:'#572', type:'update', label:'修改', title:'基金赎回到账时间说明（2026年6月版）', path:'个人银行 › 基金业务 › 赎回规则', time:'13:22', author:'Ines', read:true, kind:'knowledge' }
       ]
     },
     {
       date: '2026-06-29',
       items: [
-        { type:'update', label:'修改', title:'跨境汇款限额说明（2026年6月版）', path:'个人银行 › 转账业务 › 跨境汇款', time:'15:40', author:'Tom', read:true, kind:'knowledge' }
+        { id:'#561', type:'update', label:'修改', title:'跨境汇款限额说明（2026年6月版）', path:'个人银行 › 转账业务 › 跨境汇款', time:'15:40', author:'Tom', read:true, kind:'knowledge' }
       ]
     }
   ];
@@ -215,7 +215,7 @@
           + '<div class="hist-icon">📋</div>'
           + '<div class="hist-main">'
           + '<div class="hist-top-row"><span class="d-type ' + it.type + '">' + it.label + '</span></div>'
-          + '<div class="hist-title">' + it.title + '</div>'
+          + '<div class="hist-title"><span style="color:#aaa;font-weight:400;font-size:10px;margin-right:4px;">' + (it.id || '') + '</span>' + it.title + '</div>'
           + '<div class="hist-path">' + it.path + '</div>'
           + '<div class="hist-time">' + formatDate(g.date) + ' ' + it.time + ' · 更新人：' + it.author + '</div>'
           + '</div>'
